@@ -1,4 +1,4 @@
-﻿{
+{
     "architecture":  "Entity-Component-System",
     "modules":  {
                     "Logic_Graph_Module":  {
@@ -23,7 +23,8 @@
                                                                   "123-graph-node-execution-context-entity-scope-implementieren",
                                                                   "124-graph-variable-nodes-get-set-component-implementieren",
                                                                   "125-graph-conditional-nodes-if-else-implementieren",
-                                                                  "126-graph-math-nodes-add-multiply-etc-implementieren"
+                                                                  "126-graph-math-nodes-add-multiply-etc-implementieren",
+                                                                  "161-graph-interaktive-node-library-implementieren"
                                                               ],
                                                "dependencies":  [
                                                                     "ECS_Core_Engine_Module"
@@ -165,7 +166,15 @@
                                                                 "088-editor-ui-laden-button-importproject-implementieren",
                                                                 "089-editor-ui-live-vorschau-button-implementieren",
                                                                 "090-editor-ui-layout-speichern-laden-funktion-implementieren",
-                                                                "091-editor-ui-tastatur-shortcuts-ctrl-s-delete-implementieren"
+                                                                "091-editor-ui-tastatur-shortcuts-ctrl-s-delete-implementieren",
+                                                                "163-editor-ui-debug-id-tooltip-implementieren",
+                                                                "162-library-aenderung-nur-optische-komponenten",
+                                                                "165-editor-ui-logic-graph-in-haupt-panel-laden",
+                                                                "166-editor-ui-debug-icon-fuer-graph-canvas-hinzufuegen",
+                                                                "167-editor-ui-debug-icon-position-fix",
+                                                                "168-editor-ui-debug-icon-global-toggle-implementieren",
+                                                                "169-editor-ui-admin-panel-fuer-tests-implementieren",
+                                                                "170-editor-ui-canvas-sichtbarkeit-bugfix"
                                                             ],
                                              "dependencies":  [
                                                                   "ECS_Core_Engine_Module"
@@ -174,8 +183,16 @@
                                          }
                 },
     "projectName":  "GameForge Studio",
-    "version":  "1.2.0",
+    "version":  "1.8.0",
     "completedTasks":  [
-
+                           "163-editor-ui-debug-id-tooltip-implementieren",
+                           "161-graph-interaktive-node-library-implementieren",
+                           "162-library-aenderung-nur-optische-komponenten",
+                           "165-editor-ui-logic-graph-in-haupt-panel-laden",
+                           "166-editor-ui-debug-icon-fuer-graph-canvas-hinzufuegen",
+                           "167-editor-ui-debug-icon-position-fix",
+                           "168-editor-ui-debug-icon-global-toggle-implementieren",
+                           "170-editor-ui-canvas-sichtbarkeit-bugfix",
+                           "169-editor-ui-admin-panel-fuer-tests-implementieren"
                        ]
 }

@@ -4,6 +4,7 @@ import NumberInput from './inputs/NumberInput';
 import TextInput from './inputs/TextInput';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
 import ColorPicker from './inputs/ColorPicker';
+import DebugIdTooltip from './dev/DebugIdTooltip';
 
 interface ComponentInspectorProps {
     componentName: string;
@@ -58,18 +59,21 @@ const ComponentInspector: React.FC<ComponentInspectorProps> = ({ componentName, 
     };
 
     const properties = Object.entries(componentData).filter(([key]) => key !== 'isActive');
+    const inspectorId = `inspector-${componentName.replace('Component', '').toLowerCase()}`;
 
     return (
-        <div style={styles.container}>
-            <h6 style={styles.header}>{componentName.replace('Component', '')}</h6>
-            <div style={styles.propertyList}>
-                {properties.length > 0 ? properties.map(([key, value]) => (
-                    <div key={key} style={styles.propertyItem}>
-                        {renderPropertyControl(key, value)}
-                    </div>
-                )) : <p style={styles.noPropsText}>No editable properties.</p>}
+        <DebugIdTooltip debugId={inspectorId}>
+            <div style={styles.container}>
+                <h6 style={styles.header}>{componentName.replace('Component', '')}</h6>
+                <div style={styles.propertyList}>
+                    {properties.length > 0 ? properties.map(([key, value]) => (
+                        <div key={key} style={styles.propertyItem}>
+                            {renderPropertyControl(key, value)}
+                        </div>
+                    )) : <p style={styles.noPropsText}>No editable properties.</p>}
+                </div>
             </div>
-        </div>
+        </DebugIdTooltip>
     );
 };
 

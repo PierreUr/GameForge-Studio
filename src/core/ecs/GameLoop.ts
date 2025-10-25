@@ -62,7 +62,6 @@ export class GameLoop {
         }
         this._isRunning = true;
         this.lastTime = 0; // Reset lastTime to correctly calculate deltaTime on the first frame.
-        console.log('[GameLoop] Starting...');
         
         this.animationFrameId = requestAnimationFrame(this.update);
     }
@@ -77,6 +76,5 @@ export class GameLoop {
          }
          this._isRunning = false;
          cancelAnimationFrame(this.animationFrameId);
-         console.log('[GameLoop] Stopped.');
     }
 }

@@ -1,5 +1,32 @@
 # Changelog - GameForge Studio
 
+## [1.8.0]
+- **[TASK-169]** [FEAT] Added a new "Admin Panel" accessible from the toolbar. This panel allows developers to manually trigger the full suite of system self-tests and view the results, replacing the automatic execution on startup.
+- **[TASK-170]** [FIX] Resolved a critical CSS layout bug that caused the central panel (containing the Canvas or Logic Graph) to collapse and become invisible.
+
+## [1.7.0]
+- **[TASK-167]** [FIX] Repositioned the UI debug info icons to the top-right corner of components to prevent them from being hidden in tall or scrollable panels.
+- **[TASK-168]** [FEAT] Added a global "Toggle Debug IDs" button to the main toolbar, allowing developers to show or hide all debug icons at once.
+
+## [1.6.0]
+- **[TASK-165]** Refactored the main application layout. The Logic Graph editor now opens in the central workspace area instead of the left sidebar, providing significantly more space for editing complex graphs.
+- **[TASK-166]** [FIX] Added the missing debug info icon to the Logic Graph editor's canvas to ensure UI consistency.
+
+## [1.5.0]
+- **[TASK-162]** Majorly refactored the Library panel. It now displays draggable, predefined entity templates (e.g., "Player", "Enemy") from a new `template-manifest.json` instead of individual components. This fixes the drag-and-drop workflow and improves usability.
+- **[FEAT]** The currently selected template in the Library is now visually highlighted.
+
+## [1.4.0]
+- **[TASK-161]** Implemented an interactive Node Library for the Logic Graph Editor. Users can now drag-and-drop nodes from a side panel onto the editor canvas to build logic flows.
+- **[FIX]** Added a missing debug ID tooltip to the main tab system container for better developer feedback.
+- **[FIX]** Resolved a CSS issue where panels with overflowing content (e.g., the Component Library) would not display a scrollbar, making some items inaccessible.
+
+## [1.3.1]
+- **[TASK-163]** Implemented a visual debug feature that displays a unique ID tooltip for all major UI components on hover, aiding in development and testing.
+
+## [1.3.0]
+- **[TASK-154]** Refactored the main UI to remove developer-centric panels (Test Checklist, Update Log) from the central canvas area, creating a clean, dedicated editing workspace.
+
 ## [1.2.2]
 - **[TASK-153]** Extended the Undo/Redo system to support entity creation and deletion. Creating entities via drag-and-drop and deleting them via the keyboard are now fully reversible actions.
 

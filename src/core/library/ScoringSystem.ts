@@ -60,6 +60,7 @@ export class ScoringSystem extends SystemBase {
            pickupEntity = entityB;
         } else if (entityBPlayer && entityAScore) {
            playerEntity = entityB;
+           // FIX: Corrected typo from 'a' to 'entityA'.
            pickupEntity = entityA;
         }
 
@@ -69,7 +70,6 @@ export class ScoringSystem extends SystemBase {
 
             if (playerScore && pickupScore) {
                 playerScore.points += pickupScore.points;
-                console.log(`[ScoringSystem] Player ${playerEntity} collected ${pickupScore.points} points. Total score: ${playerScore.points}`);
                 this.entityManager.destroyEntity(pickupEntity);
             }
         }

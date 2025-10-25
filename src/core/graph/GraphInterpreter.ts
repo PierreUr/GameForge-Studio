@@ -16,7 +16,6 @@ export class GraphInterpreter {
      */
     constructor(graph: Graph) {
         this.graph = graph;
-        console.log('[GraphInterpreter] Initialized.');
     }
 
     /**
@@ -25,7 +24,6 @@ export class GraphInterpreter {
      * @param {any} payload - The data associated with the event.
      */
     public executeEvent(eventName: string, payload: any): void {
-        console.log(`[GraphInterpreter] Event "${eventName}" triggered. Creating execution context.`);
         // Future logic: Find corresponding event node in the graph and start traversing the execution flow.
 
         // For now, we assume a payload might contain an entity to scope to.
@@ -34,7 +32,6 @@ export class GraphInterpreter {
         
         if (primaryEntity !== undefined) {
             const context = new ExecutionContext(primaryEntity);
-            console.log(`[GraphInterpreter] Context created with entity scope: ${context.entityScope}`);
             // TODO: Start graph traversal with this context.
         } else {
             console.warn(`[GraphInterpreter] Event "${eventName}" triggered but no primary entity found in payload to create a context.`);

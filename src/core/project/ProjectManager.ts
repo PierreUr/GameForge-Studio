@@ -16,7 +16,6 @@ export class ProjectManager {
     private graph: Graph | null = null;
 
     private constructor() {
-        console.log('[ProjectManager] Singleton instance created.');
     }
 
     public static getInstance(): ProjectManager {
@@ -34,7 +33,6 @@ export class ProjectManager {
     public init(world: World, graph: Graph): void {
         this.world = world;
         this.graph = graph;
-        console.log('[ProjectManager] Initialized with world and graph instances.');
     }
 
     /**
@@ -66,7 +64,6 @@ export class ProjectManager {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            console.log('[ProjectManager] Project saved successfully.');
         } catch (error) {
             console.error('[ProjectManager] Failed to save project:', error);
             alert('An error occurred while saving the project. See console for details.');
@@ -108,7 +105,6 @@ export class ProjectManager {
 
                     this.world!.loadProjectState(projectState.ecsState);
                     this.graph!.deserialize(projectState.logicGraphState);
-                    console.log('[ProjectManager] Project loaded successfully.');
 
                 } catch (error) {
                     console.error('[ProjectManager] Failed to load project:', error);
@@ -126,7 +122,6 @@ export class ProjectManager {
      * @returns {number} The interval ID, which can be used with clearInterval.
      */
     public startAutoSave(interval: number): number {
-        console.log(`[ProjectManager] Auto-save started with an interval of ${interval / 1000} seconds.`);
         return window.setInterval(() => this.autoSaveToLocalStorage(), interval);
     }
     
@@ -149,7 +144,6 @@ export class ProjectManager {
             };
             const jsonString = JSON.stringify(project);
             localStorage.setItem(AUTO_SAVE_KEY, jsonString);
-            console.log('[ProjectManager] Project auto-saved to localStorage.');
         } catch (error) {
             console.error('[ProjectManager] Auto-save to localStorage failed:', error);
         }
@@ -214,7 +208,6 @@ export class ProjectManager {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            console.log('[ProjectManager] Project exported to HTML successfully.');
 
         } catch (error) {
             console.error('[ProjectManager] Failed to export project to HTML:', error);

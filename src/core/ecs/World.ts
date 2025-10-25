@@ -33,7 +33,6 @@ export class World {
         this.entityManager = entityManager;
         this.componentManager = componentManager;
         this.systemManager = systemManager;
-        console.log('[World] Initialized and linked all ECS managers.');
 
         EventBus.getInstance().subscribe('entity:destroyed', (payload: { entityId: Entity }) => {
             if (this.selectedEntity === payload.entityId) {
@@ -55,7 +54,6 @@ export class World {
             return;
         }
         this.componentRegistry.set(className, componentClass);
-        console.log(`[World] Registered component: ${className}`);
     }
 
     /**
@@ -68,7 +66,6 @@ export class World {
             if (this.selectedEntity !== null) {
                 this.selectedEntity = null;
                 EventBus.getInstance().publish('entity:deselected');
-                console.log(`[World] Deselected entity.`);
             }
             return;
         }
@@ -81,7 +78,6 @@ export class World {
             return;
         }
         this.selectedEntity = entityId;
-        console.log(`[World] Selected entity: ${entityId}`);
         EventBus.getInstance().publish('entity:selected', { entityId });
     }
 
@@ -177,7 +173,6 @@ export class World {
      */
     public loadProjectState(state: any): void {
         try {
-            console.log('[World] Starting to load project state...');
             
             // 1. Clear existing state
             this.entityManager.reset();
@@ -211,7 +206,6 @@ export class World {
                     }
                 }
             }
-            console.log('[World] Project state loaded successfully.');
         } catch (error) {
             console.error('[World] Failed to load project state:', error);
             throw new Error('Could not deserialize project state.');

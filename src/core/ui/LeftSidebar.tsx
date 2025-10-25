@@ -1,12 +1,15 @@
 import React from 'react';
-import TabSystem from './TabSystem';
+import TabSystem, { Tab } from './TabSystem';
 import LibraryPanel from './LibraryPanel';
-import LogicGraphPanel from './LogicGraphPanel';
 import AssetPanel from './AssetPanel';
 
-const LeftSidebar: React.FC = () => {
+interface LeftSidebarProps {
+    onViewChange: (viewId: 'canvas' | 'logic-graph') => void;
+}
+
+const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
     
-    const tabs = [
+    const tabs: Tab[] = [
         {
             label: 'Library',
             content: <LibraryPanel />
@@ -17,7 +20,7 @@ const LeftSidebar: React.FC = () => {
         },
         {
             label: 'Logic Graph',
-            content: <LogicGraphPanel />
+            content: <div style={styles.panelContent}><p>Logic Graph editor is active in the main view.</p></div>
         },
         {
             label: 'Assets',
@@ -25,9 +28,17 @@ const LeftSidebar: React.FC = () => {
         }
     ];
 
+    const handleTabChange = (tab: Tab) => {
+        if (tab.label === 'Logic Graph') {
+            onViewChange('logic-graph');
+        } else {
+            onViewChange('canvas');
+        }
+    };
+
     return (
         <div style={styles.sidebarContainer}>
-            <TabSystem tabs={tabs} />
+            <TabSystem tabs={tabs} onTabChange={handleTabChange} />
         </div>
     );
 };

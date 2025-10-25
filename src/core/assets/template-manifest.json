@@ -1,0 +1,24 @@
+{
+    "templates": [
+        {
+            "id": "player",
+            "name": "Player",
+            "description": "A player-controlled character with health and physics."
+        },
+        {
+            "id": "enemy",
+            "name": "Enemy",
+            "description": "An AI-controlled enemy with basic patrol behavior."
+        },
+        {
+            "id": "obstacle",
+            "name": "Obstacle",
+            "description": "A static, collidable object."
+        },
+        {
+            "id": "pickup",
+            "name": "Pickup",
+            "description": "A collectible item that can provide a score."
+        }
+    ]
+}

@@ -38,7 +38,6 @@ export class EntityManager {
         try {
             const newEntity = this.generateNewEntityId();
             this.activeEntities.add(newEntity);
-            console.log(`[EntityManager] Entity created with ID: ${newEntity}`);
             return newEntity;
         } catch (error) {
             console.error("Error creating new entity:", error);
@@ -60,7 +59,6 @@ export class EntityManager {
         try {
             this.activeEntities.delete(entity);
             EventBus.getInstance().publish('entity:destroyed', { entityId: entity });
-            console.log(`[EntityManager] Entity destroyed with ID: ${entity}`);
             // Later, this will also trigger component cleanup.
             return true;
         } catch (error) {
@@ -84,6 +82,5 @@ export class EntityManager {
     public reset(): void {
         this.activeEntities.clear();
         this.nextEntityId = 0;
-        console.log('[EntityManager] State has been reset.');
     }
 }

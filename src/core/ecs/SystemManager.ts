@@ -24,7 +24,6 @@ export class SystemManager {
     constructor(entityManager: EntityManager, componentManager: ComponentManager) {
         this.entityManager = entityManager;
         this.componentManager = componentManager;
-        console.log('[SystemManager] Initialized.');
     }
 
     /**
@@ -54,7 +53,6 @@ export class SystemManager {
         this.systems.push(registration);
         this.systems.sort((a, b) => b.priority - a.priority); 
 
-        console.log(`[SystemManager] Registered system ${system.constructor.name} with priority ${priority}.`);
         return true;
     }
 
@@ -69,7 +67,6 @@ export class SystemManager {
         this.systems = this.systems.filter(reg => reg.system !== system);
 
         if (this.systems.length < initialLength) {
-            console.log(`[SystemManager] Unregistered system ${system.constructor.name}.`);
             // Clean up error count for the unregistered system
             if ((system as any)._id !== undefined) {
                 this.systemErrorCounts.delete((system as any)._id);
@@ -98,9 +95,6 @@ export class SystemManager {
         const originalState = registration.isActive;
         registration.isActive = forceState !== undefined ? forceState : !registration.isActive;
         
-        if (originalState !== registration.isActive) {
-             console.log(`[SystemManager] Toggled system ${system.constructor.name} to isActive: ${registration.isActive}.`);
-        }
         return registration.isActive;
     }
 

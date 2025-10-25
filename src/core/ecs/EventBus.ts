@@ -31,7 +31,6 @@ export class EventBus {
         if (EventBus.instance) {
             throw new Error("Error: Instantiation failed: Use EventBus.getInstance() instead of new.");
         }
-        console.log('[EventBus] Singleton instance created.');
     }
 
     /**
@@ -58,7 +57,6 @@ export class EventBus {
             }
             const eventListeners = this.listeners.get(event)!;
             eventListeners.add(callback);
-            console.log(`[EventBus] Callback subscribed to event: ${event}`);
         } catch (error) {
             console.error(`[EventBus] Error subscribing to event "${event}":`, error);
         }
@@ -82,7 +80,6 @@ export class EventBus {
             const wasDeleted = eventListeners.delete(callback);
 
             if (wasDeleted) {
-                console.log(`[EventBus] Callback unsubscribed from event: ${event}`);
                 // If no listeners remain for this event, clean up the map entry.
                 if (eventListeners.size === 0) {
                     this.listeners.delete(event);
@@ -109,7 +106,6 @@ export class EventBus {
             return; // No listeners for this event.
         }
 
-        console.log(`[EventBus] Publishing event: ${event} with payload:`, args);
         eventListeners.forEach(callback => {
             try {
                 callback(...args);
@@ -134,8 +130,6 @@ export class EventBus {
         if (!eventListeners) {
             return; // No listeners for this event.
         }
-
-        console.log(`[EventBus] Publishing async event: ${event} with payload:`, args);
         
         const listenerPromises: Promise<any>[] = [];
 

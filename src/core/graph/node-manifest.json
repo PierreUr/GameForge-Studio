@@ -1,0 +1,58 @@
+{
+    "nodes": [
+        {
+            "type": "OnCollisionEventNode",
+            "name": "On Collision",
+            "category": "Event",
+            "description": "Triggers when two entities collide."
+        },
+        {
+            "type": "OnKeyPressEventNode",
+            "name": "On Key Press",
+            "category": "Event",
+            "description": "Triggers when a specific key is pressed."
+        },
+        {
+            "type": "ModifyHealthActionNode",
+            "name": "Modify Health",
+            "category": "Action",
+            "description": "Changes the health of an entity."
+        },
+        {
+            "type": "CreateEntityActionNode",
+            "name": "Create Entity",
+            "category": "Action",
+            "description": "Creates a new entity from a template."
+        },
+        {
+            "type": "DestroyEntityActionNode",
+            "name": "Destroy Entity",
+            "category": "Action",
+            "description": "Removes an entity from the world."
+        },
+        {
+            "type": "GetComponentValueNode",
+            "name": "Get Component Value",
+            "category": "Data",
+            "description": "Reads a property value from a component."
+        },
+        {
+            "type": "SetComponentValueNode",
+            "name": "Set Component Value",
+            "category": "Data",
+            "description": "Writes a property value to a component."
+        },
+        {
+            "type": "IfElseNode",
+            "name": "If/Else Branch",
+            "category": "Flow Control",
+            "description": "Splits execution based on a condition."
+        },
+        {
+            "type": "AddNode",
+            "name": "Add",
+            "category": "Math",
+            "description": "Adds two numbers together."
+        }
+    ]
+}

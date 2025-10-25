@@ -106,7 +106,7 @@ const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children }) => {
                 aria-orientation="vertical"
                 tabIndex={0}
             />
-            <div style={{ flex: 1, ...styles.panel }}>
+            <div style={{ flex: 1, ...styles.panel, minWidth: 0 }}>
                 {middle}
             </div>
             <div
@@ -129,11 +129,9 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flex: 1,
         width: '100%',
-        height: '100%', // Ensure it fills the parent flex container
         overflow: 'hidden',
     },
     panel: {
-        height: '100%',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',

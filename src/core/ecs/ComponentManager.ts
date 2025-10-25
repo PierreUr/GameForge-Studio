@@ -28,7 +28,6 @@ export class ComponentManager {
      * Initializes a new instance of the ComponentManager.
      */
     constructor() {
-        console.log('[ComponentManager] Initialized with componentStores Map.');
     }
 
     /**
@@ -65,7 +64,6 @@ export class ComponentManager {
             // Create and add the new component.
             const newComponent = new componentClass(...args);
             store.set(entity, newComponent);
-            console.log(`[ComponentManager] Added component ${componentType} to entity ${entity}.`);
             return newComponent;
         } catch (error) {
             console.error(`Error adding component ${componentType} to entity ${entity}:`, error);
@@ -114,9 +112,6 @@ export class ComponentManager {
         }
 
         const success = store.delete(entity);
-        if (success) {
-            console.log(`[ComponentManager] Removed component ${componentType} from entity ${entity}.`);
-        }
         return success;
     }
 
@@ -128,7 +123,6 @@ export class ComponentManager {
         for (const store of this.componentStores.values()) {
             store.delete(entity);
         }
-        console.log(`[ComponentManager] Removed all components from entity ${entity}.`);
     }
 
     /**
@@ -156,7 +150,6 @@ export class ComponentManager {
             component.isActive = forceState !== undefined ? forceState : !component.isActive;
             
             if (originalState !== component.isActive) {
-                 console.log(`[ComponentManager] Toggled component ${componentClass.name} on entity ${entity} to isActive: ${component.isActive}.`);
                  return true;
             }
             return false; // State was not changed
@@ -261,7 +254,6 @@ export class ComponentManager {
         if (propertyKey in component) {
             try {
                 (component as any)[propertyKey] = value;
-                console.log(`[ComponentManager] Updated ${componentName}.${propertyKey} for entity ${entity} to:`, value);
                 return true;
             } catch (error) {
                 console.error(`[ComponentManager] Error updating property '${propertyKey}' on component '${componentName}' for entity ${entity}:`, error);
@@ -302,6 +294,5 @@ export class ComponentManager {
      */
     public reset(): void {
         this.componentStores.clear();
-        console.log('[ComponentManager] State has been reset.');
     }
 }

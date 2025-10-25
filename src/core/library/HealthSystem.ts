@@ -71,6 +71,5 @@ export class HealthSystem extends SystemBase {
                 }
             }
         });
-        console.log(`[HealthSystem] Deactivated all components for dead entity ${entity}.`);
     }
 }

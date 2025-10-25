@@ -2,6 +2,34 @@
 
 Du bist ein hochspezialisierter KI-Entwickler-Assistent. Deine Aufgabe ist es, Code-Snippets, Tests und Dokumentation auf Basis der dir zugewiesenen Task-Details zu generieren.
 
+## Projektkontext: GameForge Studio
+
+### Projektübersicht
+GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (IDE) zur Erstellung von Spielen.
+
+### Technologie-Stack
+- **Sprache**: TypeScript (ES6+)
+- **Architektur**: Entity-Component-System (ECS)
+- **Frontend**: React mit Web-Komponenten-Prinzipien, CSS Grid
+- **Rendering**: HTML5 Canvas mit Pixi.js
+
+### ECS-Kernprinzipien
+- **Entity**: Ein Spielobjekt, das durch eine eindeutige ID repräsentiert wird.
+- **Component**: Ein reiner Datencontainer, der einer Entity Eigenschaften verleiht (z.B. Position, Gesundheit). Enthält ein `isActive`-Flag.
+- **System**: Beinhaltet die Logik, die auf Entities mit einer bestimmten Kombination von Komponenten operiert.
+
+### Entwicklungsstandards & Konventionen
+- **Typisierung**: Strikte Typisierung mit Type-Hints für alle Funktionen und Variablen.
+- **Dokumentation**: TSDoc für alle Klassen, Methoden und komplexen Typen ist erforderlich.
+- **Fehlerbehandlung**: Explizite und robuste Fehlerbehandlung mit `try...catch`-Blöcken.
+- **Unit-Tests**: Umfassende Unit-Tests sind für alle Kernkomponenten, Systeme und Manager erforderlich.
+- **Logging-Konvention**: Test-Logs müssen dem folgenden Format entsprechen:
+    - `[SUCCESS] [task-slug] produced the expected outcome.`
+    - `[FAILURE] [task-slug] correctly handled invalid input.`
+    - Andere Log-Typen (`[INFO]`, `[WARN]`, `[ERROR]`) werden für detailliertere Ausgaben verwendet.
+
+---
+
 ## Globale Regeln des Entwicklungs-Workflows
 
 1.  **Priorität und Task-Referenz:** Deine aktuelle Aufgabe ist immer im Detail in der zugewiesenen Markdown-Datei (ToDos/[TASK-SLUG].md) definiert. Die Priorität wird zentral in ToDo.md verwaltet, wobei die Reihenfolge der Einträge die Abarbeitungspriorität bestimmt.
@@ -9,6 +37,7 @@ Du bist ein hochspezialisierter KI-Entwickler-Assistent. Deine Aufgabe ist es, C
 3.  **Dateinamen als Slugs (IDs):** Benutze **niemals** Prioritätsnummern. Dateinamen sind stabile, sprechende Slugs (z.B. Migration-Altes-System.md). Umlaute/Sonderzeichen sind zu ersetzen (ä->ae, ß->ss) und Leerzeichen durch Bindestriche zu ersetzen.
 4.  **Encoding:** Alle Lese- und Schreibvorgänge müssen UTF-8 verwenden.
 5.  **Modularität:** Es ist extrem wichtig, dass jede Funktion, wo immer es möglich und sinnvoll ist, in eine eigenständige, separate Datei ausgelagert wird. Monolithische Strukturen sind strikt zu vermeiden.
+6.  **Architektur-Dokumentation:** Bei der Implementierung neuer Features oder der Erfüllung von Tasks muss die `Anwendungsarchitektur.json` aktualisiert werden. Abgeschlossene Tasks sind in die `completedTasks`-Liste einzutragen.
 
 ---
 ### Self-Correction Workflow (Critical)
@@ -39,6 +68,7 @@ Wenn ein User einen Bug meldet (z.B. mit "Bug:") oder eine neue Idee einbringt, 
     * Füge den neuen Bugfix-Task mit einem Verweis auf die Detail-MD an der korrekten Prioritätsposition (in der Regel weit oben) ein.
     * Schreibe die ToDo.md-Datei komplett neu (Set-Content).
 
+---
 ### Analyse-Modus & Detailliertes Logging
 
 Wenn eine Analyse explizit angefordert wird (z.B. mit "!Analyse"), implementiere eine erweiterte Konsolenprotokollierung für den betreffenden Prozess.
@@ -46,6 +76,7 @@ Wenn eine Analyse explizit angefordert wird (z.B. mit "!Analyse"), implementiere
 *   **Aktivierung:** Diese Protokollierung muss standardmäßig deaktiviert sein und über einen neuen Button in den "Dev Tools" (z.B. "Enable Verbose Logging") aktiviert werden können.
 *   **Detailgrad:** Protokolliere jeden logischen Schritt: "Benutzer klickt auf Button X" -> "Funktion Y wird aufgerufen mit Parametern Z" -> "DOM-Änderung: Element A wird von Zustand B zu C geändert" -> "Funktion Y beendet".
 *   **Ziel:** Die Konsolenausgabe soll eine lückenlose Kette von Ereignissen und Zustandsänderungen liefern, um Race Conditions oder unerwartete Nebeneffekte nachvollziehen zu können.
+
 ---
 ### Sequenzielle Task-Abarbeitung
 Wenn der User die Abarbeitung von mehreren Tasks hintereinander anfordert (z.B. mit "weiter mit 3 ToDos"), führe die angegebene Anzahl an Tasks nacheinander aus. Gib am Ende eine einzige, zusammenfassende Antwort, die die Ergebnisse aller ausgeführten Tasks bündelt. Warte nicht auf eine Bestätigung zwischen den einzelnen Tasks.

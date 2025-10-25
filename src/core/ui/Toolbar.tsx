@@ -1,29 +1,51 @@
 import React from 'react';
+import DebugIdTooltip from './dev/DebugIdTooltip';
 
 interface ToolbarProps {
     onSave: () => void;
     onLoad: () => void;
     onPreview: () => void;
-    onToggleGrid: () => void;
     onToggleColliders: () => void;
     onExportHTML: () => void;
     onUndo: () => void;
     onRedo: () => void;
+    onOpenAdminPanel: () => void;
+    onOpenSettingsPanel: () => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ onSave, onLoad, onPreview, onToggleGrid, onToggleColliders, onExportHTML, onUndo, onRedo }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ onSave, onLoad, onPreview, onToggleColliders, onExportHTML, onUndo, onRedo, onOpenAdminPanel, onOpenSettingsPanel }) => {
+    
     return (
         <div style={styles.toolbar}>
-            <button style={styles.button} onClick={onUndo}>Undo</button>
-            <button style={styles.button} onClick={onRedo}>Redo</button>
+            <DebugIdTooltip debugId="toolbar-undo">
+                <button style={styles.button} onClick={onUndo}>Undo</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-redo">
+                <button style={styles.button} onClick={onRedo}>Redo</button>
+            </DebugIdTooltip>
             <div style={styles.divider}></div>
-            <button style={styles.button} onClick={onSave}>Save Project</button>
-            <button style={styles.button} onClick={onLoad}>Load Project</button>
-            <button style={styles.button} onClick={onExportHTML}>Export HTML</button>
+            <DebugIdTooltip debugId="toolbar-save">
+                <button style={styles.button} onClick={onSave}>Save Project</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-load">
+                <button style={styles.button} onClick={onLoad}>Load Project</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-export-html">
+                <button style={styles.button} onClick={onExportHTML}>Export HTML</button>
+            </DebugIdTooltip>
             <div style={styles.divider}></div>
-            <button style={styles.button} onClick={onToggleGrid}>Toggle Grid</button>
-            <button style={styles.button} onClick={onToggleColliders}>Toggle Colliders</button>
-            <button style={{...styles.button, ...styles.previewButton}} onClick={onPreview}>Live Preview</button>
+            <DebugIdTooltip debugId="toolbar-toggle-colliders">
+                <button style={styles.button} onClick={onToggleColliders}>Toggle Colliders</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-settings">
+                <button style={styles.button} onClick={onOpenSettingsPanel}>Settings</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-admin-panel">
+                <button style={styles.button} onClick={onOpenAdminPanel}>Admin Panel</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-live-preview">
+                <button style={{...styles.button, ...styles.previewButton}} onClick={onPreview}>Live Preview</button>
+            </DebugIdTooltip>
         </div>
     );
 };

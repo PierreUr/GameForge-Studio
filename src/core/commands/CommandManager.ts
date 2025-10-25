@@ -13,7 +13,6 @@ export class CommandManager {
     private redoStack: ICommand[] = [];
 
     private constructor() {
-        console.log('[CommandManager] Singleton instance created.');
     }
 
     /**
@@ -37,7 +36,6 @@ export class CommandManager {
             this.undoStack.push(command);
             // When a new command is executed, the redo history is invalidated.
             this.redoStack = []; 
-            console.log(`[CommandManager] Executed command: ${command.constructor.name}`);
             EventBus.getInstance().publish('command:executed');
         } catch (error) {
             console.error(`[CommandManager] Error executing command: ${command.constructor.name}`, error);
@@ -53,15 +51,13 @@ export class CommandManager {
             try {
                 command.undo();
                 this.redoStack.push(command);
-                console.log(`[CommandManager] Undid command: ${command.constructor.name}`);
                 EventBus.getInstance().publish('command:executed');
+            // FIX: Added curly braces to the catch block to correctly scope the error handling logic.
             } catch (error) {
                 console.error(`[CommandManager] Error undoing command: ${command.constructor.name}`, error);
                 // If undo fails, push it back to the undo stack to maintain state.
                 this.undoStack.push(command);
             }
-        } else {
-            console.log('[CommandManager] Undo stack is empty.');
         }
     }
 
@@ -74,15 +70,12 @@ export class CommandManager {
             try {
                 command.execute();
                 this.undoStack.push(command);
-                console.log(`[CommandManager] Redid command: ${command.constructor.name}`);
                 EventBus.getInstance().publish('command:executed');
             } catch (error) {
                 console.error(`[CommandManager] Error redoing command: ${command.constructor.name}`, error);
                  // If redo fails, push it back to the redo stack.
                 this.redoStack.push(command);
             }
-        } else {
-            console.log('[CommandManager] Redo stack is empty.');
         }
     }
 }

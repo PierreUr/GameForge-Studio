@@ -1,17 +1,17 @@
 # GameForge Studio - Entwicklungsplan
 
 **Projekt:** GameForge Studio  
-**Version:** 1.2.0  
-**Gesamtanzahl Tasks:** 153
+**Version:** 1.8.0  
+**Gesamtanzahl Tasks:** 160
 **Status:** In Entwicklung
 
 ## Uebersicht
-Dieser Plan enthaelt 153 atomare Arbeitsschritte zur Entwicklung von GameForge Studio.
+Dieser Plan enthaelt 160 atomare Arbeitsschritte zur Entwicklung von GameForge Studio.
 
 ## Modul-Verteilung
 - ECS Core Engine: 31 Tasks
 - Function Library: 25 Tasks  
-- UI Editor: 35 Tasks
+- UI Editor: 42 Tasks
 - Rendering: 15 Tasks
 - Logic Graph: 20 Tasks
 - Project Management: 10 Tasks
@@ -19,156 +19,23 @@ Dieser Plan enthaelt 153 atomare Arbeitsschritte zur Entwicklung von GameForge S
 - Editor Features: 2 Tasks
 
 ## Arbeitsschritte
-- [x] **[1]** ECS-Core: EntityManager Basisklasse implementieren -> [Details](./ToDos/001-ecs-core-entitymanager-basisklasse-implementieren.md)
-- [x] **[2]** ECS-Core: Entity ID-Generator mit Auto-Increment erstellen -> [Details](./ToDos/002-ecs-core-entity-id-generator-mit-auto-increment-erstellen.md)
-- [x] **[3]** ECS-Core: Entity-Set fuer aktive Entities verwalten -> [Details](./ToDos/003-ecs-core-entity-set-fuer-aktive-entities-verwalten.md)
-- [x] **[4]** ECS-Core: createEntity() Methode implementieren -> [Details](./ToDos/004-ecs-core-createentity-methode-implementieren.md)
-- [x] **[5]** ECS-Core: destroyEntity() Methode mit Cleanup implementieren -> [Details](./ToDos/005-ecs-core-destroyentity-methode-mit-cleanup-implementieren.md)
-- [x] **[6]** ECS-Core: ComponentManager Basisklasse implementieren -> [Details](./ToDos/006-ecs-core-componentmanager-basisklasse-implementieren.md)
-- [x] **[7]** ECS-Core: ComponentStores Map-Datenstruktur erstellen -> [Details](./ToDos/007-ecs-core-componentstores-map-datenstruktur-erstellen.md)
-- [x] **[8]** ECS-Core: addComponent() Methode implementieren -> [Details](./ToDos/008-ecs-core-addcomponent-methode-implementieren.md)
-- [x] **[9]** ECS-Core: getComponent() Methode implementieren -> [Details](./ToDos/009-ecs-core-getcomponent-methode-implementieren.md)
-- [x] **[10]** ECS-Core: removeComponent() Methode implementieren -> [Details](./ToDos/010-ecs-core-removecomponent-methode-implementieren.md)
-- [x] **[11]** ECS-Core: getEntitiesWithComponents() Query-System implementieren -> [Details](./ToDos/011-ecs-core-getentitieswithcomponents-query-system-implementieren.md)
-- [x] **[12]** ECS-Core: Component isActive-Flag Unterstuetzung implementieren -> [Details](./ToDos/012-ecs-core-component-isactive-flag-unterstuetzung-implementieren.md)
-- [x] **[13]** ECS-Core: toggleComponent() Methode implementieren -> [Details](./ToDos/013-ecs-core-togglecomponent-methode-implementieren.md)
-- [x] **[14]** ECS-Core: SystemManager Basisklasse implementieren -> [Details](./ToDos/014-ecs-core-systemmanager-basisklasse-implementieren.md)
-- [x] **[15]** ECS-Core: System-Registry mit Priority-Queue erstellen -> [Details](./ToDos/015-ecs-core-system-registry-mit-priority-queue-erstellen.md)
-- [x] **[16]** ECS-Core: registerSystem() Methode mit Prioritaet implementieren -> [Details](./ToDos/016-ecs-core-registersystem-methode-mit-prioritaet-implementieren.md)
-- [x] **[17]** ECS-Core: unregisterSystem() Methode implementieren -> [Details](./ToDos/017-ecs-core-unregistersystem-methode-implementieren.md)
-- [x] **[18]** ECS-Core: toggleSystem() fuer globales Pausieren implementieren -> [Details](./ToDos/018-ecs-core-togglesystem-fuer-globales-pausieren-implementieren.md)
-- [x] **[19]** ECS-Core: GameLoop requestAnimationFrame-Integration implementieren -> [Details](./ToDos/019-ecs-core-gameloop-requestanimationframe-integration-implementieren.md)
-- [x] **[20]** ECS-Core: DeltaTime-Berechnung fuer GameLoop implementieren -> [Details](./ToDos/020-ecs-core-deltatime-berechnung-fuer-gameloop-implementieren.md)
-- [x] **[21]** ECS-Core: System.update() Aufruf-Mechanismus implementieren -> [Details](./ToDos/021-ecs-core-system-update-aufruf-mechanismus-implementieren.md)
-- [x] **[22]** ECS-Core: GameLoop start() Methode implementieren -> [Details](./ToDos/022-ecs-core-gameloop-start-methode-implementieren.md)
-- [x] **[23]** ECS-Core: GameLoop stop() Methode implementieren -> [Details](./ToDos/023-ecs-core-gameloop-stop-methode-implementieren.md)
-- [x] **[24]** ECS-Core: EventBus Singleton-Klasse implementieren -> [Details](./ToDos/024-ecs-core-eventbus-singleton-klasse-implementieren.md)
-- [x] **[25]** ECS-Core: EventBus Listeners Map-Struktur erstellen -> [Details](./ToDos/025-ecs-core-eventbus-listeners-map-struktur-erstellen.md)
-- [x] **[26]** ECS-Core: EventBus.subscribe() Methode implementieren -> [Details](./ToDos/026-ecs-core-eventbus-subscribe-methode-implementieren.md)
-- [x] **[27]** ECS-Core: EventBus.unsubscribe() Methode implementieren -> [Details](./ToDos/027-ecs-core-eventbus-unsubscribe-methode-implementieren.md)
-- [x] **[28]** ECS-Core: EventBus.publish() Sync-Dispatcher implementieren -> [Details](./ToDos/028-ecs-core-eventbus-publish-sync-dispatcher-implementieren.md)
-- [x] **[29]** ECS-Core: EventBus.publishAsync() Async-Dispatcher implementieren -> [Details](./ToDos/029-ecs-core-eventbus-publishasync-async-dispatcher-implementieren.md)
-- [x] **[30]** ECS-Core: Projekt-Serialisierung (getProjectState) implementieren -> [Details](./ToDos/030-ecs-core-projekt-serialisierung-getprojectstate-implementieren.md)
-- [x] **[31]** ECS-Core: Projekt-Deserialisierung (loadProjectState) implementieren -> [Details](./ToDos/031-ecs-core-projekt-deserialisierung-loadprojectstate-implementieren.md)
-- [x] **[32]** Library: Component Basisklasse mit isActive erstellen -> [Details](./ToDos/032-library-component-basisklasse-mit-isactive-erstellen.md)
-- [x] **[33]** Library: System Basisklasse mit update() Template erstellen -> [Details](./ToDos/033-library-system-basisklasse-mit-update-template-erstellen.md)
-- [x] **[34]** Library: PositionComponent (x, y, z) implementieren -> [Details](./ToDos/034-library-positioncomponent-x-y-z-implementieren.md)
-- [x] **[35]** Library: VelocityComponent (x, y) implementieren -> [Details](./ToDos/035-library-velocitycomponent-x-y-implementieren.md)
-- [x] **[36]** Library: SpriteComponent (texture, width, height) implementieren -> [Details](./ToDos/036-library-spritecomponent-texture-width-height-implementieren.md)
-- [x] **[37]** Library: HealthComponent (max, current) implementieren -> [Details](./ToDos/037-library-healthcomponent-max-current-implementieren.md)
-- [x] **[38]** Library: PlayerInputComponent (keyBindings) implementieren -> [Details](./ToDos/038-library-playerinputcomponent-keybindings-implementieren.md)
-- [x] **[39]** Library: PhysicsBodyComponent (mass, friction) implementieren -> [Details](./ToDos/039-library-physicsbodycomponent-mass-friction-implementieren.md)
-- [x] **[40]** Library: ColliderComponent (shape, size) implementieren -> [Details](./ToDos/040-library-collidercomponent-shape-size-implementieren.md)
-- [x] **[41]** Library: ScoreComponent (points) implementieren -> [Details](./ToDos/041-library-scorecomponent-points-implementieren.md)
-- [x] **[42]** Library: AIPatrolComponent (waypoints, speed) implementieren -> [Details](./ToDos/042-library-aipatrolcomponent-waypoints-speed-implementieren.md)
-- [x] **[43]** Library: MovementSystem implementieren -> [Details](./ToDos/043-library-movementsystem-implementieren.md)
-- [x] **[44]** Library: PhysicsSystem mit Kollisionserkennung implementieren -> [Details](./ToDos/044-library-physicssystem-mit-kollisionserkennung-implementieren.md)
-- [x] **[45]** Library: HealthSystem (Regeneration, Tod) implementieren -> [Details](./ToDos/045-library-healthsystem-regeneration-tod-implementieren.md)
-- [x] **[46]** Library: PlayerInputSystem (Tastatur-Handler) implementieren -> [Details](./ToDos/046-library-playerinputsystem-tastatur-handler-implementieren.md)
-- [x] **[47]** Library: AIPatrolSystem implementieren -> [Details](./ToDos/047-library-aipatrolsystem-implementieren.md)
-- [x] **[48]** Library: ScoringSystem implementieren -> [Details](./ToDos/048-library-scoringsystem-implementieren.md)
-- [x] **[49]** Library: RenderingSystem Schnittstelle implementieren -> [Details](./ToDos/049-library-renderingsystem-schnittstelle-implementieren.md)
-- [x] **[50]** Library: Component-Manifest (JSON) fuer Editor erstellen -> [Details](./ToDos/050-library-component-manifest-json-fuer-editor-erstellen.md)
-- [x] **[51]** Library: Template-System fuer vordefinierte Entities erstellen -> [Details](./ToDos/051-library-template-system-fuer-vordefinierte-entities-erstellen.md)
-- [x] **[52]** Library: PlayerTemplate (Health, Input, Sprite) erstellen -> [Details](./ToDos/052-library-playertemplate-health-input-sprite-erstellen.md)
-- [x] **[53]** Library: EnemyTemplate (Health, AI, Sprite) erstellen -> [Details](./ToDos/053-library-enemytemplate-health-ai-sprite-erstellen.md)
-- [x] **[54]** Library: ObstacleTemplate (PhysicsBody, Collider) erstellen -> [Details](./ToDos/054-library-obstacletemplate-physicsbody-collider-erstellen.md)
-- [x] **[55]** Library: PickupTemplate (Collider, Score) erstellen -> [Details](./ToDos/055-library-pickuptemplate-collider-score-erstellen.md)
-- [x] **[56]** Library: Component-Validierung (Schema) implementieren -> [Details](./ToDos/056-library-component-validierung-schema-implementieren.md)
-- [x] **[57]** Editor-UI: CSS Grid Hauptlayout (3-Spalten) implementieren -> [Details](./ToDos/057-editor-ui-css-grid-hauptlayout-3-spalten-implementieren.md)
-- [x] **[58]** Editor-UI: Resizable Split-Pane Komponente erstellen -> [Details](./ToDos/058-editor-ui-resizable-split-pane-komponente-erstellen.md)
-- [x] **[59]** Editor-UI: Linke Sidebar (Bibliothek + Ebenen) Struktur erstellen -> [Details](./ToDos/059-editor-ui-linke-sidebar-bibliothek-ebenen-struktur-erstellen.md)
-- [x] **[60]** Editor-UI: Rechte Sidebar (Inspektor) Struktur erstellen -> [Details](./ToDos/060-editor-ui-rechte-sidebar-inspektor-struktur-erstellen.md)
-- [x] **[61]** Editor-UI: Canvas-Container in Mittelspalte implementieren -> [Details](./ToDos/061-editor-ui-canvas-container-in-mittelspalte-implementieren.md)
-- [x] **[62]** Editor-UI: Tab-System fuer Sidebars implementieren -> [Details](./ToDos/062-editor-ui-tab-system-fuer-sidebars-implementieren.md)
-- [x] **[63]** Editor-UI: Bibliothek-Panel Komponente erstellen -> [Details](./ToDos/063-editor-ui-bibliothek-panel-komponente-erstellen.md)
-- [x] **[64]** Editor-UI: Component-Manifest laden und parsen -> [Details](./ToDos/064-editor-ui-component-manifest-laden-und-parsen.md)
-- [x] **[65]** Editor-UI: Component-Card UI-Element erstellen -> [Details](./ToDos/065-editor-ui-component-card-ui-element-erstellen.md)
-- [x] **[66]** Editor-UI: Component-Card Icon und Beschreibung rendern -> [Details](./ToDos/066-editor-ui-component-card-icon-und-beschreibung-rendern.md)
-- [x] **[67]** Editor-UI: Draggable-Attribut fuer Library-Items setzen -> [Details](./ToDos/067-editor-ui-draggable-attribut-fuer-library-items-setzen.md)
-- [x] **[68]** Editor-UI: DragStart Event-Handler implementieren -> [Details](./ToDos/068-editor-ui-dragstart-event-handler-implementieren.md)
-- [x] **[69]** Editor-UI: DataTransfer Template-Name speichern -> [Details](./ToDos/069-editor-ui-datatransfer-template-name-speichern.md)
-- [x] **[70]** Editor-UI: Canvas DragOver Event-Handler implementieren -> [Details](./ToDos/070-editor-ui-canvas-dragover-event-handler-implementieren.md)
-- [x] **[71]** Editor-UI: Canvas Drop Event-Handler implementieren -> [Details](./ToDos/071-editor-ui-canvas-drop-event-handler-implementieren.md)
-- [x] **[72]** Editor-UI: Drop-Koordinaten Canvas-lokal umrechnen -> [Details](./ToDos/072-editor-ui-drop-koordinaten-canvas-lokal-umrechnen.md)
-- [x] **[73]** Editor-UI: engine.createEntityFromTemplate() Integration -> [Details](./ToDos/073-editor-ui-engine-createentityfromtemplate-integration.md)
-- [x] **[74]** Editor-UI: Entity-Selektion Click-Handler implementieren -> [Details](./ToDos/074-editor-ui-entity-selektion-click-handler-implementieren.md)
-- [x] **[75]** Editor-UI: engine.selectEntity() API-Aufruf implementieren -> [Details](./ToDos/075-editor-ui-engine-selectentity-api-aufruf-implementieren.md)
-- [x] **[76]** Editor-UI: EventBus entity:selected Subscription -> [Details](./ToDos/076-editor-ui-eventbus-entity-selected-subscription.md)
-- [x] **[77]** Editor-UI: Inspektor-Panel dynamisch leeren/fuellen -> [Details](./ToDos/077-editor-ui-inspektor-panel-dynamisch-leeren-fuellen.md)
-- [x] **[78]** Editor-UI: engine.getComponents() Daten abrufen -> [Details](./ToDos/078-editor-ui-engine-getcomponents-daten-abrufen.md)
-- [x] **[79]** Editor-UI: Component-Daten zu UI-Feldern mappen -> [Details](./ToDos/079-editor-ui-component-daten-zu-ui-feldern-mappen.md)
-- [x] **[80]** Editor-UI: NumberInput Komponente erstellen -> [Details](./ToDos/080-editor-ui-numberinput-komponente-erstellen.md)
-- [x] **[81]** Editor-UI: TextInput Komponente erstellen -> [Details](./ToDos/081-editor-ui-textinput-komponente-erstellen.md)
-- [x] **[82]** Editor-UI: BooleanCheckbox Komponente erstellen -> [Details](./ToDos/082-editor-ui-booleancheckbox-komponente-erstellen.md)
-- [x] **[83]** Editor-UI: ColorPicker Komponente erstellen -> [Details](./ToDos/083-editor-ui-colorpicker-komponente-erstellen.md)
-- [x] **[84]** Editor-UI: Input onChange-Handler implementieren -> [Details](./ToDos/084-editor-ui-input-onchange-handler-implementieren.md)
-- [x] **[85]** Editor-UI: engine.updateComponent() bei Aenderung aufrufen -> [Details](./ToDos/085-editor-ui-engine-updatecomponent-bei-aenderung-aufrufen.md)
-- [x] **[86]** Editor-UI: Toolbar mit Projekt-Aktionen erstellen -> [Details](./ToDos/086-editor-ui-toolbar-mit-projekt-aktionen-erstellen.md)
-- [x] **[87]** Editor-UI: Speichern-Button (exportProject) implementieren -> [Details](./ToDos/087-editor-ui-speichern-button-exportproject-implementieren.md)
-- [x] **[88]** Editor-UI: Laden-Button (importProject) implementieren -> [Details](./ToDos/088-editor-ui-laden-button-importproject-implementieren.md)
-- [x] **[89]** Editor-UI: Live-Vorschau-Button implementieren -> [Details](./ToDos/089-editor-ui-live-vorschau-button-implementieren.md)
-- [x] **[90]** Editor-UI: Layout speichern/laden Funktion implementieren -> [Details](./ToDos/090-editor-ui-layout-speichern-laden-funktion-implementieren.md)
-- [x] **[91]** Editor-UI: Tastatur-Shortcuts (Ctrl+S, Delete) implementieren -> [Details](./ToDos/091-editor-ui-tastatur-shortcuts-ctrl-s-delete-implementieren.md)
-- [x] **[92]** Rendering: Pixi.js Application initialisieren -> [Details](./ToDos/092-rendering-pixi-js-application-initialisieren.md)
-- [x] **[93]** Rendering: Canvas-Groesse dynamisch anpassen -> [Details](./ToDos/093-rendering-canvas-groesse-dynamisch-anpassen.md)
-- [x] **[94]** Rendering: Sprite-Loader System implementieren -> [Details](./ToDos/094-rendering-sprite-loader-system-implementieren.md)
-- [x] **[95]** Rendering: Texture-Cache implementieren -> [Details](./ToDos/095-rendering-texture-cache-implementieren.md)
-- [x] **[96]** Rendering: Entity zu Pixi-Sprite Mapping erstellen -> [Details](./ToDos/096-rendering-entity-zu-pixi-sprite-mapping-erstellen.md)
-- [x] **[97]** Rendering: RenderSystem.update() Loop implementieren -> [Details](./ToDos/097-rendering-rendersystem-update-loop-implementieren.md)
-- [x] **[98]** Rendering: Position-Component zu Sprite.position Sync -> [Details](./ToDos/098-rendering-position-component-zu-sprite-position-sync.md)
-- [x] **[99]** Rendering: Sprite-Component zu Pixi-Texture Sync -> [Details](./ToDos/099-rendering-sprite-component-zu-pixi-texture-sync.md)
-- [x] **[100]** Rendering: Layer-System (z-Index) implementieren -> [Details](./ToDos/100-rendering-layer-system-z-index-implementieren.md)
-- [x] **[101]** Rendering: Camera-Transform (Pan, Zoom) implementieren -> [Details](./ToDos/101-rendering-camera-transform-pan-zoom-implementieren.md)
-- [x] **[102]** Rendering: Grid-Overlay fuer Editor-Modus implementieren -> [Details](./ToDos/102-rendering-grid-overlay-fuer-editor-modus-implementieren.md)
-- [x] **[103]** Rendering: Entity-Highlight bei Selektion implementieren -> [Details](./ToDos/103-rendering-entity-highlight-bei-selektion-implementieren.md)
-- [x] **[104]** Rendering: Debug-Rendering (Collider-Boxen) implementieren -> [Details](./ToDos/104-rendering-debug-rendering-collider-boxen-implementieren.md)
-- [x] **[105]** Rendering: Performance-Optimierung (Culling) implementieren -> [Details](./ToDos/105-rendering-performance-optimierung-culling-implementieren.md)
-- [x] **[106]** Rendering: Resize-Handler fuer responsive Canvas -> [Details](./ToDos/106-rendering-resize-handler-fuer-responsive-canvas.md)
-- [x] **[107]** Graph: Node-Editor UI-Grundstruktur erstellen -> [Details](./ToDos/107-graph-node-editor-ui-grundstruktur-erstellen.md)
-- [x] **[108]** Graph: Node Basisklasse (inputs, outputs) implementieren -> [Details](./ToDos/108-graph-node-basisklasse-inputs-outputs-implementieren.md)
-- [x] **[109]** Graph: Connection Klasse (source, target) implementieren -> [Details](./ToDos/109-graph-connection-klasse-source-target-implementieren.md)
-- [x] **[110]** Graph: Graph-Datenstruktur (nodes, edges) implementieren -> [Details](./ToDos/110-graph-graph-datenstruktur-nodes-edges-implementieren.md)
-- [x] **[111]** Graph: Drag-to-Connect Interaktion implementieren -> [Details](./ToDos/111-graph-drag-to-connect-interaktion-implementieren.md)
-- [x] **[112]** Graph: Node-Library (Events, Actions) erstellen -> [Details](./ToDos/112-graph-node-library-events-actions-erstellen.md)
-- [x] **[113]** Graph: OnCollisionEvent Node implementieren -> [Details](./ToDos/113-graph-oncollisionevent-node-implementieren.md)
-- [x] **[114]** Graph: OnKeyPressEvent Node implementieren -> [Details](./ToDos/114-graph-onkeypressevent-node-implementieren.md)
-- [x] **[115]** Graph: ModifyHealthAction Node implementieren -> [Details](./ToDos/115-graph-modifyhealthaction-node-implementieren.md)
-- [x] **[116]** Graph: CreateEntityAction Node implementieren -> [Details](./ToDos/116-graph-createentityaction-node-implementieren.md)
-- [x] **[117]** Graph: DestroyEntityAction Node implementieren -> [Details](./ToDos/117-graph-destroyentityaction-node-implementieren.md)
-- [x] **[118]** Graph: Graph zu JSON Serialisierung implementieren -> [Details](./ToDos/118-graph-graph-zu-json-serialisierung-implementieren.md)
-- [x] **[119]** Graph: JSON zu Graph Deserialisierung implementieren -> [Details](./ToDos/119-graph-json-zu-graph-deserialisierung-implementieren.md)
-- [x] **[120]** Graph: Graph-Compiler (Validierung) implementieren -> [Details](./ToDos/120-graph-graph-compiler-validierung-implementieren.md)
-- [x] **[121]** Graph: Graph-Interpreter Runtime implementieren -> [Details](./ToDos/121-graph-graph-interpreter-runtime-implementieren.md)
-- [x] **[122]** Graph: Event-Trigger zu Graph-Execution Mapping -> [Details](./ToDos/122-graph-event-trigger-zu-graph-execution-mapping.md)
-- [x] **[123]** Graph: Node-Execution Context (Entity-Scope) implementieren -> [Details](./ToDos/123-graph-node-execution-context-entity-scope-implementieren.md)
-- [x] **[124]** Graph: Variable-Nodes (Get/Set Component) implementieren -> [Details](./ToDos/124-graph-variable-nodes-get-set-component-implementieren.md)
-- [x] **[125]** Graph: Conditional-Nodes (If/Else) implementieren -> [Details](./ToDos/125-graph-conditional-nodes-if-else-implementieren.md)
-- [x] **[126]** Graph: Math-Nodes (Add, Multiply, etc.) implementieren -> [Details](./ToDos/126-graph-math-nodes-add-multiply-etc-implementieren.md)
-- [x] **[127]** Projekt: ProjectManager Singleton erstellen -> [Details](./ToDos/127-projekt-projectmanager-singleton-erstellen.md)
-- [x] **[128]** Projekt: Projekt-Metadaten Struktur definieren -> [Details](./ToDos/128-projekt-projekt-metadaten-struktur-definieren.md)
-- [x] **[129]** Projekt: Speichern zu JSON-File implementieren -> [Details](./ToDos/129-projekt-speichern-zu-json-file-implementieren.md)
-- [x] **[130]** Projekt: Laden aus JSON-File implementieren -> [Details](./ToDos/130-projekt-laden-aus-json-file-implementieren.md)
-- [x] **[131]** Projekt: Auto-Save Mechanismus (Intervall) implementieren -> [Details](./ToDos/131-projekt-auto-save-mechanismus-intervall-implementieren.md)
-- [x] **[132]** Projekt: Projekt-Versionierung implementieren -> [Details](./ToDos/132-projekt-projekt-versionierung-implementieren.md)
-- [x] **[133]** Projekt: Undo/Redo Command-Pattern implementieren -> [Details](./ToDos/133-projekt-undo-redo-command-pattern-implementieren.md)
-- [x] **[134]** Projekt: Command-History Stack implementieren -> [Details](./ToDos/134-projekt-command-history-stack-implementieren.md)
-- [x] **[135]** Projekt: Export zu Standalone-HTML implementieren -> [Details](./ToDos/135-projekt-export-zu-standalone-html-implementieren.md)
-- [x] **[136]** Projekt: Asset-Management (Bilder, Audio) implementieren -> [Details](./ToDos/136-projekt-asset-management-bilder-audio-implementieren.md)
-- [x] **[137]** Testing: Jest Test-Environment Setup -> [Details](./ToDos/137-testing-jest-test-environment-setup.md)
-- [x] **[138]** Testing: EntityManager Unit-Tests erstellen -> [Details](./ToDos/138-testing-entitymanager-unit-tests-erstellen.md)
-- [x] **[139]** Testing: ComponentManager Unit-Tests erstellen -> [Details](./ToDos/139-testing-componentmanager-unit-tests-erstellen.md)
-- [x] **[140]** Testing: SystemManager Unit-Tests erstellen -> [Details](./ToDos/140-testing-systemmanager-unit-tests-erstellen.md)
-- [x] **[141]** Testing: EventBus Unit-Tests erstellen -> [Details](./ToDos/141-testing-eventbus-unit-tests-erstellen.md)
-- [x] **[142]** Testing: GameLoop Integration-Tests erstellen -> [Details](./ToDos/142-testing-gameloop-integration-tests-erstellen.md)
-- [x] **[143]** Testing: Component-Library Unit-Tests erstellen -> [Details](./ToDos/143-testing-component-library-unit-tests-erstellen.md)
-- [x] **[144]** Testing: System-Library Unit-Tests erstellen -> [Details](./ToDos/144-testing-system-library-unit-tests-erstellen.md)
-- [x] **[145]** Testing: UI-Editor E2E-Tests (Playwright) erstellen -> [Details](./ToDos/145-testing-ui-editor-e2e-tests-playwright-erstellen.md)
-- [x] **[146]** Testing: Graph-Editor E2E-Tests erstellen -> [Details](./ToDos/146-testing-graph-editor-e2e-tests-erstellen.md)
-- [x] **[147]** Testing: Drag-and-Drop E2E-Tests erstellen -> [Details](./ToDos/147-testing-drag-and-drop-e2e-tests-erstellen.md)
-- [x] **[148]** Testing: Performance-Tests (500+ Entities) erstellen -> [Details](./ToDos/148-testing-performance-tests-500-entities-erstellen.md)
-- [x] **[149]** Testing: Memory-Leak Detection Tests erstellen -> [Details](./ToDos/149-testing-memory-leak-detection-tests-erstellen.md)
-- [x] **[150]** Testing: Cross-Browser Compatibility Tests -> [Details](./ToDos/150-testing-cross-browser-compatibility-tests.md)
-- [x] **[151]** Testing: CI/CD Pipeline (GitHub Actions) Setup -> [Details](./ToDos/151-testing-ci-cd-pipeline-github-actions-setup.md)
-- [x] **[152]** Projekt: Undo/Redo fuer Component-Aenderungen implementieren -> [Details](./ToDos/152-projekt-undo-redo-fuer-component-aenderungen-implementieren.md)
-- [x] **[153]** Projekt: Undo/Redo fuer Entity-Erstellung/-Loeschung implementieren -> [Details](./ToDos/153-projekt-undo-redo-fuer-entity-erstellung-loeschung-implementieren.md)
+- [X]  Canvas läst sich mich gedrückt maustaste begegen / und läd immer Zentriert
+- [X]  Ennätige Logs aus der Konsole entfernen
+- [X]  Asuwählen in der Libary oder im Graph Libary zeigt die Optionen schon im Inspetor an ohne das sie im Canvas geladen werden müssen
+- [ ]  Canvas zeit ein Karo raster im hintergrund
+- [ ]  Live Previre Implentierung
+- [ ]  
+- [ ]  Canvas zeit einen Rahmen für die verschiendenen Layouts Desktop  /  Mobile / Tablet
+- [ ]  alle Optionen lassen sich GRouppiert oder einzeln als fenster ausdocken
+- [ ]  Dummy Objekte für Lebenbalken Stats usw einfügen (vorlage für Datenbank abrufe es soll Auswahl felder der Stats die in der Datenbank zu verfügung stehen für das Template augelistet werden Also den Tag Attribut / Template it müssen dann stimmen für diese logik)
+- [ ]  Graph editor Abjekte anfassbar machen und bewegbar
+- [ ] Dummy Funktionen die z.B. eine einfache berechnung von Attibut - Verteidungung (Also 2 Funktionen anzeigen das sie verbunden sind und welche Rechnung dazwischen ist) alle grunrechen arten einfügen
+- [ ]  Live Previre Implentierung
+- [ ]  Upload Card und Funktionen
+- [ ]  Layout Card einfügen
+- [ ]  Layout Cardoptionen (Burgermenu,Akkrodien usw. sowie Option als fenster oder Position Fixiert)
+- [ ]  Jeder Tab als einezlen oder GRuppiertes Libery,Layer etc. als als Fenster ab docken können ,button zu standart layout (jetztige ansicht)
+- [ ]  NorGraph edir imer als eigenes Fenster aufrufen
+- [ ]  3 Ebenen Super Admin/Teamplate Admin / Design Admin , hier sollen Verfügbar funktionen anders sein, der Superadmin soll bestimmen welche Funktionen dem Template Admin zu verfügung stehen Bsp. Graph Editor etc. Card Upload usw.
+- [ ]  Dankenbank einbindung (alle einstellungen sollen in die Datennk kommen)
+- [ ]

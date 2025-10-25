@@ -23,7 +23,6 @@ export class LogicSystem extends SystemBase {
         this.graph = graph;
         this.interpreter = interpreter;
         this.subscribeToEvents();
-        console.log('[LogicSystem] Initialized and subscribed to game events.');
     }
 
     /**

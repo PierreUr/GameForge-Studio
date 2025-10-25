@@ -1,0 +1,77 @@
+{
+    "components": [
+        {
+            "name": "PositionComponent",
+            "description": "Defines the entity's position in 2D/3D space.",
+            "properties": [
+                { "name": "x", "type": "number", "description": "X-coordinate", "defaultValue": 0 },
+                { "name": "y", "type": "number", "description": "Y-coordinate", "defaultValue": 0 },
+                { "name": "z", "type": "number", "description": "Z-coordinate (for layering)", "defaultValue": 0 }
+            ]
+        },
+        {
+            "name": "VelocityComponent",
+            "description": "Defines the entity's movement speed.",
+            "properties": [
+                { "name": "vx", "type": "number", "description": "Velocity on the X-axis", "defaultValue": 0 },
+                { "name": "vy", "type": "number", "description": "Velocity on the Y-axis", "defaultValue": 0 }
+            ]
+        },
+        {
+            "name": "SpriteComponent",
+            "description": "Defines the visual representation of the entity.",
+            "properties": [
+                { "name": "texture", "type": "string", "description": "Path or ID of the image texture", "defaultValue": "" },
+                { "name": "width", "type": "number", "description": "Width of the sprite", "defaultValue": 0 },
+                { "name": "height", "type": "number", "description": "Height of the sprite", "defaultValue": 0 }
+            ]
+        },
+        {
+            "name": "HealthComponent",
+            "description": "Manages the health points of an entity.",
+            "properties": [
+                { "name": "maxHealth", "type": "number", "description": "Maximum health points", "defaultValue": 100 },
+                { "name": "currentHealth", "type": "number", "description": "Current health points", "defaultValue": 100 }
+            ]
+        },
+        {
+            "name": "PlayerInputComponent",
+            "description": "Maps keyboard inputs to player actions.",
+            "properties": [
+                { "name": "keyBindings", "type": "map", "description": "Map of keys to actions", "defaultValue": {} }
+            ]
+        },
+        {
+            "name": "PhysicsBodyComponent",
+            "description": "Defines physical properties like mass and friction.",
+            "properties": [
+                { "name": "mass", "type": "number", "description": "Mass of the object", "defaultValue": 1 },
+                { "name": "friction", "type": "number", "description": "Friction coefficient", "defaultValue": 0.1 }
+            ]
+        },
+        {
+            "name": "ColliderComponent",
+            "description": "Defines the collision shape and size.",
+            "properties": [
+                { "name": "shape", "type": "string", "description": "Shape of the collider (e.g., 'box')", "defaultValue": "box" },
+                { "name": "size", "type": "object", "description": "Dimensions of the collider", "defaultValue": { "width": 10, "height": 10 } }
+            ]
+        },
+        {
+            "name": "ScoreComponent",
+            "description": "Stores points value for an entity.",
+            "properties": [
+                { "name": "points", "type": "number", "description": "Number of points", "defaultValue": 0 }
+            ]
+        },
+        {
+            "name": "AIPatrolComponent",
+            "description": "Defines a patrol path for an AI entity.",
+            "properties": [
+                { "name": "waypoints", "type": "array", "description": "List of {x, y} waypoints", "defaultValue": [] },
+                { "name": "speed", "type": "number", "description": "Movement speed", "defaultValue": 1 },
+                { "name": "currentWaypointIndex", "type": "number", "description": "Internal state for current target", "defaultValue": 0 }
+            ]
+        }
+    ]
+}

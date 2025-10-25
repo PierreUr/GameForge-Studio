@@ -1,0 +1,169 @@
+# Changelog - GameForge Studio
+
+## [1.2.2]
+- **[TASK-153]** Extended the Undo/Redo system to support entity creation and deletion. Creating entities via drag-and-drop and deleting them via the keyboard are now fully reversible actions.
+
+## [1.2.1]
+- **[TASK-152]** Implemented a full Undo/Redo system for component property changes made in the Inspector. Added Undo/Redo buttons to the toolbar and keyboard shortcuts (Ctrl+Z, Ctrl+Y).
+
+## [1.2.0]
+- **[TASK-151]** Established a placeholder test for the conceptual setup of a CI/CD pipeline.
+- **[TASK-150]** Established a placeholder test for future cross-browser compatibility tests.
+- **[TASK-149]** Established a placeholder test for future memory leak detection tests.
+- **[TASK-148]** Established a placeholder test for future performance tests with high entity counts (500+).
+- **[TASK-147]** Established a placeholder test for future Drag-and-Drop End-to-End (E2E) tests.
+- **[TASK-146]** Established a placeholder test for future Graph Editor End-to-End (E2E) tests.
+- **[TASK-145]** Established a placeholder test for future UI Editor End-to-End (E2E) tests, as Playwright is not applicable in this environment.
+- **[TASK-144]** Implemented a consolidated unit test suite for the `System Library` (Movement, Physics, etc.), replacing previous placeholders.
+- **[TASK-143]** Implemented a consolidated unit test suite for the `Component Library` (Position, Health, etc.), replacing previous placeholders.
+- **[TASK-142]** Implemented a comprehensive integration test for the `GameLoop`, validating its start, update, and stop lifecycle.
+- **[TASK-141]** Implemented a unit test for the `EventBus` singleton pattern, ensuring only one instance is ever created.
+- **[TASK-140]** Implemented comprehensive unit tests for the `SystemManager`, validating system registration with priority, unregistration, and toggling.
+- **[TASK-139]** Implemented comprehensive unit tests for the `ComponentManager`, covering the full lifecycle (add, get, remove, toggle) and the entity query system.
+- **[TASK-138]** Implemented comprehensive unit tests for the `EntityManager`, validating the creation, destruction, and tracking of entities.
+- **[TASK-137]** Conceptually established the in-browser test runner as the official testing environment for the project, as a traditional Jest setup is not applicable.
+- **[TASK-136]** Implemented the basic UI structure for the Asset Management module, including a new "Assets" tab and a placeholder panel.
+- **[TASK-135]** Implemented the "Export to Standalone HTML" feature, which bundles the project's scene and logic into a single, playable HTML file.
+- **[TASK-134]** Implemented the `CommandManager` singleton to manage `undo` and `redo` stacks, completing the core of the command history system.
+- **[TASK-133]** Implemented the `ICommand` interface and the base `CommandManager` class, establishing the Command Pattern for the Undo/Redo system.
+- **[TASK-132]** Implemented project versioning. The project file now includes a version number, and a warning is shown if there is a mismatch when loading.
+- **[TASK-131]** Implemented an auto-save mechanism that backs up the entire project state to `localStorage` every 30 seconds to prevent data loss.
+- **[TASK-130]** Centralized project loading logic into `ProjectManager`, which now handles file reading, parsing, and state restoration for both the ECS and Logic Graph.
+- **[TASK-129]** Centralized project saving logic into `ProjectManager`, which now serializes the entire `IProject` structure (metadata, ECS, Logic Graph) into a single JSON file.
+- **[TASK-128]** Defined the top-level `IProject` data structure, which encapsulates all project-related data, including metadata, ECS state, and Logic Graph state.
+- **[TASK-127]** Implemented a placeholder `ProjectManager` singleton, which will serve as the central hub for managing the overall project state.
+- **[TASK-126]** Implemented the `AddNode` as the first mathematical node for the Logic Graph, enabling basic arithmetic operations.
+- **[TASK-125]** Implemented the `IfElseNode`, a fundamental control flow node that allows for conditional branching in the Logic Graph.
+- **[TASK-124]** Implemented `GetComponentValueNode` and `SetComponentValueNode` to allow the Logic Graph to read from and write to the ECS.
+- **[TASK-123]** Implemented the `ExecutionContext` class, which will carry scoped data through the graph during execution.
+- **[TASK-122]** Implemented the `LogicSystem` to bridge the gap between the core EventBus and the GraphInterpreter, enabling event-driven graph execution.
+- **[TASK-121]** Implemented a placeholder `GraphInterpreter` class, which will serve as the runtime engine for executing visual graph logic.
+- **[TASK-120]** Implemented the `GraphValidator` class to check for logical errors, such as incompatible port connections.
+- **[TASK-119]** Implemented graph deserialization logic in the `Graph` class, using a new `nodeFactory` to reconstruct nodes from JSON data.
+- **[TASK-118]** Implemented graph serialization; `Graph`, `NodeBase`, and `Connection` classes now have `serialize()` methods to convert the graph state to a JSON-friendly format.
+- **[TASK-117]** Implemented the `DestroyEntityActionNode` and added it to the Logic Graph library and visual editor.
+- **[TASK-116]** Formally implemented the `CreateEntityActionNode` as part of the core node library.
+- **[TASK-115]** Formally implemented the `ModifyHealthActionNode` as part of the core node library.
+- **[TASK-114]** Formally implemented the `OnKeyPressEventNode` as part of the core node library.
+- **[TASK-113]** Formally implemented the `OnCollisionEventNode` as part of the core node library.
+- **[TASK-112]** Implemented the visual `Node` component and the foundational node library, including `OnCollisionEvent`, `OnKeyPressEvent`, `ModifyHealthAction`, and `CreateEntityAction` nodes, making them visible in the Logic Graph editor.
+- **[TASK-111]** Implemented the foundational state and event handlers in the `LogicGraphPanel` for future "drag-to-connect" interactions between nodes.
+- **[TASK-110]** Implemented the core `Graph` data structure, which acts as a container for all nodes and connections within a single logic graph.
+- **[TASK-109]** Implemented the `Connection` class to represent the edges between nodes in the logic graph.
+- **[TASK-108]** Implemented the `NodeBase` class, providing the fundamental data structure for all nodes in the logic graph, including definitions for inputs and outputs.
+- **[TASK-107]** Created the basic UI structure for the Logic Graph module, including a new "Logic Graph" tab in the left sidebar and a placeholder panel for the node editor.
+- **[TASK-106]** Implemented a responsive resize handler for the main canvas, ensuring that systems like the grid overlay and viewport culling are correctly updated when the window or panels are resized.
+- **[TASK-105]** Implemented viewport culling in the rendering system to improve performance by only rendering visible sprites.
+- **[TASK-104]** Implemented debug rendering for `ColliderComponent` boxes, which can be toggled via a new toolbar button.
+- **[TASK-103]** The rendering system now draws a visual highlight around the currently selected entity in the canvas.
+- **[TASK-102]** Added a dynamic grid overlay to the editor, which adapts to the camera's zoom and pan level and can be toggled from the toolbar.
+- **[TASK-101]** Implemented interactive camera controls: pan the view by dragging with the middle mouse button and zoom with the scroll wheel.
+- **[TASK-100]** Implemented a z-index based layering system; sprites are now sorted and rendered based on the `z` value of their `PositionComponent`.
+- **[TASK-099]** The rendering system now syncs `width` and `height` from the `SpriteComponent` to the Pixi sprite.
+- **[TASK-098]** The rendering system now syncs entity `PositionComponent` data to the `x` and `y` properties of the corresponding Pixi sprite in every frame.
+- **[TASK-097]** Implemented the main `update` loop in the `RenderingSystem`, which iterates through all renderable entities each frame.
+- **[TASK-096]** Implemented the core entity-to-sprite mapping in the `RenderingSystem`. The system now creates, caches, and destroys Pixi sprites in sync with the ECS entity lifecycle.
+- **[TASK-095]** Implemented texture caching within the rendering system, leveraging Pixi.js's built-in asset loader to prevent re-downloading of assets.
+- **[TASK-094]** Implemented a dynamic sprite loading system that creates Pixi.js sprites for entities with a `SpriteComponent` once their texture is available.
+- **[TASK-093]** The rendering canvas now dynamically resizes to fit the available space in the editor's central panel, ensuring a responsive layout.
+- **[TASK-092]** Initialized the core `Renderer` singleton, which manages the Pixi.js application and its canvas.
+- **[TASK-091]** Implemented global keyboard shortcuts: `Ctrl+S` (or `Cmd+S`) to save the project and `Delete`/`Backspace` to destroy the selected entity.
+- **[TASK-090]** Implemented layout persistence; sidebar widths are now saved to `localStorage` and restored on page load.
+- **[TASK-089]** Added a placeholder "Live Preview" button to the main toolbar for future functionality.
+- **[TASK-088]** Implemented the "Load Project" functionality, allowing users to import a previously saved scene from a JSON file.
+- **[TASK-087]** Implemented the "Save Project" functionality, allowing users to export the entire scene state to a `gameforge-project.json` file.
+- **[TASK-086]** Created a global `Toolbar` component to house project-level actions like save and load.
+- **[TASK-085]** Implemented the `world.updateComponentData` API, allowing the UI to send live updates to the ECS engine.
+- **[TASK-084]** Fully implemented `onChange` handlers for all Inspector input fields, connecting them to the new engine update API for real-time data binding.
+- **[TASK-083]** Created a new `ColorPicker` input component and integrated it into the `ComponentInspector` to handle properties related to color.
+- **[TASK-082]** Added `BooleanCheckbox` as a reusable UI component for editing boolean properties in the Inspector panel.
+- **[TASK-081]** Added `TextInput` as a reusable UI component for editing string properties in the Inspector panel.
+- **[TASK-080]** Added `NumberInput` as a reusable UI component for editing numeric properties in the Inspector panel.
+- **[TASK-079]** The Inspector panel now dynamically renders UI input fields based on component data types.
+- **[TASK-078]** Implemented `world.getComponentsForEntity()` to allow the UI to retrieve all components of a selected entity.
+- **[TASK-077]** The Inspector panel now dynamically displays the components and properties of the selected entity.
+- **[TASK-076]** The right sidebar now subscribes to the `entity:selected` event and displays the ID of the selected entity.
+- **[TASK-075]** Implemented the `world.selectEntity()` method to formalize entity selection and publish a global `entity:selected` event.
+- **[TASK-074]** Added a click handler to the main canvas to trigger entity selection.
+- **[TASK-073]** Integrated the `TemplateManager` with the canvas drop handler to create entities from templates at the drop location.
+- **[TASK-072]** Implemented coordinate conversion in the canvas drop handler to place entities at the correct local position.
+- **[TASK-071]** Implemented the `onDrop` event handler on the main canvas to receive dragged component data.
+- **[TASK-070]** Implemented the `onDragOver` event handler on the main canvas to allow dropping.
+- **[TASK-069]** Stored the template name in `dataTransfer` during the drag-and-drop operation.
+- **[TASK-068]** Implemented the `onDragStart` event handler for component library items.
+- **[TASK-067]** Set the `draggable` attribute on component cards in the library.
+- **[TASK-066]** Component cards in the library now render a placeholder icon and a description.
+- **[TASK-065]** Created the `ComponentCard` UI element for the library panel.
+- **[TASK-064]** The library panel now fetches and parses the `component-manifest.json` to dynamically display available components.
+- **[TASK-063]** Created the base `LibraryPanel` component.
+- **[TASK-062]** Implemented a reusable `TabSystem` component for managing tabbed content within sidebars.
+- **[TASK-061]** Implemented the main `CanvasContainer` component to house the future rendering canvas and current UI overlays.
+- **[TASK-060]** Created the basic structure for the right sidebar, which will contain the Inspector panel.
+- **[TASK-059]** Created the basic structure for the left sidebar, which will contain the Library and Layers panels.
+- **[TASK-058]** Implemented a `ResizablePanels` component to create a flexible 3-column layout with draggable dividers.
+- **[TASK-057]** Converted the main application layout to a 3-column CSS grid, establishing the foundational structure for the editor's sidebars (Library, Inspector) and main content area.
+- **[TASK-056]** Implemented a `ComponentValidator` class that uses the `component-manifest.json` to validate component data structures at runtime, ensuring data integrity.
+- **[TASK-055]** Added a 'pickup' template to the `TemplateManager` for creating collectible items with a score value.
+- **[TASK-054]** Added an 'obstacle' template to the `TemplateManager` for creating static, collidable objects with a single command.
+- **[TASK-053]** Extended the `TemplateManager` to include an 'enemy' template, allowing for one-line creation of an enemy with Health, AI, and a Sprite.
+- **[TASK-052]** Extended the `TemplateManager` to include a 'player' template, allowing for one-line creation of a fully equipped player entity.
+- **[TASK-051]** Implemented the base `TemplateManager` class to facilitate the creation of entities from predefined templates.
+- **[TASK-050]** Created `component-manifest.json` to provide component definitions (properties, defaults, descriptions) for the upcoming UI editor.
+- **[TASK-049]** Implemented a placeholder `RenderingSystem` as an interface for future rendering logic with Pixi.js.
+- **[TASK-048]** Implemented the event-based `ScoringSystem` to handle score accumulation upon `collision:detected` events between players and score pickups.
+- **[TASK-047]** Implemented the `AIPatrolSystem` to move entities along a predefined path of waypoints.
+- **[TASK-046]** Implemented the `PlayerInputSystem` to handle keyboard events and translate them into velocity changes for player-controlled entities.
+- **[TASK-045]** Implemented the `HealthSystem` to manage entity death (publishing an `entity:death` event) and simple health regeneration.
+- **[TASK-044]** Implemented the `PhysicsSystem` to apply friction and detect AABB collisions, publishing a `collision:detected` event.
+- **[TASK-043]** Implemented the concrete `MovementSystem` to update entity positions based on velocity and deltaTime.
+- **[TASK-042]** Created the concrete `AIPatrolComponent` to manage AI patrolling behavior.
+- **[TASK-041]** Created the concrete `ScoreComponent` to manage score points for entities.
+- **[TASK-040]** Created the concrete `ColliderComponent` to define collision boundaries for entities, including shape and size properties.
+- **[TASK-039]** Created the concrete `PhysicsBodyComponent` to manage physical properties like mass and friction.
+- **[TASK-038]** Created the concrete `PlayerInputComponent` to manage key bindings for player-controlled entities.
+- **[TASK-037]** Created the concrete `HealthComponent` to manage entity health points.
+- **[TASK-036]** Created the concrete `SpriteComponent` to hold texture and dimension data for rendering.
+- **[TASK-035]** Created the concrete `VelocityComponent` with vx and vy values, essential for movement systems.
+- **[TASK-034]** Created the concrete `PositionComponent` with x, y, and z coordinates, inheriting from `ComponentBase`.
+- **[TASK-033]** Implemented the abstract `SystemBase` class to serve as a foundation for all game logic systems, enforcing a consistent architecture.
+- **[TASK-032]** Implemented the abstract `ComponentBase` class as a foundation for all future game components.
+- **[FIX]** Corrected a regression in the `AnsiToHtml` component that prevented test logs from rendering in color. Parsing logic is now robust.
+- **[TASK-031]** Implemented `loadProjectState()` method in `World` class for project deserialization, including a component registry and manager reset logic.
+- **[FIX]** Corrected the ANSI color code parsing in the UI's Test Execution Log. The `AnsiToHtml` component now correctly maps regex-captured codes to their respective colors, making test results visible again. Also improved the `TestLogger` to generate correct color codes for different log types.
+- **[TASK-030]** Implemented `World` class to encapsulate ECS managers and added `getProjectState()` for project serialization.
+- **[CHORE]** Performed project cleanup: corrected corrupted ToDo.md file and synchronized TestLogger documentation in DEV_TOOL_BOX.md with its implementation.
+- **[TASK-029]** Implemented asynchronous `publishAsync()` method in the EventBus for non-blocking event dispatching.
+- **[TASK-028]** Implemented synchronous `publish()` method in the EventBus for immediate event dispatching.
+- **[FIX]** Resolved persistent console spam by implementing a robust, ID-based auto-disable mechanism in `SystemManager` for failing systems. The bug is now definitively fixed.
+- **[TASK-027]** Implemented `unsubscribe()` method in the EventBus to allow event listener removal.
+- **[FIX]** Added detailed, frame-by-frame debug logging to the `SystemManager.updateAll` method to diagnose and fix the persistent console spamming bug. The error counting and auto-disable mechanism is now fully traceable.
+- **[TASK-026]** Implemented `subscribe()` method in the EventBus to allow event listener registration.
+- **[TASK-025]** Implemented the core `listeners` Map data structure in the EventBus.
+- **[TASK-024]** Implemented `EventBus` as a Singleton class for global event handling.
+- **[FIX]** Added detailed debugging logs to SystemManager to definitively resolve the console spam issue from failing systems.
+- **[TASK-023]** Implemented `stop()` method in GameLoop.
+- **[TASK-022]** Implemented `start()` method in GameLoop to prevent multiple loop instances.
+- **[FIX]** Implemented an auto-disable mechanism in SystemManager to prevent system error spam in the console.
+- **[TASK-021]** Implemented robust error handling in the system update loop to prevent crashes from single system failures.
+- **[TASK-020]** Implemented deltaTime calculation in GameLoop for frame-rate independent updates.
+- **[TASK-019]** Implemented GameLoop class with requestAnimationFrame integration.
+- **[TASK-018]** Implemented toggleSystem() method in SystemManager to pause/resume systems.
+- **[TASK-017]** Implemented unregisterSystem() method in SystemManager.
+- **[TASK-016]** Implemented registerSystem() method in SystemManager with priority sorting.
+- **[TASK-015]** Implemented the System-Registry data structure in SystemManager.
+- **[TASK-014]** Implemented the base class structure for the SystemManager.
+- **[TASK-013]** Implemented toggleComponent() method in ComponentManager for activating/deactivating components.
+- **[TASK-012]** Updated query system in ComponentManager to respect the component's `isActive` flag.
+- **[TASK-011]** Implemented getEntitiesWithComponents() query method in ComponentManager.
+- **[TASK-010]** Implemented removeComponent() method in ComponentManager.
+- **[TASK-009]** Implemented getComponent() method in ComponentManager.
+- **[TASK-008]** Implemented addComponent() method in ComponentManager.
+- **[TASK-007]** Implemented the ComponentStores Map data structure in ComponentManager.
+- **[TASK-006]** Implemented the base class structure for the ComponentManager.
+- **[TASK-005]** Implemented destroyEntity() method in EntityManager.
+- **[TASK-004]** Implemented createEntity() method in EntityManager.
+- **[TASK-003]** Added a Set to manage active entities in EntityManager.
+- **[TASK-002]** Implemented auto-incrementing entity ID generator in EntityManager.
+- **[TASK-001]** Implemented the base class structure for the EntityManager.
+- Projektstruktur initialisiert
+- Master-Prompt definiert

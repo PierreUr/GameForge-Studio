@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameForge Studio - Handbuch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Grundlegende Typografie und Farben */
+        body { font-family: 'Inter', sans-serif; }
+        .bg-gray-900 { background-color: #111827; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .text-gray-300 { color: #d1d5db; }
+        
+        /* Sidebar Styling */
+        .sidebar { transition: width 0.3s ease; }
+        .sidebar a.active { background-color: #374151; color: #f3f4f6; }
+        .nav-link { display: block; padding: 0.5rem 1rem; margin-bottom: 0.25rem; border-radius: 0.375rem; transition: background-color 0.2s; }
+        .nav-link:hover { background-color: #4b5563; }
+
+        /* Content Styling */
+        .content h2 { border-bottom: 1px solid #4b5563; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600;}
+        .content h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.25rem; font-weight: 600;}
+        .content p, .content ul, .content ol { margin-bottom: 1rem; line-height: 1.6;}
+        .content ul { list-style: disc; margin-left: 1.5rem; }
+        .content ol { list-style: decimal; margin-left: 1.5rem; }
+        /* Spezielles Styling für Code und Hervorhebung */
+        .content code { background-color: #374151; color: #e5e7eb; padding: 0.1rem 0.3rem; border-radius: 4px; font-family: monospace; }
+        .content strong { font-weight: 600; }
+        .content .note { background-color: #1f2937; border-left: 4px solid #3b82f6; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .content .warning { background-color: #1f2937; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .content .coming-soon { background-color: #1f2937; border-left: 4px solid #9ca3af; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; font-style: italic; color: #9ca3af; }
+        .content img { max-width: 100%; height: auto; border-radius: 0.375rem; margin-top: 1rem; margin-bottom: 1rem; }
+        
+        /* NEU: Highlight-Stil für Suchbegriffe */
+        .highlight {
+            background-color: #f59e0b; /* Amber/Orange */
+            color: #1f2937; /* Dunkle Schrift für Kontrast */
+            padding: 1px 3px;
+            border-radius: 4px;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-gray-300 flex h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar w-64 bg-gray-800 p-4 overflow-y-auto flex-shrink-0 h-full">
+        <h1 class="text-xl font-semibold text-white mb-6">GameForge Handbuch</h1>
+        
+        <!-- Suchfeld (Links über dem Menü) -->
+        <div class="mb-6">
+            <input type="text" id="searchInput" placeholder="Suchen..." 
+                   class="w-full bg-gray-900 text-white p-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150">
+        </div>
+
+        <nav id="sidebarNav">
+            <a href="#willkommen" class="nav-link active">Willkommen</a>
+            <a href="#ui-ueberblick" class="nav-link">Oberfläche</a>
+            <a href="#entities-components" class="nav-link">Entities & Components</a>
+            <a href="#spielmodi-erstellen" class="nav-link">Spielmodi erstellen</a>
+            <a href="#logic-graph" class="nav-link">Logic Graph nutzen</a>
+            <a href="#assets-nutzen" class="nav-link">Assets nutzen</a>
+            <a href="#spielregeln-definieren" class="nav-link">Spielregeln definieren</a>
+            <a href="#projektverwaltung" class="nav-link">Projektverwaltung</a>
+            <a href="#responsive" class="nav-link">Responsive Design</a>
+            <a href="#fuer-super-admins" class="nav-link">Für Super Admins</a>
+            <a href="#tastaturkuerzel" class="nav-link">Tastaturkürzel</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content flex-1 p-8 overflow-y-auto h-full">
+        
+        <section id="willkommen">
+            <h2>Willkommen bei GameForge Studio!</h2>
+            <p>GameForge Studio ist eine webbasierte Umgebung, die es Ihnen ermöglicht, auf einfache Weise 2D-Spiele und Spielmodi zu erstellen. Als **Template Admin** ist es Ihre Hauptaufgabe, aus *vorhandenen* Bausteinen (Components, Logic Nodes, Assets) neue Spielvarianten, Level oder komplette Spielmodi ("Custom Games") zu konfigurieren.</p>
+            <p>Dieses Handbuch führt Sie durch die Werkzeuge und Konzepte, die Sie benötigen, um Ihre eigenen Kreationen in GameForge Studio zu verwirklichen, ohne selbst Code schreiben zu müssen.</p>
+             <div class="note">
+                <p><strong>Hinweis für Super Admins:</strong> Ein separater Abschnitt am Ende dieses Dokuments (<a href="#fuer-super-admins" class="text-blue-400 hover:underline">Für Super Admins</a>) beschreibt, wie neue Bausteine (Components, Nodes, Assets) entwickelt und in das System integriert werden können.</p>
+            </div>
+        </section>
+
+        <section id="ui-ueberblick">
+            <h2>Überblick über die Benutzeroberfläche</h2>
+            <p>Die Oberfläche ist in vier Hauptbereiche aufgeteilt:</p>
+            <!--  -->
+            <div class="w-full h-48 bg-gray-700 flex items-center justify-center rounded-lg my-4 border border-gray-600">
+                <span class="text-gray-400 italic">Platzhalter: Bild von GameForge Studio Benutzeroberfläche</span>
+            </div>
+            <ol class="list-decimal ml-6 mb-4">
+                <li>**Toolbar (Oben):** Globale Aktionen (Speichern, Laden, Undo/Redo etc.).</li>
+                <li>**Left Sidebar (Links):** Werkzeugkasten mit Bausteinen (Library, Logic Graph etc.). Anpassbare Breite.</li>
+                <li>**Canvas / Main Content Area (Mitte):** Visueller Editor für Ihre Spielszene.</li>
+                <li>**Right Sidebar (Rechts):** Detailansicht und Einstellungen für ausgewählte Elemente (Inspector). Anpassbare Breite.</li>
+            </ol>
+
+            <h3>Toolbar</h3>
+            <ul class="list-disc ml-6">
+                <li><strong>Undo/Redo:</strong> Aktionen rückgängig machen oder wiederholen.</li>
+                <li><strong>Save Project:</strong> Speichert das Projekt als <code>.json</code>-Datei.</li>
+                <li><strong>Load Project:</strong> Lädt ein Projekt aus einer <code>.json</code>-Datei (überschreibt aktuellen Stand).</li>
+                <li><strong>Export HTML:</strong> Erzeugt eine spielbare HTML-Datei (Coming Soon).</li>
+                <li><strong>Toggle Grid:</strong> Schaltet das Hilfsraster im Canvas an/aus.</li>
+                <li><strong>Toggle Colliders:</strong> Zeigt/Versteckt Kollisionsboxen zur Fehlersuche.</li>
+                <li><strong>Live Preview:</strong> (Coming Soon) Startet eine Spielvorschau.</li>
+            </ul>
+
+            <h3>Left Sidebar</h3>
+             <ul class="list-disc ml-6">
+                 <li><strong>Library Tab:</strong> Enthält <code>ComponentCards</code> - visuelle Repräsentationen von Templates (vorgefertigte Entity-Typen) und einzelnen Components. Ziehen Sie diese auf das Canvas.</li>
+                 <li><strong>Layers Tab:</strong> (Coming Soon) Zukünftige Verwaltung von Zeichenebenen.</li>
+                 <li><strong>Logic Graph Tab:</strong> Visueller Editor zur Programmierung der Spiellogik mit Knoten.</li>
+                 <li><strong>Assets Tab:</strong> (Coming Soon) Zukünftige Verwaltung von Bildern, Sounds etc.</li>
+             </ul>
+
+            <h3>Canvas / Main Content Area</h3>
+             <ul class="list-disc ml-6">
+                 <li>Zeigt die Spielszene.</li>
+                 <li>**Navigation:** Mittlere Maustaste gedrückt halten zum Verschieben (Pan), Mausrad zum Zoomen.</li>
+                 <li>**Interaktion:** Linksklick zum Auswählen einer Entity, Entf/Rücktaste zum Löschen der Auswahl. Drag & Drop von Templates aus der Library zum Erstellen.</li>
+             </ul>
+
+             <h3>Right Sidebar</h3>
+              <ul class="list-disc ml-6">
+                  <li><strong>Inspector Tab:</strong> Zeigt die Components (Eigenschaften) der ausgewählten Entity an und erlaubt deren Bearbeitung. Änderungen sind sofort sichtbar und können rückgängig gemacht werden.</li>
+              </ul>
+        </section>
+
+        <section id="entities-components">
+            <h2>Entities & Components verstehen</h2>
+            <p>GameForge Studio nutzt ein Baukastensystem:</p>
+            <ul class="list-disc ml-6">
+                <li><strong>Entities:</strong> Die Objekte in Ihrer Spielwelt (Spieler, Gegner, Münzen). Sie sind im Grunde nur IDs.</li>
+                <li><strong>Components:</strong> Die Eigenschaften, die einer Entity Leben einhauchen. Eine Entity ist die Summe ihrer Components. Beispiele:
+                    <ul class="ml-4 list-disc">
+                        <li><code>PositionComponent</code>: Gibt der Entity einen Ort.</li>
+                        <li><code>SpriteComponent</code>: Gibt der Entity ein Aussehen.</li>
+                        <li><code>HealthComponent</code>: Ermöglicht es der Entity, Schaden zu nehmen.</li>
+                        <li><code>ColliderComponent</code>: Ermöglicht Kollisionen.</li>
+                    </ul>
+                </li>
+            </ul>
+            <p>Als Template Admin kombinieren Sie vorhandene Components, um das gewünschte Verhalten und Aussehen für Ihre Entities zu erreichen.</p>
+        </section>
+
+        <section id="spielmodi-erstellen">
+             <h2>Spielmodi & Templates erstellen (als Template Admin)</h2>
+             <p>Ihre Hauptaufgabe als Template Admin ist es, mithilfe der vorhandenen Werkzeuge neue Spielmodi, Level oder wiederverwendbare Entity-Vorlagen ("Templates") zu erstellen.</p>
+
+             <h3>1. Entities erstellen und konfigurieren</h3>
+             <ul class="list-disc ml-6">
+                 <li>**Aus der Library ziehen:** Der einfachste Weg, Entities zu erstellen, ist das Ziehen von fertigen Templates (wie <code>Player</code>, <code>Enemy</code>) aus dem **Library Tab** auf das **Canvas**. Diese Templates bringen bereits eine sinnvolle Kombination von Components mit.</li>
+                 <li>**Components anpassen:** Wählen Sie eine erstellte Entity im **Canvas** aus. Im **Inspector** (rechte Seitenleiste) sehen Sie nun alle Components dieser Entity. Ändern Sie hier die Werte nach Bedarf (z.B. die <code>maxHealth</code> im <code>HealthComponent</code>, die <code>texture</code> im <code>SpriteComponent</code> oder die <code>waypoints</code> im <code>AIPatrolComponent</code>).</li>
+                 <li>**(Coming Soon): Components hinzufügen/entfernen:** Zukünftig wird es möglich sein, auch einzelne Components aus der Library zu einer bestehenden Entity hinzuzufügen oder davon zu entfernen, um hochgradig angepasste Entities zu erstellen.</li>
+             </ul>
+
+             <h3>2. Szene anordnen</h3>
+             <p>Positionieren Sie Ihre erstellten Entities im **Canvas** durch Anpassen der <code>PositionComponent</code> im Inspector, um Ihr Level oder Ihre Spielszene zu gestalten. (Drag & Drop Positionierung im Canvas ist Coming Soon).</p>
+
+             <h3>3. Logik definieren</h3>
+             <p>Verwenden Sie den **Logic Graph**, um das Zusammenspiel der Entities und die Spielregeln festzulegen (siehe nächster Abschnitt).</p>
+
+             <h3>4. Speichern</h3>
+             <p>Speichern Sie Ihre Konfiguration regelmäßig über <code>Save Project</code> in der Toolbar. Diese gespeicherte <code>.json</code>-Datei repräsentiert Ihren erstellten Spielmodus oder Ihr Template.</p>
+        </section>
+
+        <section id="logic-graph">
+            <h2>Logic Graph nutzen (als Template Admin)</h2>
+            <p>Der Logic Graph ermöglicht es Ihnen, auf Ereignisse im Spiel zu reagieren und Aktionen auszulösen, ohne Code zu schreiben. Sie verwenden dabei die von Super Admins bereitgestellten Knoten.</p>
+             <div class="coming-soon">
+                <p><strong>Coming Soon:</strong> Die volle Funktionalität des Logic Graphs, insbesondere das Verbinden von Knoten per Drag & Drop und die tatsächliche Ausführung der Logik, befindet sich noch in Entwicklung.</p>
+            </div>
+            <ul class="list-disc ml-6">
+                <li>**Verfügbare Knoten finden:** Im **Logic Graph Tab** (linke Seitenleiste) sehen Sie eine Vorschau der verfügbaren Knoten (Events, Actions, Logik etc.).</li>
+                <li>**Konzept (Zukünftig):**
+                    <ol class="list-decimal ml-6">
+                        <li>Ziehen Sie benötigte Knoten (z.B. <code>OnCollisionEvent</code>, <code>ModifyHealthAction</code>) in den Graphen-Editor.</li>
+                        <li>Verbinden Sie die Ports der Knoten per Drag & Drop:
+                            <ul class="list-disc ml-6">
+                                <li><strong>Flow Ports (Pfeile):</strong> Bestimmen die Reihenfolge der Ausführung.</li>
+                                <li><strong>Data Ports (Kreise):</strong> Übergeben Daten (z.B. Entity-IDs, Zahlenwerte).</li>
+                            </ul>
+                        </li>
+                        <li>Konfigurieren Sie die Knoten im Inspector (falls Parameter vorhanden).</li>
+                    </ol>
+                </li>
+            </ul>
+        </section>
+
+        <section id="assets-nutzen">
+            <h2>Assets nutzen (als Template Admin)</h2>
+            <div class="coming-soon">
+                <p><strong>Coming Soon:</strong> Das Asset Management System befindet sich noch in Entwicklung. Die Funktionalität zum Hochladen, Verwalten und einfachen Auswählen von Assets ist noch nicht implementiert.</p>
+            </div>
+            <p>Assets sind die Medieninhalte Ihres Spiels (Bilder, Sounds).</p>
+            <ul class="list-disc ml-6">
+                <li>**Konzept (Zukünftig):** Super Admins laden Assets über den **Assets Tab** hoch. Als Template Admin können Sie diese Assets dann über eine Auswahlbox oder per ID in Components wie <code>SpriteComponent</code> auswählen.</li>
+                <li>**Aktueller Stand:** Momentan müssen Asset-Pfade (z.B. <code>player.png</code>) direkt als Text in die Component-Felder eingetragen werden. Die Assets müssen manuell im Projektordner verfügbar sein.</li>
+            </ul>
+        </section>
+
+         <section id="spielregeln-definieren">
+            <h2>Spielregeln & Berechnungen definieren</h2>
+             <div class="coming-soon">
+                <p><strong>Coming Soon:</strong> Dedizierte Werkzeuge zur einfachen Konfiguration komplexer Spielregeln und Berechnungen (z.B. Schaden, Punkte, Sieg/Niederlage) sind in Planung.</p>
+            </div>
+            <p>Ein zentrales Ziel für Template Admins ist es, Spielmechaniken anzupassen, ohne Code zu schreiben. Zukünftig wird GameForge Studio dedizierte Oberflächen oder spezielle Components/Nodes bieten, um Folgendes zu konfigurieren:</p>
+            <ul class="list-disc ml-6">
+                <li>Schadensberechnungen (Grundwerte, Multiplikatoren, Resistenzen etc.)</li>
+                <li>Punktesysteme</li>
+                <li>Sieg- und Niederlagebedingungen</li>
+                <li>KI-Parameter (Sichtweite, Reaktion etc.)</li>
+                <li>Item-Effekte</li>
+            </ul>
+            <p>Diese Konfigurationen werden voraussichtlich über spezialisierte UI-Panels oder direkt im Inspector vorgenommen.</p>
+        </section>
+
+        <section id="projektverwaltung">
+            <h2>Projektverwaltung</h2>
+            <p>Die Toolbar bietet die wesentlichen Funktionen zur Verwaltung Ihres Projekts:</p>
+            <ul class="list-disc ml-6">
+                <li>**Speichern (<code>Save Project</code>):** Sichert den gesamten Zustand (Szene, Logik) in einer <code>.json</code>-Datei. <strong>Wichtig:</strong> Speichern Sie häufig!</li>
+                <li>**Laden (<code>Load Project</code>):** Öffnet ein zuvor gespeichertes Projekt. Ihr aktueller Stand wird überschrieben.</li>
+                <li>**Export (<code>Export HTML</code>):** (Coming Soon) Erzeugt eine eigenständige HTML-Version Ihres Projekts.</li>
+                <li>**Auto-Save:** Ihr Projekt wird alle 30 Sekunden automatisch im Browser zwischengespeichert, um Datenverlust zu minimieren. Dies ersetzt kein manuelles Speichern!</li>
+            </ul>
+        </section>
+
+         <section id="responsive">
+            <h2>Responsive Design</h2>
+            <p>GameForge Studio selbst passt sich an verschiedene Bildschirmgrößen an. Die exportierten Spiele (via <code>Export HTML</code>) sollen ebenfalls auf verschiedenen Geräten (Desktop, Tablet, Mobile) funktionieren. Die zugrundeliegende Engine ist dafür ausgelegt, die konkrete Umsetzung hängt aber vom zukünftigen Game Runner ab.</p>
+             <div class="coming-soon">
+                <p><strong>Coming Soon:</strong> Werkzeuge zur spezifischen Anpassung des Layouts und der Steuerung für verschiedene Geräte (Desktop, Tablet, Mobile) sind geplant.</p>
+            </div>
+        </section>
+
+        <section id="fuer-super-admins">
+            <h2>Für Super Admins: System erweitern</h2>
+            <p>Dieser Abschnitt richtet sich an Entwickler (Super Admins), die GameForge Studio um neue Bausteine erweitern möchten.</p>
+            <div class="coming-soon">
+               <p><strong>Coming Soon:</strong> Mechanismen zum dynamischen Laden von extern entwickelten Modulen (Plugins) sind geplant, um die Erweiterbarkeit zu verbessern.</p>
+           </div>
+             <div class="warning">
+                <p><strong>Aktueller Stand:</strong> Die folgenden Anleitungen beschreiben, wie neue Elemente *direkt in den Kern-Code* von GameForge Studio integriert werden müssen.</p>
+            </div>
+
+            <h3>Neue Components hinzufügen</h3>
+            <ol class="list-decimal ml-6">
+                <li>**TypeScript-Klasse erstellen:** In <code>src/core/library/</code>, von <code>ComponentBase</code> erben, Properties definieren, exportieren, TSDoc hinzufügen.</li>
+                 <li>**Manifest aktualisieren (<code>src/core/assets/component-manifest.json</code>):** Neuen Eintrag im <code>components</code>-Array hinzufügen (Name, Description, Properties mit Name, Typ, Beschreibung, DefaultValue). Der <code>type</code> bestimmt das UI-Control im Inspector.</li>
+                 <li>**World-Registrierung (<code>index.tsx</code>):** Neue Component importieren und mit <code>world.registerComponent(MyNewComponent);</code> registrieren.</li>
+            </ol>
+
+            <h3>Neue Logic Graph Nodes hinzufügen</h3>
+             <ol class="list-decimal ml-6">
+                 <li>**TypeScript-Klasse erstellen:** In <code>src/core/graph/nodes/</code>, von <code>NodeBase</code> erben. Im Konstruktor Ports via <code>this.addInput()</code> / <code>this.addOutput()</code> definieren. Exportieren, TSDoc hinzufügen. (Execute-Logik ist Coming Soon).</li>
+                  <li>**Node Factory registrieren (<code>src/core/graph/nodeFactory.ts</code>):** Neue Node-Klasse importieren und in <code>nodeRegistry</code>-Map eintragen (<code>nodeRegistry.set('MyNewNode', MyNewNode);</code>).</li>
+                  <li>**(Optional) Visuelle Darstellung (<code>src/core/ui/LogicGraphPanel.tsx</code>):** Manuell Instanz hinzufügen für Vorschau (dynamische Library ist Coming Soon).</li>
+             </ol>
+
+             <h3>Neue Assets hinzufügen</h3>
+              <div class="coming-soon">
+                 <p><strong>Coming Soon:</strong> Das Asset Management System inklusive Upload, Verwaltung und Auswahl-UI ist in Entwicklung.</p>
+             </div>
+             <ol class="list-decimal ml-6">
+                 <li>**Konzept (Zukünftig):** Upload über "Assets Tab", Registrierung in Asset-DB/Manifest, Referenzierung per ID/Pfad in Components.</li>
+                 <li>**Aktueller Stand:** Assets manuell im Projekt ablegen, Pfade direkt in Component-Felder eintragen.</li>
+             </ol>
+
+             <h3>Allgemeine Regeln für Kern-Entwicklung</h3>
+             <ul class="list-disc ml-6">
+                 <li>**ECS-Konformität:** Strikte Trennung von Daten (Components) und Logik (Systems).</li>
+                 <li>**TypeScript:** Typisierung, Interfaces, TSDoc.</li>
+                 <li>**Basisklassen:** <code>ComponentBase</code>, <code>SystemBase</code>, <code>NodeBase</code> nutzen.</li>
+                 <li>**Metadaten:** <code>component-manifest.json</code> pflegen.</li>
+                 <li>**Registrierung:** Neue Elemente in <code>World</code>, <code>nodeFactory</code>, <code>SystemManager</code> bekannt machen.</li>
+             </ul>
+        </section>
+
+        <section id="tastaturkuerzel">
+            <h2>Tastaturkürzel</h2>
+             <ul class="list-disc ml-6">
+                 <li><code>Strg+S</code> / <code>Cmd+S</code>: Projekt speichern.</li>
+                 <li><code>Strg+Z</code> / <code>Cmd+Z</code>: Letzte Aktion rückgängig machen.</li>
+                 <li><code>Strg+Y</code> / <code>Cmd+Shift+Z</code>: Letzte rückgängig gemachte Aktion wiederholen.</li>
+                 <li><code>Entf</code> / <code>Rücktaste</code>: Löscht die aktuell ausgewählte Entity im Canvas.</li>
+             </ul>
+        </section>
+
+    </main>
+
+    <script>
+        // DOM-Elemente
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        const sections = document.querySelectorAll('main section');
+        const mainContent = document.querySelector('main.content');
+        const searchInput = document.getElementById('searchInput'); 
+        const originalContent = {}; // Speichert den Original-HTML-Inhalt jeder Sektion
+
+        /**
+         * Speichert den Original-HTML-Inhalt aller Abschnitte beim Laden der Seite.
+         */
+        function storeOriginalContent() {
+            sections.forEach(section => {
+                originalContent[section.id] = section.innerHTML;
+            });
+        }
+
+        /**
+         * Setzt alle Abschnitte auf ihren Originalzustand zurück (entfernt Highlights und zeigt alle an).
+         */
+        function resetContent() {
+            sections.forEach(section => {
+                section.innerHTML = originalContent[section.id];
+                section.style.display = 'block';
+            });
+        }
+
+        /**
+         * Ersetzt den Suchbegriff in einem Text-String durch einen hervorgehobenen Span.
+         * @param {string} text - Der Text, in dem gesucht werden soll.
+         * @param {string} query - Der Suchbegriff.
+         * @returns {string} Der Text mit HTML-Hervorhebungen.
+         */
+        function highlightText(text, query) {
+            if (!query) return text;
+            // Regex für globale, nicht-sensible Suche
+            const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+            // Ersetze den gefundenen Treffer ($1) mit dem Hervorhebungs-Span
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        /**
+         * Durchläuft rekursiv die Kindknoten eines Elements und wendet die Hervorhebung nur auf Textknoten an.
+         * Überspringt dabei den Inhalt von <code>-Tags.
+         * @param {HTMLElement} element - Das Startelement (z.B. eine <section>).
+         * @param {string} query - Der Suchbegriff.
+         */
+        function processTextNodes(element, query) {
+            if (element.tagName === 'CODE') return; // Überspringe Code-Blöcke
+
+            // Erstelle eine Kopie der Kindknoten-Liste, um Probleme bei der Knoten-Entfernung/Einfügung zu vermeiden
+            const nodes = Array.from(element.childNodes);
+
+            nodes.forEach(node => {
+                if (node.nodeType === 3) { // Text Node
+                    const newHtml = highlightText(node.nodeValue, query);
+                    
+                    if (newHtml !== node.nodeValue) {
+                        // Wenn der Text ersetzt wurde, ersetze den Textknoten durch das neue DOM-Fragment
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = newHtml;
+                        
+                        while (tempDiv.firstChild) {
+                            node.parentNode.insertBefore(tempDiv.firstChild, node);
+                        }
+                        node.remove();
+                    }
+                } else if (node.nodeType === 1) { // Element Node
+                    processTextNodes(node, query);
+                }
+            });
+        }
+
+        /**
+         * Bestimmt den aktuell sichtbaren Abschnitt und markiert den Link als aktiv.
+         * Funktioniert nur zuverlässig, wenn keine Suche aktiv ist (alle Abschnitte sichtbar).
+         */
+        function setActiveLink() {
+            let currentSectionId = '';
+            
+            // Finde den obersten sichtbaren Abschnitt
+            sections.forEach(section => {
+                if (section.style.display !== 'none') {
+                    const rect = section.getBoundingClientRect();
+                    // Wenn der obere Rand des Abschnitts im oberen Bereich des Viewports ist (z.B. <= 50px)
+                    if (rect.top <= 50 && rect.bottom > 50) { 
+                        currentSectionId = section.getAttribute('id');
+                    }
+                }
+            });
+
+            // Setze den aktiven Link
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+             
+             // Fallback: Setze den ersten Link aktiv, wenn ganz oben gescrollt ist
+             if (!currentSectionId && mainContent.scrollTop < sections[0].offsetTop && sidebarLinks.length > 0) {
+                 sidebarLinks[0].classList.add('active'); 
+             }
+        }
+
+        /**
+         * Hauptfunktion für die Suche und Filterung.
+         */
+        function filterContent() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            // 1. Zurücksetzen, wenn die Suchanfrage leer ist
+            if (query === '') {
+                resetContent();
+                setActiveLink();
+                return;
+            }
+
+            // 2. Suche und Hervorhebung
+            sections.forEach(section => {
+                // Den gesamten Textinhalt der Originalsektion prüfen (für Filterung)
+                // Wichtig: Wir nutzen den TextContent, um nicht versehentlich in Tags zu suchen
+                const originalTextContent = document.createElement('div');
+                originalTextContent.innerHTML = originalContent[section.id];
+                
+                if (originalTextContent.textContent.toLowerCase().includes(query)) {
+                    // Inhalt zurücksetzen (entfernt vorherige Highlights)
+                    section.innerHTML = originalContent[section.id];
+
+                    // Hervorhebung anwenden
+                    processTextNodes(section, query);
+
+                    section.style.display = 'block'; // Abschnitt anzeigen
+                } else {
+                    section.style.display = 'none';  // Abschnitt ausblenden
+                }
+            });
+
+            // 3. Scrollen zurücksetzen, um den ersten Treffer anzuzeigen
+            mainContent.scrollTop = 0;
+            
+            // 4. Aktiven Link in der Sidebar neu bestimmen
+            setActiveLink();
+        }
+
+        // --- Initialisierung und Events ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+             // Speichere den Originalinhalt beim Laden
+             storeOriginalContent();
+             
+             // Initialer Check
+             setActiveLink();
+             
+             // Listener für Eingaben im Suchfeld
+             if (searchInput) {
+                 searchInput.addEventListener('input', filterContent);
+             }
+        });
+
+        // Scroll-Listener für die Sidebar-Markierung
+        mainContent.addEventListener('scroll', setActiveLink);
+        
+        // Scroll-Logik für Sidebar-Links (Smooth Scroll)
+        sidebarLinks.forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                // Stelle sicher, dass der Abschnitt sichtbar ist (falls gerade gefiltert wird)
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement && targetElement.style.display === 'none') {
+                    // Setze die Suche zurück, wenn auf einen aktuell versteckten Link geklickt wird
+                    resetContent();
+                    searchInput.value = '';
+                }
+                
+                if(targetElement) {
+                    // Temporär Scroll-Listener deaktivieren
+                    mainContent.removeEventListener('scroll', setActiveLink);
+                    
+                    // Ziehe etwas Padding ab, damit der Header des Abschnitts sichtbar ist.
+                    const offset = targetElement.offsetTop - mainContent.offsetTop - 32;
+
+                    mainContent.scrollTo({
+                        top: offset,
+                        behavior: 'smooth'
+                    });
+
+                    // Aktiven Link sofort setzen (visuelles Feedback)
+                    sidebarLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Scroll-Listener nach kurzer Verzögerung wieder aktivieren
+                    setTimeout(() => {
+                        mainContent.addEventListener('scroll', setActiveLink);
+                        setActiveLink(); 
+                    }, 800); 
+                }
+            });
+        });
+    </script>
+</body>
+</html>

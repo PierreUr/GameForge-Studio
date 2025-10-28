@@ -24,7 +24,10 @@ Dieser Plan enthaelt 160 atomare Arbeitsschritte zur Entwicklung von GameForge S
 - [X]  Asuwählen in der Libary oder im Graph Libary zeigt die Optionen schon im Inspetor an ohne das sie im Canvas geladen werden müssen
 - [X]  Canvas zeit ein Karo raster im hintergrund
 - [X]  Live Previre Implentierung
-- [X]  Canvas zeit einen Rahmen für die verschiendenen Layouts Desktop  /  Mobile / Tablet
+- [ ]  Canvas zeit einen Rahmen für die verschiendenen Layouts Desktop  /  Mobile / Tablet im Viewport oben link mit einstellungen welche beim Anwählen und Anklicken im Inspertor (Dort wor die details eines Card angezeigt werden )stehen:
+        a) DEsign Height einstellungen:
+      - Auto Height; via Checkbox: das Design wird Verticale verlängert abehänging des neuen design
+      - Height in PX angeben
 - [ ]  alle Optionen lassen sich GRouppiert oder einzeln als fenster ausdocken
 - [ ]  Dummy Objekte für Lebenbalken Stats usw einfügen (vorlage für Datenbank abrufe es soll Auswahl felder der Stats die in der Datenbank zu verfügung stehen für das Template augelistet werden Also den Tag Attribut / Template it müssen dann stimmen für diese logik)
 - [ ]  Graph editor Abjekte anfassbar machen und bewegbar

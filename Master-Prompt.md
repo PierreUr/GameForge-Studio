@@ -38,6 +38,7 @@ GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (I
 4.  **Encoding:** Alle Lese- und Schreibvorgänge müssen UTF-8 verwenden.
 5.  **Modularität:** Es ist extrem wichtig, dass jede Funktion, wo immer es möglich und sinnvoll ist, in eine eigenständige, separate Datei ausgelagert wird. Monolithische Strukturen sind strikt zu vermeiden.
 6.  **Architektur-Dokumentation:** Bei der Implementierung neuer Features oder der Erfüllung von Tasks muss die `Anwendungsarchitektur.json` aktualisiert werden. Abgeschlossene Tasks sind in die `completedTasks`-Liste einzutragen.
+7.  **Changelog-Archivierung:** Das `Changelog.md` dient als temporäres Log für die aktuelle Aufgabe. Nach Abschluss der Aufgabe werden diese Einträge in `Changelog-Archiv.md` überführt und mit Kommentaren (Aufgabe, Schwierigkeit, Lösung) versehen.
 
 ---
 ### Self-Correction Workflow (Critical)

@@ -183,7 +183,7 @@
                                          }
                 },
     "projectName":  "GameForge Studio",
-    "version":  "1.8.0",
+    "version":  "1.11.0",
     "completedTasks":  [
                            "163-editor-ui-debug-id-tooltip-implementieren",
                            "161-graph-interaktive-node-library-implementieren",
@@ -193,6 +193,10 @@
                            "167-editor-ui-debug-icon-position-fix",
                            "168-editor-ui-debug-icon-global-toggle-implementieren",
                            "170-editor-ui-canvas-sichtbarkeit-bugfix",
-                           "169-editor-ui-admin-panel-fuer-tests-implementieren"
+                           "169-editor-ui-admin-panel-fuer-tests-implementieren",
+                           "102-rendering-grid-overlay-fuer-editor-modus-implementieren",
+                           "089-editor-ui-live-vorschau-button-implementieren",
+                           "editor-ui-device-preview-frame-implementieren",
+                           "editor-erweiterte-layout-speicherung-und-ui-feedback"
                        ]
 }

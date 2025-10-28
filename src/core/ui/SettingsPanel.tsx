@@ -4,56 +4,68 @@ import NumberInput from './inputs/NumberInput';
 import ColorPicker from './inputs/ColorPicker';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
 
+export const devicePresets = [
+    { name: 'Desktop', width: 1920, height: 1080 },
+    { name: 'Tablet', width: 768, height: 1024 },
+    { name: 'Mobile', width: 375, height: 812 },
+];
+
 interface SettingsPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    config: GridConfig;
-    onConfigChange: (newConfig: Partial<GridConfig>) => void;
+    gridConfig: GridConfig;
+    onGridConfigChange: (newConfig: Partial<GridConfig>) => void;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, config, onConfigChange }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
+    isOpen, 
+    onClose, 
+    gridConfig, 
+    onGridConfigChange,
+}) => {
     if (!isOpen) return null;
 
-    const handleValueChange = (key: keyof GridConfig, value: any) => {
-        onConfigChange({ [key]: value });
+    const handleGridValueChange = (key: keyof GridConfig, value: any) => {
+        onGridConfigChange({ [key]: value });
     };
 
     const numberToHex = (num: number) => '#' + ('000000' + num.toString(16)).slice(-6);
     const hexToNumber = (hex: string) => parseInt(hex.replace('#', ''), 16);
-
+    
     return (
         <div style={styles.overlay}>
             <div style={styles.modal}>
                 <h3 style={styles.header}>Settings</h3>
                 <div style={styles.content}>
+
                     <div style={styles.settingGroup}>
                         <h4 style={styles.groupHeader}>Canvas Grid</h4>
                         <div style={styles.settingItem}>
                             <BooleanCheckbox 
                                 label="Show Grid" 
-                                value={config.isVisible} 
-                                onChange={(val) => handleValueChange('isVisible', val)} 
+                                value={gridConfig.isVisible} 
+                                onChange={(val) => handleGridValueChange('isVisible', val)} 
                             />
                         </div>
                         <div style={styles.settingItem}>
                             <NumberInput 
                                 label="Tile Size" 
-                                value={config.size} 
-                                onChange={(val) => handleValueChange('size', val)} 
+                                value={gridConfig.size} 
+                                onChange={(val) => handleGridValueChange('size', val)} 
                             />
                         </div>
                          <div style={styles.settingItem}>
                             <ColorPicker 
                                 label="Color 1" 
-                                value={numberToHex(config.color1)}
-                                onChange={(val) => handleValueChange('color1', hexToNumber(val))} 
+                                value={numberToHex(gridConfig.color1)}
+                                onChange={(val) => handleGridValueChange('color1', hexToNumber(val))} 
                             />
                         </div>
                          <div style={styles.settingItem}>
                             <ColorPicker 
                                 label="Color 2" 
-                                value={numberToHex(config.color2)}
-                                onChange={(val) => handleValueChange('color2', hexToNumber(val))} 
+                                value={numberToHex(gridConfig.color2)}
+                                onChange={(val) => handleGridValueChange('color2', hexToNumber(val))} 
                             />
                         </div>
                     </div>
@@ -115,6 +127,9 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '0.5rem',
         backgroundColor: '#333',
         borderRadius: '4px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     footer: {
         marginTop: '1.5rem',

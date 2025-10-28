@@ -17,5 +17,5 @@ Das gesamte Projektmanagement basiert auf drei miteinander verbundenen Dateien:
 
 ---
 ### Protokoll-Fuehrung
-* **CHANGELOG.md:** Nach jeder erfolgreichen Code-Ã„nderung wird ein neuer Eintrag im CHANGELOG.md erstellt.
+* **CHANGELOG.md & Changelog-Archiv.md:** Das `CHANGELOG.md` dokumentiert nur die Änderungen, die im Rahmen des *aktuell bearbeiteten ToDo-Punktes* vorgenommen wurden. Sobald dieser Punkt abgeschlossen ist, werden die Einträge in das `Changelog-Archiv.md` verschoben. Dort werden sie um Kommentare zur Aufgabe, den Herausforderungen und der finalen Lösung ergänzt.
 * **BUGLOG.md:** Neu gemeldete Fehler werden im BUGLOG.md protokolliert, bevor die Planungsphase beginnt.

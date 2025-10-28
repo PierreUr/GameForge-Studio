@@ -1,6 +1,7 @@
 import { World } from '../ecs/World';
 import { Graph } from '../graph/Graph';
 import { IProject } from './IProject';
+import { EventBus } from '../ecs/EventBus';
 
 const CURRENT_PROJECT_VERSION = "1.2.0";
 const AUTO_SAVE_KEY = 'gameforge-autosave';
@@ -8,14 +9,32 @@ const AUTO_SAVE_KEY = 'gameforge-autosave';
 /**
  * @class ProjectManager
  * @description A singleton class to manage the overall project state, including saving,
- * loading, versioning, and auto-saving.
+ * loading, versioning, and auto-saving. It now supports multiple layouts per project.
  */
 export class ProjectManager {
     private static instance: ProjectManager;
     private world: World | null = null;
     private graph: Graph | null = null;
+    
+    private currentProject: IProject;
+    private activeLayoutKey: string = 'default';
 
     private constructor() {
+        this.currentProject = this.createEmptyProject();
+    }
+
+    private createEmptyProject(): IProject {
+        return {
+            metadata: {
+                projectName: 'New GameForge Project',
+                version: CURRENT_PROJECT_VERSION,
+                activeLayoutKey: 'default',
+            },
+            layouts: {
+                default: { entities: [], components: {} }
+            },
+            logicGraphState: { nodes: [], connections: [] },
+        };
     }
 
     public static getInstance(): ProjectManager {
@@ -33,10 +52,31 @@ export class ProjectManager {
     public init(world: World, graph: Graph): void {
         this.world = world;
         this.graph = graph;
+        this.graph.deserialize(this.currentProject.logicGraphState);
+        this.world.loadProjectState(this.currentProject.layouts.default);
     }
 
     /**
-     * Saves the entire project state to a JSON file and triggers a download.
+     * Switches the active layout, saving the current scene state and loading the new one.
+     * @param {string} newLayoutKey - The key of the new layout ('default', 'desktop', etc.).
+     */
+    public switchActiveLayout(newLayoutKey: string): void {
+        if (!this.world || newLayoutKey === this.activeLayoutKey) {
+            return;
+        }
+
+        const currentEcsState = this.world.getProjectState();
+        (this.currentProject.layouts as any)[this.activeLayoutKey] = currentEcsState;
+
+        this.activeLayoutKey = newLayoutKey;
+        this.currentProject.metadata.activeLayoutKey = newLayoutKey;
+
+        const newEcsState = (this.currentProject.layouts as any)[newLayoutKey] || { entities: [], components: {} };
+        this.world.loadProjectState(newEcsState);
+    }
+
+    /**
+     * Saves the entire project state, including all layouts, to a JSON file.
      */
     public saveProject(): void {
         if (!this.world || !this.graph) {
@@ -45,16 +85,13 @@ export class ProjectManager {
         }
 
         try {
-            const project: IProject = {
-                metadata: {
-                    projectName: 'GameForge Project',
-                    version: CURRENT_PROJECT_VERSION,
-                },
-                ecsState: this.world.getProjectState(),
-                logicGraphState: this.graph.serialize(),
-            };
+            // Ensure the currently active layout is saved before serializing
+            (this.currentProject.layouts as any)[this.activeLayoutKey] = this.world.getProjectState();
+            this.currentProject.logicGraphState = this.graph.serialize();
+            this.currentProject.metadata.version = CURRENT_PROJECT_VERSION;
+            this.currentProject.metadata.activeLayoutKey = this.activeLayoutKey;
 
-            const jsonString = JSON.stringify(project, null, 2);
+            const jsonString = JSON.stringify(this.currentProject, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -94,17 +131,28 @@ export class ProjectManager {
                     
                     const projectState: IProject = JSON.parse(content);
 
-                    // Version Check
                     if (projectState.metadata?.version !== CURRENT_PROJECT_VERSION) {
-                        alert(`Warning: This project was saved with a different version (${projectState.metadata?.version || 'unknown'}). The current version is ${CURRENT_PROJECT_VERSION}. Some data may not load correctly.`);
+                        alert(`Warning: Project version (${projectState.metadata?.version}) differs from current version (${CURRENT_PROJECT_VERSION}).`);
                     }
 
-                    if (!projectState.ecsState || !projectState.logicGraphState) {
-                        throw new Error('Invalid project file structure.');
+                    if (!projectState.layouts || !projectState.logicGraphState) {
+                        // Backwards compatibility for old format
+                        if ((projectState as any).ecsState) {
+                            projectState.layouts = { default: (projectState as any).ecsState };
+                            projectState.metadata.activeLayoutKey = 'default';
+                        } else {
+                            throw new Error('Invalid project file structure.');
+                        }
                     }
 
-                    this.world!.loadProjectState(projectState.ecsState);
-                    this.graph!.deserialize(projectState.logicGraphState);
+                    this.currentProject = projectState;
+                    this.activeLayoutKey = this.currentProject.metadata.activeLayoutKey || 'default';
+                    const stateToLoad = (this.currentProject.layouts as any)[this.activeLayoutKey] || this.currentProject.layouts.default;
+
+                    this.world!.loadProjectState(stateToLoad);
+                    this.graph!.deserialize(this.currentProject.logicGraphState);
+                    
+                    EventBus.getInstance().publish('project:loaded', { activeLayoutKey: this.activeLayoutKey });
 
                 } catch (error) {
                     console.error('[ProjectManager] Failed to load project:', error);
@@ -131,74 +179,77 @@ export class ProjectManager {
      */
     private autoSaveToLocalStorage(): void {
         if (!this.world || !this.graph) {
-            return; // Not ready to save yet
+            return; 
         }
         try {
-            const project: IProject = {
-                metadata: {
-                    projectName: 'Auto-Save',
-                    version: CURRENT_PROJECT_VERSION,
-                },
-                ecsState: this.world.getProjectState(),
-                logicGraphState: this.graph.serialize(),
-            };
-            const jsonString = JSON.stringify(project);
+            // Similar to saveProject, update the current layout before saving
+            (this.currentProject.layouts as any)[this.activeLayoutKey] = this.world.getProjectState();
+            this.currentProject.logicGraphState = this.graph.serialize();
+            this.currentProject.metadata.activeLayoutKey = this.activeLayoutKey;
+
+            const jsonString = JSON.stringify(this.currentProject);
             localStorage.setItem(AUTO_SAVE_KEY, jsonString);
         } catch (error) {
             console.error('[ProjectManager] Auto-save to localStorage failed:', error);
         }
     }
 
-    /**
-     * Exports the current project as a standalone HTML file.
-     */
-    public exportToStandaloneHTML(): void {
+    private _generateStandaloneHTML(isPreview: boolean): string | null {
         if (!this.world || !this.graph) {
-            alert('Cannot export: ProjectManager not fully initialized.');
-            return;
+            alert('Cannot generate HTML: ProjectManager not fully initialized.');
+            return null;
         }
 
         try {
-            const projectState: IProject = {
-                metadata: {
-                    projectName: 'GameForge Export',
-                    version: CURRENT_PROJECT_VERSION,
-                },
-                ecsState: this.world.getProjectState(),
-                logicGraphState: this.graph.serialize(),
-            };
-            const projectStateString = JSON.stringify(projectState);
+            // Ensure current layout is saved before generating
+            (this.currentProject.layouts as any)[this.activeLayoutKey] = this.world.getProjectState();
+            this.currentProject.logicGraphState = this.graph.serialize();
+            
+            const projectStateString = JSON.stringify(this.currentProject);
+            
+            const title = isPreview ? 'GameForge Project Preview' : 'GameForge Project';
+            const bodyContent = isPreview
+                ? `<div class="container"><h1>Live Preview</h1><p>Game runner not yet implemented.</p></div>`
+                : `<div id="game-container"></div>`;
 
-            // This is a simplified HTML template. A real implementation would need a full game runner.
-            const htmlContent = `
+            const runnerScript = `
+                console.log('Game Runner Initialized.');
+                const projectData = JSON.parse(document.getElementById('project-data').textContent);
+                console.log('Project Data Loaded:', projectData);
+            `;
+
+            return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>GameForge Project</title>
-    <style>body { margin: 0; background-color: #000; }</style>
+    <meta charset="UTF-8"><title>${title}</title>
+    <style>body{margin:0;background:#1a1a1a;color:#eee;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;}.container{text-align:center;padding:2rem;border:1px solid #444;border-radius:8px;background:#2a2a2a;}</style>
 </head>
 <body>
-    <div id="game-container"></div>
-    <script type="application/json" id="project-data">
-        ${projectStateString}
-    </script>
-    <script>
-        // Placeholder for a lightweight game runner engine
-        console.log('Game Runner Initialized.');
-        const projectDataElement = document.getElementById('project-data');
-        if (projectDataElement) {
-            const projectData = JSON.parse(projectDataElement.textContent || '{}');
-            console.log('Project Data Loaded:', projectData);
-            // Here, the game runner would deserialize the project and start the game loop.
-            alert('Project data loaded! Check the console. Game execution is not yet implemented.');
-        } else {
-            console.error('Project data not found!');
-        }
-    </script>
+    ${bodyContent}
+    <script type="application/json" id="project-data">${projectStateString}</script>
+    <script>${runnerScript}</script>
 </body>
 </html>`;
+        } catch (error) {
+            console.error('[ProjectManager] Failed to generate standalone HTML:', error);
+            alert('An error occurred during HTML generation.');
+            return null;
+        }
+    }
+    
+    public previewProject(): void {
+        const htmlContent = this._generateStandaloneHTML(true);
+        if (htmlContent) {
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+    }
 
+    public exportToStandaloneHTML(): void {
+        const htmlContent = this._generateStandaloneHTML(false);
+        if (htmlContent) {
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -208,10 +259,6 @@ export class ProjectManager {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
-        } catch (error) {
-            console.error('[ProjectManager] Failed to export project to HTML:', error);
-            alert('An error occurred during HTML export. See console for details.');
         }
     }
 }

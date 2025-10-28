@@ -2,12 +2,16 @@ import React from 'react';
 import TabSystem, { Tab } from './TabSystem';
 import LibraryPanel from './LibraryPanel';
 import AssetPanel from './AssetPanel';
+import { FrameConfig } from '../rendering/Renderer';
+import ViewportControls from './ViewportControls';
 
 interface LeftSidebarProps {
     onViewChange: (viewId: 'canvas' | 'logic-graph') => void;
+    frameConfig: FrameConfig;
+    onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
 }
 
-const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
+const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange, frameConfig, onFrameConfigChange }) => {
     
     const tabs: Tab[] = [
         {
@@ -38,6 +42,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
 
     return (
         <div style={styles.sidebarContainer}>
+            <ViewportControls 
+                frameConfig={frameConfig}
+                onFrameConfigChange={onFrameConfigChange}
+            />
             <TabSystem tabs={tabs} onTabChange={handleTabChange} />
         </div>
     );

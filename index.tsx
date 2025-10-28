@@ -22,7 +22,7 @@ import RightSidebar from './src/core/ui/RightSidebar';
 import CanvasContainer from './src/core/ui/CanvasContainer';
 import Toolbar from './src/core/ui/Toolbar';
 import { RenderingSystem } from './src/core/library/RenderingSystem';
-import { Renderer, GridConfig } from './src/core/rendering/Renderer';
+import { Renderer, GridConfig, FrameConfig } from './src/core/rendering/Renderer';
 import { LogicSystem } from './src/core/library/LogicSystem';
 import { Graph } from './src/core/graph/Graph';
 import { GraphInterpreter } from './src/core/graph/GraphInterpreter';
@@ -32,8 +32,19 @@ import { DestroyEntityCommand } from './src/core/commands/DestroyEntityCommand';
 import LogicGraphPanel from './src/core/ui/LogicGraphPanel';
 import { DebugProvider } from './src/core/ui/dev/DebugContext';
 import AdminPanel from './src/core/ui/dev/AdminPanel';
-import SettingsPanel from './src/core/ui/SettingsPanel';
+import SettingsPanel, { devicePresets } from './src/core/ui/SettingsPanel';
+import { EventBus } from './src/core/ecs/EventBus';
 
+
+const getLayoutKeyFromConfig = (config: FrameConfig): string => {
+    if (!config.isVisible) {
+        return 'default';
+    }
+    const preset = devicePresets.find(p => p.width === config.width && p.height === config.height)
+        || devicePresets.find(p => p.height === config.width && p.width === config.height);
+
+    return preset?.name.toLowerCase() || 'default';
+};
 
 const App = () => {
     const [ecsWorld, setEcsWorld] = useState<World | null>(null);
@@ -48,6 +59,14 @@ const App = () => {
         color1: 0x444444,
         color2: 0x333333,
     });
+    const [frameConfig, setFrameConfig] = useState<FrameConfig>({
+        isVisible: false,
+        width: 1920,
+        height: 1080,
+        color: 0x00aaff,
+        orientation: 'landscape',
+    });
+    const [activeLayoutKey, setActiveLayoutKey] = useState('default');
 
 
     useEffect(() => {
@@ -100,6 +119,7 @@ const App = () => {
                 const renderer = Renderer.getInstance();
                 if(renderer.isInitialized) {
                     renderer.setGridConfig(gridConfig);
+                    renderer.setFrameConfig(frameConfig);
                 }
 
             } catch (e: any) {
@@ -109,6 +129,28 @@ const App = () => {
         
         setupEcs();
 
+        const handleProjectLoaded = (payload: { activeLayoutKey: string }) => {
+            const loadedKey = payload.activeLayoutKey;
+            setActiveLayoutKey(loadedKey);
+            
+            if (loadedKey === 'default') {
+                setFrameConfig(prev => ({ ...prev, isVisible: false }));
+            } else {
+                const preset = devicePresets.find(p => p.name.toLowerCase() === loadedKey);
+                if (preset) {
+                    setFrameConfig(prev => ({
+                        ...prev,
+                        isVisible: true,
+                        width: preset.width,
+                        height: preset.height,
+                        orientation: preset.width > preset.height ? 'landscape' : 'portrait'
+                    }));
+                }
+            }
+        };
+
+        EventBus.getInstance().subscribe('project:loaded', handleProjectLoaded);
+
         return () => {
             if (gameLoop && gameLoop.isRunning) {
                 gameLoop.stop();
@@ -116,6 +158,7 @@ const App = () => {
             if(autoSaveInterval) {
                 clearInterval(autoSaveInterval);
             }
+            EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
         };
 
     }, []);
@@ -186,6 +229,10 @@ const App = () => {
         ProjectManager.getInstance().exportToStandaloneHTML();
     }, []);
 
+    const handlePreviewProject = useCallback(() => {
+        ProjectManager.getInstance().previewProject();
+    }, []);
+
     const handleUndo = useCallback(() => {
         CommandManager.getInstance().undo();
     }, []);
@@ -238,6 +285,21 @@ const App = () => {
         });
     }, []);
 
+    const handleFrameConfigChange = useCallback((newConfig: Partial<FrameConfig>) => {
+        setFrameConfig(prevConfig => {
+            const updatedConfig = { ...prevConfig, ...newConfig };
+            const newLayoutKey = getLayoutKeyFromConfig(updatedConfig);
+            
+            if (newLayoutKey !== activeLayoutKey) {
+                ProjectManager.getInstance().switchActiveLayout(newLayoutKey);
+                setActiveLayoutKey(newLayoutKey);
+            }
+
+            Renderer.getInstance().setFrameConfig(updatedConfig);
+            return updatedConfig;
+        });
+    }, [activeLayoutKey]);
+
     const handleToggleColliders = useCallback(() => {
         renderingSystemRef.current?.toggleDebugRendering();
     }, []);
@@ -250,14 +312,18 @@ const App = () => {
                     onRedo={handleRedo}
                     onSave={handleSaveProject}
                     onLoad={handleLoadProject}
-                    onPreview={() => alert('Live Preview not implemented yet.')}
+                    onPreview={handlePreviewProject}
                     onToggleColliders={handleToggleColliders}
                     onExportHTML={handleExportHTML}
                     onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
                     onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
                 />
                 <ResizablePanels>
-                    <LeftSidebar onViewChange={handleViewChange} />
+                    <LeftSidebar 
+                        onViewChange={handleViewChange} 
+                        frameConfig={frameConfig}
+                        onFrameConfigChange={handleFrameConfigChange}
+                    />
                     {activeView === 'canvas' ? (
                          <CanvasContainer world={ecsWorld} renderingSystem={renderingSystemRef.current} />
                     ) : (
@@ -277,8 +343,8 @@ const App = () => {
                 <SettingsPanel
                     isOpen={isSettingsPanelOpen}
                     onClose={() => setIsSettingsPanelOpen(false)}
-                    config={gridConfig}
-                    onConfigChange={handleGridConfigChange}
+                    gridConfig={gridConfig}
+                    onGridConfigChange={handleGridConfigChange}
                 />
             )}
         </div>

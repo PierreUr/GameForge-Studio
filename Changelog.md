@@ -1,5 +1,17 @@
 # Changelog - GameForge Studio
 
+## [1.11.0]
+- **[FEAT]** Implemented a device-specific layout saving system. The project file now stores separate scene layouts for Desktop, Tablet, and Mobile views. Selecting a device preset in the settings now automatically loads the corresponding layout.
+- **[FEAT]** Added a visual feedback label to the top-left corner of the canvas that displays the current device preview settings (e.g., "Landscape (1920x1080)") when a frame is active.
+- **[CHORE]** Refactored the changelog process. Changelogs are now archived with developer comments upon task completion.
+
+## [1.10.0]
+- **[FEAT]** Implemented a device preview frame in the canvas. Users can now select device presets (Desktop, Tablet, Mobile) and orientation from the Settings panel to visualize different screen sizes.
+
+## [1.9.0]
+- **[TASK-089]** [FEAT] Implemented the "Live Preview" functionality. Clicking the button now opens a new tab containing a standalone version of the current project, ready for a future game runner.
+- **[TASK-102]** [CHORE] Marked the grid overlay feature as complete in the project's ToDo list, as it was already implemented and functional.
+
 ## [1.8.0]
 - **[TASK-169]** [FEAT] Added a new "Admin Panel" accessible from the toolbar. This panel allows developers to manually trigger the full suite of system self-tests and view the results, replacing the automatic execution on startup.
 - **[TASK-170]** [FIX] Resolved a critical CSS layout bug that caused the central panel (containing the Canvas or Logic Graph) to collapse and become invisible.

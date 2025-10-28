@@ -1,7 +1,7 @@
 # GameForge Studio - Entwicklungsplan
 
 **Projekt:** GameForge Studio  
-**Version:** 1.8.0  
+**Version:** 1.11.0  
 **Gesamtanzahl Tasks:** 160
 **Status:** In Entwicklung
 
@@ -22,10 +22,9 @@ Dieser Plan enthaelt 160 atomare Arbeitsschritte zur Entwicklung von GameForge S
 - [X]  Canvas läst sich mich gedrückt maustaste begegen / und läd immer Zentriert
 - [X]  Ennätige Logs aus der Konsole entfernen
 - [X]  Asuwählen in der Libary oder im Graph Libary zeigt die Optionen schon im Inspetor an ohne das sie im Canvas geladen werden müssen
-- [ ]  Canvas zeit ein Karo raster im hintergrund
-- [ ]  Live Previre Implentierung
-- [ ]  
-- [ ]  Canvas zeit einen Rahmen für die verschiendenen Layouts Desktop  /  Mobile / Tablet
+- [X]  Canvas zeit ein Karo raster im hintergrund
+- [X]  Live Previre Implentierung
+- [X]  Canvas zeit einen Rahmen für die verschiendenen Layouts Desktop  /  Mobile / Tablet
 - [ ]  alle Optionen lassen sich GRouppiert oder einzeln als fenster ausdocken
 - [ ]  Dummy Objekte für Lebenbalken Stats usw einfügen (vorlage für Datenbank abrufe es soll Auswahl felder der Stats die in der Datenbank zu verfügung stehen für das Template augelistet werden Also den Tag Attribut / Template it müssen dann stimmen für diese logik)
 - [ ]  Graph editor Abjekte anfassbar machen und bewegbar

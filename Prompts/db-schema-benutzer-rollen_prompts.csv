@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere TypeORM-EntitÃ¤tsdefinitionen fÃ¼r 'User', 'Role' und 'Permission'. Implementiere die Many-to-Many-Beziehungen zwischen User und Role sowie zwischen Role und Permission. Die User-EntitÃ¤t soll eine 'BeforeInsert'-Hook enthalten, um das Passwort automatisch mit 'bcrypt' zu hashen."
+"test","Beschreibe, wie man durch AusfÃ¼hren einer TypeORM-Migration (oder Synchronisierung im Entwicklungsmodus) Ã¼berprÃ¼ft, ob die Tabellen 'user', 'role', 'permission' sowie die Join-Tabellen 'user_roles_role' und 'role_permissions_permission' korrekt in der Datenbank erstellt werden."

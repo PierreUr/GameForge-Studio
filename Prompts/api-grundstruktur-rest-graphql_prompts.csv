@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere die 'npm install'-Befehle fÃ¼r '@nestjs/graphql', '@nestjs/apollo', 'apollo-server-express' und 'graphql'. Erstelle ein Code-Beispiel, wie das 'GraphQLModule' in das 'AppModule' importiert wird, mit der 'autoSchemaFile' Option gesetzt auf 'schema.gql' fÃ¼r die automatische Schema-Generierung."
+"test","Beschreibe, wie man testet, ob der GraphQL-Endpunkt aktiv ist, indem man nach dem Serverstart die URL 'http://localhost:3000/graphql' aufruft und prÃ¼ft, ob das GraphQL-Playground-Interface geladen wird."

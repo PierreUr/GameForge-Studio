@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine erweiterte TypeORM-EntitÃ¤tsdefinition fÃ¼r 'Task'. Implementiere die Selbst-Referenzierung fÃ¼r die Hierarchie ('parent' und 'children'). FÃ¼ge Many-to-Many-Beziehungen zu 'User' (fÃ¼r Zuweisungen) und zu einer neuen 'Tag'-EntitÃ¤t hinzu. Verwende 'jsonb' fÃ¼r Felder wie 'checklist' und 'recurrenceRule'."
+"test","Beschreibe, wie man durch eine Migration Ã¼berprÃ¼ft, ob die 'task'-Tabelle mit allen neuen Spalten und die notwendigen Join-Tabellen (z.B. 'task_assignees_user', 'task_tags_tag') korrekt erstellt werden."

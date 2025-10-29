@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere TypeORM-EntitÃ¤tsdefinitionen fÃ¼r 'Character' und 'Pet'. Implementiere die One-to-One-Beziehung zu 'User' fÃ¼r beide EntitÃ¤ten. Beim Erstellen eines neuen Benutzers sollen via 'Subscriber' oder 'Hook' automatisch ein Charakter und ein Pet mit initialen Werten erstellt werden."
+"test","Beschreibe, wie man testet: 1. Erstelle einen neuen Benutzer Ã¼ber die Registrierungs-API. 2. ÃœberprÃ¼fe in den Tabellen 'character' und 'pet', ob fÃ¼r den neuen Benutzer automatisch EintrÃ¤ge mit Standardwerten angelegt wurden."

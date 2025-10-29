@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den Code fÃ¼r einen 'JwtAuthGuard', der die Standard-AuthGuard-Klasse von '@nestjs/passport' erweitert. Erstelle zusÃ¤tzlich einen 'RolesGuard', der die Rollen aus dem JWT-Payload des Benutzers extrahiert und mit den Ã¼ber einen '@Roles()'-Decorator definierten Rollen abgleicht. Zeige, wie beide Guards an einem Beispiel-Controller angewendet werden."
+"test","Beschreibe den Test: 1. SchÃ¼tze einen Endpunkt, sodass er nur fÃ¼r die 'ADMIN'-Rolle zugÃ¤nglich ist. 2. Versuche, den Endpunkt mit einem JWT eines normalen Benutzers aufzurufen. Erwarte einen 'Forbidden'-Fehler (HTTP 403). 3. Versuche, den Endpunkt mit einem JWT eines Admin-Benutzers aufzurufen. Erwarte eine erfolgreiche Antwort (HTTP 200)."

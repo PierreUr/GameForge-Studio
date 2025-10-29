@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","1. Generiere eine React-Komponente 'CustomFieldManager' fÃ¼r die Admin-OberflÃ¤che, die es erlaubt, neue Feld-Definitionen (Name, Typ) zu erstellen. 2. Erweitere die 'TaskDetailView'-Komponente: Sie soll die Liste der verfÃ¼gbaren benutzerdefinierten Felder abrufen und basierend auf dem 'type' jedes Feldes dynamisch das passende Input-Element (z.B. 'TextInput', 'NumberInput') rendern."
+"test","Beschreibe einen manuellen UI-Test: 1. Erstelle im Admin-Bereich ein neues benutzerdefiniertes Feld 'Kosten' vom Typ 'Zahl'. 2. Ã–ffne eine beliebige Aufgabe in der Detailansicht. 3. ÃœberprÃ¼fe, ob ein neues Eingabefeld mit der Beschriftung 'Kosten' erscheint. 4. Gib einen Wert ein, speichere und lade neu, um die Persistenz zu prÃ¼fen."

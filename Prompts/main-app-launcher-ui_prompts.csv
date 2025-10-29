@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine React-Komponente 'LauncherDashboard'. Diese Komponente soll ein Layout (z.B. mit CSS Grid) definieren, das Bereiche fÃ¼r das 'GamificationWidget', die Haupt-Aufgabenansicht ('TasksView') und eine 'ModuleListView' vorsieht. Die 'ModuleListView' soll via 'fetch' die '/modules' abrufen und als Liste von klickbaren Karten darstellen."
+"test","Beschreibe einen manuellen UI-Test: 1. Logge dich als normaler Benutzer ein. 2. ÃœberprÃ¼fe, ob das Launcher-Dashboard mit allen drei Hauptbereichen (Gamification, Aufgaben, Module) korrekt geladen wird."

@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den vollstÃ¤ndigen Code fÃ¼r eine 'handbuch.html'-Datei. Die Datei soll ein ansprechendes, dunkles Theme haben. Enthalte einen Header, einen Haupt-Container und Basis-CSS fÃ¼r 'section.task-entry', 'h2', 'h3', 'p', 'pre', 'code', 'ul', 'li'. FÃ¼ge einen Einleitungstext hinzu, der erklÃ¤rt, dass dieses Dokument automatisch mit dem Projektfortschritt wÃ¤chst."
+"test","Beschreibe, wie man prÃ¼ft, ob die 'handbuch.html' korrekt im Browser gerendert wird und das Basis-Styling angewendet wurde."

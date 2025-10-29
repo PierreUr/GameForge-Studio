@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den vollstÃ¤ndigen Code fÃ¼r eine 'index.html'-Datei. Diese Datei muss eine Progress-Bar und einen Log-Ausgabebereich enthalten. Integriere ein Skript, das alle 2 Sekunden die lokale 'progress.json' mittels 'fetch' abruft und die Progress-Bar sowie den Log-Bereich basierend auf den Werten 'completedTasks', 'totalTasks' und 'testLog' aktualisiert."
+"test","Erstelle ein Test-Szenario fÃ¼r die 'index.html'. Beschreibe, wie man manuell prÃ¼ft, ob die Progress-Bar auf eine Ã„nderung in 'progress.json' (z.B. ErhÃ¶hung von 'completedTasks') reagiert und ob neue Log-EintrÃ¤ge korrekt angezeigt werden."

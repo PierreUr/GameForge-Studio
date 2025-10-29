@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine TypeORM-EntitÃ¤t 'AutomationRule'. Erstelle einen 'AutomationService', der auf das 'task.status.changed'-Event hÃ¶rt. In der Listener-Methode soll der Service alle Regeln abrufen, deren Trigger-Typ 'STATUS_CHANGE' ist und deren Bedingung (z.B. 'neuer Status ist "Done"') zutrifft. Implementiere beispielhaft eine Aktion 'ASSIGN_USER', die den 'TasksService' aufruft, um die Zuweisung der Aufgabe zu Ã¤ndern."
+"test","Beschreibe einen Test: 1. Erstelle eine Automatisierungsregel in der Datenbank: 'Wenn Status auf "Done" geÃ¤ndert wird, weise Benutzer mit ID 5 zu'. 2. Ã„ndere den Status einer Aufgabe auf 'Done'. 3. ÃœberprÃ¼fe, ob die Aufgabe anschlieÃŸend dem Benutzer mit ID 5 zugewiesen ist."

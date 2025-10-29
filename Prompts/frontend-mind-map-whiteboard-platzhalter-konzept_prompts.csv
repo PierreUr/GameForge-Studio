@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den Code fÃ¼r zwei einfache React-Komponenten, 'MindMapView' und 'WhiteboardView'. Jede Komponente soll nur einen Container mit einem Text wie 'Mind Map Feature - Coming Soon!' rendern. Zeige, wie diese Komponenten in einem React Router (oder einem Ã¤quivalenten Routing-System) registriert werden."
+"test","Beschreibe, wie man testet, ob die Platzhalter korrekt funktionieren, indem man die entsprechenden URLs (z.B. '/mindmap', '/whiteboard') aufruft und Ã¼berprÃ¼ft, ob die 'Coming Soon'-Nachricht angezeigt wird."

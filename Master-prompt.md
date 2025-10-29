@@ -39,6 +39,8 @@ GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (I
 5.  **Modularität:** Es ist extrem wichtig, dass jede Funktion, wo immer es möglich und sinnvoll ist, in eine eigenständige, separate Datei ausgelagert wird. Monolithische Strukturen sind strikt zu vermeiden.
 6.  **Architektur-Dokumentation:** Bei der Implementierung neuer Features oder der Erfüllung von Tasks muss die `Anwendungsarchitektur.json` aktualisiert werden. Abgeschlossene Tasks sind in die `completedTasks`-Liste einzutragen.
 7.  **Changelog-Archivierung:** Das `Changelog.md` dient als temporäres Log für die aktuelle Aufgabe. Nach Abschluss der Aufgabe werden diese Einträge in `Changelog-Archiv.md` überführt und mit Kommentaren (Aufgabe, Schwierigkeit, Lösung) versehen.
+8.  **Task-Abschluss:** Ein Task in `ToDo.md` wird erst dann als erledigt (`- [x]`) markiert, wenn der User explizit die Anweisung "Erledigt! Weiter" gibt.
+9.  **Datenbank-Simulation:** Bis auf Weiteres wird die gesamte Datenbank-Kommunikation simuliert (z.B. durch In-Memory-Datenstrukturen), um die Entwicklung zu beschleunigen. Dokumentationen sollen jedoch weiterhin die finale Zieldatenbank beschreiben.
 
 ---
 ### Self-Correction Workflow (Critical)
@@ -81,3 +83,7 @@ Wenn eine Analyse explizit angefordert wird (z.B. mit "!Analyse"), implementiere
 ---
 ### Sequenzielle Task-Abarbeitung
 Wenn der User die Abarbeitung von mehreren Tasks hintereinander anfordert (z.B. mit "weiter mit 3 ToDos"), führe die angegebene Anzahl an Tasks nacheinander aus. Gib am Ende eine einzige, zusammenfassende Antwort, die die Ergebnisse aller ausgeführten Tasks bündelt. Warte nicht auf eine Bestätigung zwischen den einzelnen Tasks.
+---
+### Spezialbefehle
+
+-   **`!Init`**: Wenn dieser Befehl vom User eingegeben wird, initialisierst du alle deine Richtlinien (ToDo-Listen, etc.) neu und gibst eine detaillierte Erklärung deines Arbeitsablaufs. Du erklärst, wie du eine Aufgabe aus der `ToDo.md` umsetzt, welche Dateien du dafür sequenziell verwendest (z.B. `ToDo.md` -> `Tasks/[TASK-SLUG].md` -> `Prompts/[...].csv`) und wie die `Master-prompt.md` dein gesamtes Verhalten steuert. Zusätzlich erklärst du wie eine Chatanwort nach der Bearbeitung eines Tasks aussieht.

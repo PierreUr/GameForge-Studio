@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den Code fÃ¼r ein 'GamificationModule', einen 'GamificationService' und einen 'GamificationController'. Der Controller soll einen Endpunkt 'GET /status' implementieren, der die Gamification-Daten fÃ¼r den aktuellen Benutzer (extrahiert aus dem JWT-Payload) abruft. SchÃ¼tze den Controller global mit dem 'JwtAuthGuard'."
+"test","Beschreibe einen Test: 1. Rufe als nicht eingeloggter Benutzer den Endpunkt 'GET /gamification/status' auf und erwarte einen 401-Fehler. 2. Rufe den Endpunkt als eingeloggter Benutzer auf und erwarte eine Antwort mit den initialen XP-, Level- und Pet-Daten."

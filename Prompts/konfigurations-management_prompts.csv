@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den 'npm install'-Befehl fÃ¼r '@nestjs/config'. Zeige, wie das 'ConfigModule' im 'AppModule' importiert und mit 'isGlobal: true' konfiguriert wird. Erstelle eine Beispiel-'.env'-Datei mit den Variablen 'DB_HOST', 'DB_PORT', 'DB_USERNAME', 'DB_PASSWORD' und 'DB_DATABASE'."
+"test","Beschreibe, wie man testet, ob das Konfigurationsmodul funktioniert, indem man den 'ConfigService' in einen beliebigen Service injiziert und einen Wert (z.B. 'DB_HOST') in der Konsole beim Start der Anwendung ausgibt und prÃ¼ft, ob der Wert aus der '.env'-Datei korrekt geladen wird."

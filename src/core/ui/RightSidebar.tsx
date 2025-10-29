@@ -7,12 +7,17 @@ import ComponentInspector from './ComponentInspector';
 import { CommandManager } from '../commands/CommandManager';
 import { UpdateComponentCommand } from '../commands/UpdateComponentCommand';
 import PreviewInspector from './PreviewInspector';
+import { FrameConfig } from '../rendering/Renderer';
+import BooleanCheckbox from './inputs/BooleanCheckbox';
+import NumberInput from './inputs/NumberInput';
 
 interface RightSidebarProps {
     world: World | null;
+    frameConfig: FrameConfig;
+    onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
 }
 
-const RightSidebar: React.FC<RightSidebarProps> = ({ world }) => {
+const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrameConfigChange }) => {
     const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
     const [entityComponents, setEntityComponents] = useState<[string, IComponent][]>([]);
     
@@ -130,6 +135,27 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world }) => {
             }
         }
     };
+    
+    const LayoutSettingsPanel = () => (
+        <div style={styles.layoutSettingsContainer}>
+            <h5 style={styles.entityHeader}>Layout Settings</h5>
+             <div style={styles.settingItem}>
+                <BooleanCheckbox
+                    label="Auto Height"
+                    value={frameConfig.autoHeight || false}
+                    onChange={(val) => onFrameConfigChange({ autoHeight: val })}
+                />
+            </div>
+            <div style={styles.settingItem}>
+                <NumberInput
+                    label="Height (px)"
+                    value={frameConfig.height}
+                    onChange={(val) => onFrameConfigChange({ height: val })}
+                    disabled={frameConfig.autoHeight}
+                />
+            </div>
+        </div>
+    );
 
     let inspectorContent;
 
@@ -155,7 +181,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world }) => {
         inspectorContent = (
             <PreviewInspector item={previewData.data} type={previewData.type} />
         );
-    } else {
+    } else if (!frameConfig.isVisible) { // Only show this if no frame is visible
         inspectorContent = (
              <p>Select an entity on the canvas or an item in a library to inspect its properties.</p>
         );
@@ -164,7 +190,10 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world }) => {
     const tabs = [
         {
             label: 'Inspector',
-            content: <div style={styles.panelContent}>{inspectorContent}</div>
+            content: <div style={styles.panelContent}>
+                {frameConfig.isVisible && <LayoutSettingsPanel />}
+                {inspectorContent}
+            </div>
         }
     ];
     
@@ -195,6 +224,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderBottom: '1px solid #444',
         paddingBottom: '0.5rem',
         fontSize: '1rem'
+    },
+    layoutSettingsContainer: {
+        marginBottom: '1.5rem'
+    },
+    settingItem: {
+        marginBottom: '0.5rem',
+        padding: '0.5rem',
+        backgroundColor: '#333',
+        borderRadius: '4px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     }
 };
 

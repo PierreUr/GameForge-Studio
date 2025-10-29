@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere Code-Beispiele fÃ¼r React-Komponenten: 1. Eine 'XpBar'-Komponente, die 'currentXp' und 'xpForNextLevel' als Props entgegennimmt und einen prozentualen Fortschrittsbalken darstellt. 2. Eine 'GamificationWidget'-Komponente, die mit einer 'useEffect'-Hook die Daten vom '/gamification/status'-Endpunkt abruft und die 'XpBar' sowie andere Statusanzeigen mit den erhaltenen Daten rendert."
+"test","Beschreibe einen manuellen UI-Test: 1. Logge dich als Benutzer ein. 2. ÃœberprÃ¼fe, ob das Gamification-Widget die korrekten initialen Level- und XP-Werte anzeigt. 3. Erledige eine Aufgabe im Tool, um XP zu erhalten. 4. ÃœberprÃ¼fe, ob sich der XP-Balken im Widget aktualisiert (ggf. nach Neuladen der Daten)."

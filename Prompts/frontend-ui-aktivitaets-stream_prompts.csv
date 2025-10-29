@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine React-Komponente 'ActivityStream', die eine 'taskId' als Prop erhaelt. In einer 'useEffect'-Hook soll sie die Aktivitaetsdaten vom Backend abrufen. Implementiere eine Render-Logik, die durch das Array der Aktivitaeten iteriert und fuer jeden Typ eine formatierte Zeichenkette ausgibt (z.B. mithilfe einer 'switch'-Anweisung fuer den Aktivitaetstyp)."
+"test","Beschreibe einen manuellen UI-Test: 1. Fuehre eine Aktion aus, die eine Aktivitaet ausloest (z.B. aendere einen Aufgabenstatus). 2. oeffne die Detailansicht der entsprechenden Aufgabe. 3. ueberpruefe, ob im Aktivitaets-Stream ein neuer Eintrag erscheint, der die gerade durchgefuehrte Aktion korrekt beschreibt."

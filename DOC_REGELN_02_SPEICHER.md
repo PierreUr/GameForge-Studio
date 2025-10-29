@@ -3,7 +3,7 @@ Dieses Dokument enthält die statische Definition der Dateiliste und die strikte
 1. Obligatorische Dokumenten- und Dateiliste  
 | Dateiname                | Primärer Zweck                                               | Speicher-Fokus (WAS)                          |
 |--------------------------|--------------------------------------------------------------|-----------------------------------------------|
-| ANWEISUNGEN.md           | Globale Systemanweisungen und KI-Verhalten.                  | Regeln & Prozesse                             |
+| Master-prompt.md         | Globale Systemanweisungen und KI-Verhalten.                  | Regeln & Prozesse                             |
 | Implementierungs-Fahrplan.csv | Archiv und Master-Quelle aller geplanten Tasks.          | Master-Tasks & Definitionen                   |
 | TODO.md                  | Aktuelle Haupt-Abarbeitungswarteschlange (Prio 2).           | Aktueller Task-Status                          |
 | Secound To do list.md    | Dringende/Priorisierte Warteschlange (Prio 1).                | Urgent Tasks & Bugfixes                       |

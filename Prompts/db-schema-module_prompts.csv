@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine TypeORM-EntitÃ¤tsdefinition fÃ¼r 'Module'. Das Feld 'name' soll als 'unique' markiert sein. Das Feld 'configSchema' soll den Typ 'jsonb' verwenden, um ein JSON-Schema fÃ¼r die Modulkonfiguration zu speichern."
+"test","Beschreibe, wie man durch AusfÃ¼hren einer Migration Ã¼berprÃ¼ft, ob die Tabelle 'module' mit den korrekten Spaltentypen (insbesondere 'jsonb' fÃ¼r 'configSchema') in der Datenbank erstellt wird."

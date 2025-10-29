@@ -8,7 +8,7 @@ interface DebugContextType {
 const DebugContext = createContext<DebugContextType | undefined>(undefined);
 
 export const DebugProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isDebugVisible, setIsDebugVisible] = useState(true);
+    const [isDebugVisible, setIsDebugVisible] = useState(false);
 
     const toggleDebugVisibility = () => {
         setIsDebugVisible(prev => !prev);

@@ -1,19 +1,30 @@
 import React from 'react';
 import DebugIdTooltip from './dev/DebugIdTooltip';
+import { useAuth } from '../auth/AuthContext';
 
 interface ToolbarProps {
     onSave: () => void;
     onLoad: () => void;
     onPreview: () => void;
-    onToggleColliders: () => void;
     onExportHTML: () => void;
     onUndo: () => void;
     onRedo: () => void;
-    onOpenAdminPanel: () => void;
-    onOpenSettingsPanel: () => void;
+    onLogout: () => void;
+    onAdminClick: () => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ onSave, onLoad, onPreview, onToggleColliders, onExportHTML, onUndo, onRedo, onOpenAdminPanel, onOpenSettingsPanel }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ 
+    onSave, 
+    onLoad, 
+    onPreview, 
+    onExportHTML, 
+    onUndo, 
+    onRedo, 
+    onLogout,
+    onAdminClick
+}) => {
+    const { user } = useAuth();
+    const isAdmin = user?.roles.includes('ADMIN');
     
     return (
         <div style={styles.toolbar}>
@@ -34,17 +45,19 @@ const Toolbar: React.FC<ToolbarProps> = ({ onSave, onLoad, onPreview, onToggleCo
                 <button style={styles.button} onClick={onExportHTML}>Export HTML</button>
             </DebugIdTooltip>
             <div style={styles.divider}></div>
-            <DebugIdTooltip debugId="toolbar-toggle-colliders">
-                <button style={styles.button} onClick={onToggleColliders}>Toggle Colliders</button>
-            </DebugIdTooltip>
-            <DebugIdTooltip debugId="toolbar-settings">
-                <button style={styles.button} onClick={onOpenSettingsPanel}>Settings</button>
-            </DebugIdTooltip>
-            <DebugIdTooltip debugId="toolbar-admin-panel">
-                <button style={styles.button} onClick={onOpenAdminPanel}>Admin Panel</button>
-            </DebugIdTooltip>
+            <div style={styles.spacer}></div>
             <DebugIdTooltip debugId="toolbar-live-preview">
                 <button style={{...styles.button, ...styles.previewButton}} onClick={onPreview}>Live Preview</button>
+            </DebugIdTooltip>
+            
+            {isAdmin && (
+                <DebugIdTooltip debugId="toolbar-admin-area">
+                    <button style={styles.button} onClick={onAdminClick}>Admin Bereich</button>
+                </DebugIdTooltip>
+            )}
+
+            <DebugIdTooltip debugId="toolbar-logout">
+                <button style={styles.button} onClick={onLogout}>Logout</button>
             </DebugIdTooltip>
         </div>
     );
@@ -54,7 +67,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     toolbar: {
         display: 'flex',
         alignItems: 'center',
-        padding: '0.5rem 2rem',
+        padding: '0.5rem 1rem',
         backgroundColor: '#333333',
         borderBottom: '1px solid #444',
         gap: '1rem',
@@ -74,10 +87,11 @@ const styles: { [key: string]: React.CSSProperties } = {
         width: '1px',
         height: '24px',
         backgroundColor: '#444',
-        margin: '0 0.5rem',
+    },
+    spacer: {
+        flex: 1,
     },
     previewButton: {
-        marginLeft: 'auto',
         backgroundColor: '#007acc',
     }
 };

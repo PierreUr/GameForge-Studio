@@ -6,7 +6,7 @@ Dies definiert das Protokoll fürr die Erstellung, Verwaltung und Dokumentation 
 
 Das gesamte Projektmanagement basiert auf drei miteinander verbundenen Dateien:
 
-1.  **ToDo.md (Die PrioritÃ¤tenliste):** Die zentrale Datei im Stammverzeichnis, die nur die Liste der Tasks in ihrer PrioritÃ¤tsreihenfolge enthÃ¤lt. Die Reihenfolge der EintrÃ¤ge definiert die AbarbeitungsprioritÃ¤t (oberster Eintrag = hÃ¶chste PrioritÃ¤t).
+1.  **ToDo.md (Die PrioritÃtenliste):** Die zentrale Datei im Stammverzeichnis, die nur die Liste der Tasks in ihrer PrioritÃtsreihenfolge enthÃ¤lt. Die Reihenfolge der EintrÃ¤ge definiert die AbarbeitungsprioritÃt (oberster Eintrag = hÃ¶chste PrioritÃt).
 2.  **ToDos/[TASK-SLUG].md (Die Task-Spezifikation):** Detaillierte Beschreibung eines einzelnen Entwicklungs-Tasks mit einer Checkliste der atomaren Schritte.
 3.  **ToDos/Prompts/[TASK-SLUG]_[SCHRITT-SLUG].csv (Der Atomare Prompt):** Die kleinstmÃ¶gliche Arbeitseinheit, die den KI-Assistenten exakt anweist, was zu tun ist (Ziel, Kontext-Dateien).
 

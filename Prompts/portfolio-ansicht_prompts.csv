@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine TypeORM-EntitÃ¤t fÃ¼r 'Project' mit einer One-to-Many-Beziehung zu 'Task'. Erstelle einen 'ProjectsService' mit einer Methode, die fÃ¼r jedes Projekt den prozentualen Abschluss basierend auf den zugehÃ¶rigen Aufgaben berechnet. Erstelle den entsprechenden API-Endpunkt. Generiere eine React-Komponente 'PortfolioView', die die Projekte als Karten darstellt, inklusive einer kleinen Progress-Bar fÃ¼r jedes Projekt."
+"test","Beschreibe den Test: 1. Erstelle zwei Projekte mit jeweils einigen Aufgaben, von denen einige abgeschlossen sind. 2. Lade die Portfolio-Ansicht. 3. ÃœberprÃ¼fe, ob beide Projekte mit dem korrekten, prozentualen Fortschritt angezeigt werden."

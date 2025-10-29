@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Erweitere den 'ModulesController' um eine Methode fÃ¼r den Endpunkt 'GET /:moduleName/config'. Diese Methode soll den 'ModulesService' aufrufen, um die Konfigurationsdaten fÃ¼r das angegebene Modul zu laden und zurÃ¼ckzugeben. SchÃ¼tze diesen Endpunkt mit dem 'JwtAuthGuard'."
+"test","Beschreibe einen Test: 1. Speichere eine Beispiel-Konfiguration fÃ¼r ein Modul in der Datenbank. 2. Rufe den Endpunkt 'GET /mein-modul/config' mit einem gÃ¼ltigen JWT auf und erwarte die zuvor gespeicherte Konfiguration als Antwort. 3. Rufe den Endpunkt ohne JWT auf und erwarte einen 401-Fehler."

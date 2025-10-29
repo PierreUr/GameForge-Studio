@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine Methode fÃ¼r den 'UsersService' im Backend, die eine Aggregationsabfrage auf der Datenbank ausfÃ¼hrt, um die Anzahl der nicht abgeschlossenen Aufgaben pro Benutzer zu zÃ¤hlen. Erstelle einen entsprechenden Endpunkt im 'UsersController'. Generiere eine React-Komponente 'WorkloadView', die diese Daten abruft und als einfache Liste darstellt (z.B. 'User A: 5 offene Aufgaben')."
+"test","Beschreibe einen Test: 1. Weise verschiedenen Benutzern eine unterschiedliche Anzahl von Aufgaben zu. 2. Rufe die Seite mit der Auslastungsansicht auf. 3. ÃœberprÃ¼fe, ob fÃ¼r jeden Benutzer die korrekte Anzahl an offenen Aufgaben angezeigt wird."

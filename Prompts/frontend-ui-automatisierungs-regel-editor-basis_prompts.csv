@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine React-Komponente 'AutomationRuleEditor'. Verwende Select-Boxen fÃ¼r den Trigger-Typ und den Action-Typ. Zeige, wie man bedingtes Rendering einsetzt, um ein 'UserSelect'-Feld nur dann anzuzeigen, wenn als Aktion 'ASSIGN_USER' ausgewÃ¤hlt ist. Bei 'submit' soll ein JSON-Objekt, das die Regel reprÃ¤sentiert, an die API gesendet werden."
+"test","Beschreibe einen manuellen UI-Test: 1. Ã–ffne den Regel-Editor. 2. WÃ¤hle den Trigger 'StatusÃ¤nderung' und die Aktion 'Benutzer zuweisen'. 3. ÃœberprÃ¼fe, ob das Feld zur Benutzerauswahl erscheint. 4. Erstelle und speichere die Regel. 5. ÃœberprÃ¼fe (z.B. in der Admin-Modul-Ansicht), ob die Regel korrekt gespeichert wurde."

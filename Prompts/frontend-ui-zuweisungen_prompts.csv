@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Dieses Task ist groeÃŸtenteils durch Task 019 (Frontend UI Erweitert) abgedeckt. Generiere eine kurze Zusammenfassung, die beschreibt, wie die 'TaskDetailView'-Komponente eine 'Select'-Komponente im 'multiple'-Modus verwendet, die mit einer Liste aller verfuegbaren Benutzer gefuellt wird. Der aktuelle Wert der Select-Box entspricht den 'assigneeIds' der Aufgabe. Bei einer aenderung wird der Zustand aktualisiert und die Aufgabe gespeichert."
+"test","Beschreibe einen manuellen UI-Test: 1. oeffne die Detailansicht einer Aufgabe. 2. Waehle im Zuweisungs-Feld einen zusaetzlichen Benutzer aus. 3. Speichere. 4. Lade die Seite neu und ueberpruefe, ob der zusaetzliche Benutzer immer noch zugewiesen ist."

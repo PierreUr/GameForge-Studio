@@ -31,9 +31,12 @@ import { CommandManager } from './src/core/commands/CommandManager';
 import { DestroyEntityCommand } from './src/core/commands/DestroyEntityCommand';
 import LogicGraphPanel from './src/core/ui/LogicGraphPanel';
 import { DebugProvider } from './src/core/ui/dev/DebugContext';
-import AdminPanel from './src/core/ui/dev/AdminPanel';
 import SettingsPanel, { devicePresets } from './src/core/ui/SettingsPanel';
 import { EventBus } from './src/core/ecs/EventBus';
+import ProgressBarHeader from './src/core/ui/ProgressBarHeader';
+import { AuthProvider, useAuth } from './src/core/auth/AuthContext';
+import LoginPage from './src/core/ui/LoginPage';
+import AdminDashboard from './src/core/ui/admin/AdminDashboard';
 
 
 const getLayoutKeyFromConfig = (config: FrameConfig): string => {
@@ -47,12 +50,13 @@ const getLayoutKeyFromConfig = (config: FrameConfig): string => {
 };
 
 const App = () => {
+    const { user, token, logout } = useAuth();
     const [ecsWorld, setEcsWorld] = useState<World | null>(null);
-    const [activeView, setActiveView] = useState<'canvas' | 'logic-graph'>('canvas');
+    const [activeView, setActiveView] = useState<'canvas' | 'logic-graph' | 'admin'>('canvas');
     const renderingSystemRef = useRef<RenderingSystem | null>(null);
     const graphRef = useRef<Graph | null>(null);
-    const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
+    const hasRunInitialTests = useRef(false);
     const [gridConfig, setGridConfig] = useState<GridConfig>({
         isVisible: true,
         size: 100,
@@ -65,11 +69,15 @@ const App = () => {
         height: 1080,
         color: 0x00aaff,
         orientation: 'landscape',
+        autoHeight: false,
     });
     const [activeLayoutKey, setActiveLayoutKey] = useState('default');
 
 
     useEffect(() => {
+        // Do not run setup if not logged in
+        if (!token) return;
+
         let gameLoop: GameLoop | null = null;
         let autoSaveInterval: number | null = null;
 
@@ -121,6 +129,13 @@ const App = () => {
                     renderer.setGridConfig(gridConfig);
                     renderer.setFrameConfig(frameConfig);
                 }
+                
+                // Run automatic self-test on load
+                if (!hasRunInitialTests.current) {
+                    hasRunInitialTests.current = true;
+                    // We don't need the return value here, just trigger the run and local storage save
+                    handleRunTests(); 
+                }
 
             } catch (e: any) {
                 console.error('An unexpected error occurred during initial setup:', e);
@@ -161,7 +176,7 @@ const App = () => {
             EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
         };
 
-    }, []);
+    }, [token]); // Rerun setup when token changes (on login)
     
     const handleRunTests = useCallback(async (): Promise<string> => {
         const logger = new TestLogger();
@@ -241,11 +256,18 @@ const App = () => {
         CommandManager.getInstance().redo();
     }, []);
     
-    const handleViewChange = useCallback((viewId: 'canvas' | 'logic-graph') => {
+    const handleViewChange = useCallback((viewId: 'canvas' | 'logic-graph' | 'admin') => {
+        if (viewId === 'admin' && !user?.roles.includes('ADMIN')) {
+            console.warn("Access denied: Admin view is restricted.");
+            // Optionally, you could switch to a default view or show an error
+            return;
+        }
         setActiveView(viewId);
-    }, []);
+    }, [user]);
 
     useEffect(() => {
+        if (!token) return;
+
         const handleKeyDown = (e: KeyboardEvent) => {
             const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const isCtrl = isMac ? e.metaKey : e.ctrlKey;
@@ -275,7 +297,7 @@ const App = () => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [ecsWorld, handleSaveProject, handleUndo, handleRedo]);
+    }, [ecsWorld, handleSaveProject, handleUndo, handleRedo, token]);
 
     const handleGridConfigChange = useCallback((newConfig: Partial<GridConfig>) => {
         setGridConfig(prevConfig => {
@@ -304,8 +326,15 @@ const App = () => {
         renderingSystemRef.current?.toggleDebugRendering();
     }, []);
 
+    // If not authenticated, show the login page
+    if (!token) {
+        return <LoginPage />;
+    }
+
+    // If authenticated, show the main app
     return (
         <div style={styles.container}>
+            <ProgressBarHeader />
             <main style={styles.main}>
                 <Toolbar 
                     onUndo={handleUndo}
@@ -313,32 +342,43 @@ const App = () => {
                     onSave={handleSaveProject}
                     onLoad={handleLoadProject}
                     onPreview={handlePreviewProject}
-                    onToggleColliders={handleToggleColliders}
                     onExportHTML={handleExportHTML}
-                    onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
-                    onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
+                    onLogout={logout}
+                    onAdminClick={() => handleViewChange('admin')}
                 />
                 <ResizablePanels>
                     <LeftSidebar 
                         onViewChange={handleViewChange} 
+                    />
+                    
+                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
+                        {activeView === 'canvas' && (
+                            <CanvasContainer 
+                                world={ecsWorld} 
+                                renderingSystem={renderingSystemRef.current}
+                                frameConfig={frameConfig}
+                                onFrameConfigChange={handleFrameConfigChange}
+                                onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
+                            />
+                        )}
+                        {activeView === 'logic-graph' && (
+                            <LogicGraphPanel />
+                        )}
+                        {activeView === 'admin' && (
+                            <AdminDashboard 
+                                onRunTests={handleRunTests} 
+                                onToggleColliders={handleToggleColliders}
+                            />
+                        )}
+                    </div>
+
+                    <RightSidebar 
+                        world={ecsWorld}
                         frameConfig={frameConfig}
                         onFrameConfigChange={handleFrameConfigChange}
                     />
-                    {activeView === 'canvas' ? (
-                         <CanvasContainer world={ecsWorld} renderingSystem={renderingSystemRef.current} />
-                    ) : (
-                        <LogicGraphPanel />
-                    )}
-                    <RightSidebar world={ecsWorld} />
                 </ResizablePanels>
             </main>
-            {isAdminPanelOpen && (
-                <AdminPanel 
-                    isOpen={isAdminPanelOpen}
-                    onClose={() => setIsAdminPanelOpen(false)}
-                    onRunTests={handleRunTests}
-                />
-            )}
             {isSettingsPanelOpen && (
                 <SettingsPanel
                     isOpen={isSettingsPanelOpen}
@@ -368,10 +408,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
 };
 
+// Root component to manage the auth provider
+const Root = () => {
+    const { isLoading } = useAuth();
+
+    if (isLoading) {
+        // You can add a global loading spinner here if you want
+        return <div style={{height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e1e1e', color: '#d4d4d4'}}>Loading...</div>;
+    }
+
+    return <App />;
+};
+
 const container = document.getElementById('root');
 const root = createRoot(container!);
 root.render(
-    <DebugProvider>
-        <App />
-    </DebugProvider>
+    <React.StrictMode>
+        <DebugProvider>
+            <AuthProvider>
+                <Root />
+            </AuthProvider>
+        </DebugProvider>
+    </React.StrictMode>
 );

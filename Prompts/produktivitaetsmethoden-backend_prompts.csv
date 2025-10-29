@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere ein Code-Beispiel fÃ¼r ein NestJS Gateway (Websocket), das Pomodoro-Timer-Events ('start', 'stop', 'pause', 'tick') verarbeitet. Erstelle eine 'PomodoroService'-Klasse, die die Timer-Logik fÃ¼r verschiedene Benutzer verwaltet und die verbleibende Zeit Ã¼ber das Gateway an den Client sendet."
+"test","Beschreibe einen Test fÃ¼r das Pomodoro-Gateway: 1. Verbinde einen Websocket-Client. 2. Sende ein 'start'-Event. 3. Erwarte, fÃ¼r die nÃ¤chsten Sekunden regelmÃ¤ÃŸig 'tick'-Events mit der verbleibenden Zeit zu empfangen."

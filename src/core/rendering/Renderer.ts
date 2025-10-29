@@ -21,6 +21,7 @@ export interface FrameConfig {
     height: number;
     color: number;
     orientation: 'portrait' | 'landscape';
+    autoHeight: boolean;
 }
 
 
@@ -53,6 +54,7 @@ export class Renderer {
         height: 1080,
         color: 0x00aaff,
         orientation: 'landscape',
+        autoHeight: false,
     };
 
     private constructor() {
@@ -167,7 +169,8 @@ export class Renderer {
                             this.frameConfig.width !== config.width ||
                             this.frameConfig.height !== config.height ||
                             this.frameConfig.color !== config.color ||
-                            this.frameConfig.orientation !== config.orientation;
+                            this.frameConfig.orientation !== config.orientation ||
+                            this.frameConfig.autoHeight !== config.autoHeight;
     
         Object.assign(this.frameConfig, config);
         this.deviceFrame.visible = this.frameConfig.isVisible;

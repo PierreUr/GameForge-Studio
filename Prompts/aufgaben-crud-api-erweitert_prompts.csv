@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Erweitere den 'TasksService' um Logik in den 'create' und 'update' Methoden, die mit den Relationen (z.B. Zuweisungen, Tags) umgehen kann. Zeige beispielhaft, wie beim Erstellen eines Tasks die IDs fÃ¼r zugewiesene Benutzer und Tags entgegengenommen und die entsprechenden Relationen in der Datenbank gespeichert werden. Nutze DTOs (Data Transfer Objects) mit Validierung fÃ¼r die eingehenden Daten."
+"test","Beschreibe einen Test: Sende eine 'POST'-Anfrage zum Erstellen eines Tasks, die eine 'assigneeIds'- und 'tagIds'-Liste enthÃ¤lt. ÃœberprÃ¼fe anschlieÃŸend direkt in der Datenbank, ob in den Tabellen 'task_assignees_user' und 'task_tags_tag' die korrekten EintrÃ¤ge erstellt wurden."

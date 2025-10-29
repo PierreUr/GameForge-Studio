@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den Code fÃ¼r ein 'RolesModule', einen 'RolesService' und einen 'RolesController'. Der Controller soll die Standard-CRUD-Endpunkte fÃ¼r Rollen implementieren. FÃ¼ge zusÃ¤tzlich eine Methode im 'UsersController' hinzu, die es erlaubt, einem Benutzer eine bestehende Rolle Ã¼ber seine ID zuzuweisen."
+"test","Beschreibe einen Testablauf: 1. Erstelle eine neue Rolle 'TESTER' via POST an '/roles'. 2. Weise einem bestehenden Benutzer diese Rolle zu. 3. ÃœberprÃ¼fe in der Datenbank, ob die VerknÃ¼pfung in der 'user_roles_role'-Tabelle korrekt erstellt wurde."

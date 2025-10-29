@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine TypeORM-EntitÃ¤t 'Dashboard' mit einem JSON-Feld fÃ¼r das 'layout'. Erstelle einen API-Endpunkt 'GET /widgets/tasks-by-status', der die Anzahl der Aufgaben pro Status zurÃ¼ckgibt. Generiere eine React-Komponente 'DashboardView', die 'react-grid-layout' verwendet. Zeige, wie man eine 'TasksByStatusWidget'-Komponente erstellt, die die Widget-API aufruft und die Daten (z.B. mit einer Chart-Bibliothek wie 'recharts') visualisiert."
+"test","Beschreibe einen Test: 1. Lade die Dashboard-Seite. 2. ÃœberprÃ¼fe, ob das 'TasksByStatusWidget' geladen wird und die korrekten Anzahlen fÃ¼r Aufgaben in den Status 'To Do', 'In Progress' etc. anzeigt."

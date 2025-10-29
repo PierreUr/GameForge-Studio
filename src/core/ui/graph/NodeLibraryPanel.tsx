@@ -68,7 +68,8 @@ const NodeLibraryPanel: React.FC = () => {
                     <div key={category} style={styles.categoryGroup}>
                         <h6 style={styles.categoryHeader}>{category}</h6>
                         <div style={styles.grid}>
-                            {nodes.map(node => (
+                            {/* FIX: Cast `nodes` as `NodeManifest[]` to resolve type inference issue where it was being treated as `unknown`. */}
+                            {(nodes as NodeManifest[]).map(node => (
                                 <NodeCard 
                                     key={node.type}
                                     type={node.type}

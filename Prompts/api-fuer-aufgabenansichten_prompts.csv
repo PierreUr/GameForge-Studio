@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Erweitere die 'findAll'-Methode im 'TasksController' und 'TasksService', um Query-Parameter wie 'status', 'assigneeId', 'tagId', 'sortBy' und 'sortOrder' zu verarbeiten. Zeige, wie man den TypeORM 'QueryBuilder' im Service verwendet, um die Datenbankabfrage dynamisch basierend auf den Ã¼bergebenen Parametern zu erstellen."
+"test","Beschreibe einen Test: 1. Erstelle mehrere Aufgaben mit unterschiedlichen Status und Zuweisungen. 2. Rufe den Endpunkt 'GET /tasks?status=in-progress&sortBy=dueDate&sortOrder=ASC' auf. 3. ÃœberprÃ¼fe, ob die Antwort nur Aufgaben mit dem Status 'in-progress' enthÃ¤lt und diese aufsteigend nach ihrem FÃ¤lligkeitsdatum sortiert sind."

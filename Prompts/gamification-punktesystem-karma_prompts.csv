@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","1. Erweitere die 'Character'-EntitÃ¤t um ein numerisches Feld 'karma'. 2. Modifiziere den 'GamificationListenerService', sodass die 'onTaskCompleted'-Methode zusÃ¤tzlich die 'karma'-Punkte des Benutzers erhÃ¶ht. 3. Passe den 'GamificationService' und die DTOs an, damit der Karma-Wert Ã¼ber den '/status'-Endpunkt ausgegeben wird. 4. Erweitere die 'GamificationWidget'-React-Komponente, um den Karma-Wert anzuzeigen."
+"test","Beschreibe den Test: 1. SchlieÃŸe eine Aufgabe ab. 2. Rufe den '/gamification/status'-Endpunkt auf (oder lade das UI neu) und Ã¼berprÃ¼fe, ob der 'karma'-Wert korrekt erhÃ¶ht wurde."

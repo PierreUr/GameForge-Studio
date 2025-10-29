@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere die notwendigen Shell-Befehle, um die NestJS CLI global zu installieren und ein neues Projekt namens 'api-server' zu erstellen. FÃ¼ge eine kurze Beschreibung der wichtigsten initialen Dateien hinzu: 'main.ts', 'app.module.ts', 'app.controller.ts', und 'app.service.ts'."
+"test","Beschreibe, wie man verifiziert, dass das NestJS-Projekt erfolgreich erstellt wurde und der Development-Server gestartet werden kann (Ã¼blicherweise mit 'npm run start:dev')."

@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere ein Code-Beispiel fÃ¼r eine React-Komponente 'TaskDetailView'. Nutze eine UI-Bibliothek wie Ant Design oder Material-UI fÃ¼r komplexe Formular-Elemente. Zeige, wie ein Date-Picker fÃ¼r das FÃ¤lligkeitsdatum, eine Select-Box fÃ¼r die PrioritÃ¤t und eine 'Select' Komponente im 'multiple' Modus fÃ¼r die Zuweisung von Benutzern verwendet werden. Die Komponente soll die Daten von der API laden und bei Ã„nderungen Speicheranfragen senden."
+"test","Beschreibe einen manuellen UI-Test: 1. Ã–ffne die Detailansicht einer Aufgabe. 2. Ã„ndere das FÃ¤lligkeitsdatum mit dem Date-Picker. 3. Speichere die Ã„nderung. 4. Lade die Seite neu und Ã¶ffne die Detailansicht erneut. 5. ÃœberprÃ¼fe, ob das neue Datum korrekt angezeigt wird."

@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere ein Code-Beispiel fÃ¼r eine React-Komponente 'TasksCalendar', die '@fullcalendar/react' und die notwendigen Plugins ('dayGrid', 'interaction') verwendet. Die Komponente soll Aufgaben (Events) vom Backend laden und im Kalender anzeigen. Implementiere den 'eventDrop'-Handler, der ausgelÃ¶st wird, wenn ein Event verschoben wird, und eine API-Anfrage zum Aktualisieren des FÃ¤lligkeitsdatums sendet."
+"test","Beschreibe einen manuellen UI-Test: 1. Zeige den Kalender mit einer Aufgabe an einem bestimmten Tag an. 2. Ziehe die Aufgabe auf einen anderen Tag. 3. Lade die Seite neu. 4. ÃœberprÃ¼fe, ob die Aufgabe auf dem neuen Datum im Kalender verbleibt."

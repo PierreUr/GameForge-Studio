@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere den Code fÃ¼r ein 'ModulesModule', einen 'ModulesService' und einen 'ModulesController'. SchÃ¼tze den gesamten Controller mit einem 'RolesGuard', der die Rolle 'SUPER_ADMIN' erfordert. Implementiere die Standard-CRUD-Methoden im Service und Controller."
+"test","Beschreibe einen Testablauf: 1. Versuche als normaler Benutzer, auf 'GET /modules' zuzugreifen und erwarte einen 403-Fehler. 2. FÃ¼hre die gleiche Anfrage als Super-Admin aus und erwarte eine erfolgreiche Antwort (leeres Array). 3. Erstelle ein neues Modul via 'POST /modules' als Super-Admin und Ã¼berprÃ¼fe, ob es in der Datenbank angelegt wurde."

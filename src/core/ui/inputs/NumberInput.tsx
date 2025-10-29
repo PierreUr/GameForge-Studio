@@ -4,9 +4,10 @@ interface NumberInputProps {
     label: string;
     value: number;
     onChange: (newValue: number) => void;
+    disabled?: boolean;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange }) => {
+const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange, disabled = false }) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onChange(parseFloat(e.target.value));
     };
@@ -18,7 +19,8 @@ const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange }) => 
                 type="number"
                 value={value}
                 onChange={handleChange}
-                style={styles.input}
+                style={disabled ? { ...styles.input, ...styles.disabledInput } : styles.input}
+                disabled={disabled}
             />
         </div>
     );
@@ -47,6 +49,11 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: 'monospace',
         fontSize: '0.8rem',
         textAlign: 'right',
+    },
+    disabledInput: {
+        backgroundColor: '#222',
+        color: '#888',
+        cursor: 'not-allowed',
     }
 };
 

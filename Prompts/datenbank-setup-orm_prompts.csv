@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere die 'npm install'-Befehle fÃ¼r '@nestjs/typeorm', 'typeorm' und 'pg'. Erstelle ein Code-Beispiel fÃ¼r ein 'DatabaseModule' in NestJS, das TypeOrmModule.forRootAsync verwendet, um die Datenbankverbindung dynamisch Ã¼ber einen ConfigService (Platzhalter) zu konfigurieren. Zeige, wie Umgebungsvariablen fÃ¼r die Verbindungsdetails verwendet werden."
+"test","Beschreibe, wie man testet, ob die Anwendung erfolgreich eine Verbindung zur PostgreSQL-Datenbank herstellen kann, indem man die Server-Logs beim Start auf eine Erfolgsmeldung prÃ¼ft und sicherstellt, dass keine Verbindungsfehler auftreten."

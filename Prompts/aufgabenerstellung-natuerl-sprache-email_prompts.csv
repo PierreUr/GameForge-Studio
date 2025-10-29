@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine beispielhafte TypeScript-Funktion, die eine Zeichenkette als Eingabe nimmt und mit der Bibliothek 'date-fns-tz' versucht, relative Datumsangaben wie 'tomorrow at 5pm' oder 'next friday' in ein gÃ¼ltiges Datumsobjekt umzuwandeln. Beschreibe konzeptionell, wie ein NestJS-Controller aussehen wÃ¼rde, der einen Webhook von einem E-Mail-Dienst wie SendGrid empfÃ¤ngt, um eine Aufgabe zu erstellen."
+"test","Beschreibe einen Test fÃ¼r die Datums-Parsing-Funktion: Gib verschiedene Strings ein ('in 2 hours', 'gestern', 'am 25.12.') und Ã¼berprÃ¼fe, ob die Funktion die korrekten Datumsobjekte zurÃ¼ckgibt oder fehlschlÃ¤gt, wenn die Eingabe ungÃ¼ltig ist."

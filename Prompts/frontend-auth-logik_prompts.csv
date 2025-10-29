@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere Code-Beispiele fÃ¼r ein React 'AuthContext', das den Benutzerstatus und das JWT verwaltet. Erstelle eine 'useAuth'-Hook fÃ¼r den einfachen Zugriff auf den Kontext. Zeige eine beispielhafte 'LoginPage'-Komponente, die diesen Kontext nutzt, um einen Benutzer Ã¼ber einen API-Service einzuloggen und das Token im localStorage zu speichern."
+"test","Beschreibe, wie man testet: 1. Nach einem erfolgreichen Login wird der Benutzer auf eine geschÃ¼tzte Seite weitergeleitet. 2. Das JWT wird im localStorage gespeichert. 3. Bei einem Neuladen der Seite bleibt der Benutzer eingeloggt, da der Status aus dem localStorage wiederhergestellt wird."

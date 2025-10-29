@@ -1,0 +1,3 @@
+﻿"step","prompt"
+"implementierung","Generiere eine React-Komponente 'CommentsSection', die eine 'taskId' als Prop erhÃ¤lt. In einer 'useEffect'-Hook soll sie die Kommentare fÃ¼r diese Aufgabe vom '/tasks/:taskId/comments'-Endpunkt laden. Die Komponente soll eine Liste der Kommentare rendern und ein Formular mit einem Textfeld und einem Sende-Button enthalten. Bei Absenden des Formulars soll eine 'POST'-Anfrage an die API gesendet und die Kommentarliste anschlieÃŸend aktualisiert werden."
+"test","Beschreibe einen manuellen UI-Test: 1. Ã–ffne die Detailansicht einer Aufgabe. 2. Gib einen Text in das Kommentarfeld ein und klicke auf 'Senden'. 3. ÃœberprÃ¼fe, ob der neue Kommentar sofort (oder nach kurzem Laden) in der Liste Ã¼ber dem Eingabefeld erscheint."

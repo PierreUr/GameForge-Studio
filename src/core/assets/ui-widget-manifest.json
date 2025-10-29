@@ -1,0 +1,47 @@
+{
+    "widgets": [
+        {
+            "id": "layout-section",
+            "name": "Section",
+            "description": "A layout container for columns.",
+            "category": "Layout"
+        },
+        {
+            "id": "spacer",
+            "name": "Spacer",
+            "description": "Adds vertical space.",
+            "category": "Layout",
+            "properties": [
+                { "name": "height", "type": "number", "label": "Height (px)", "defaultValue": 20 }
+            ]
+        },
+        {
+            "id": "heading",
+            "name": "Heading",
+            "description": "A text heading (h1, h2, etc.).",
+            "category": "Content",
+            "properties": [
+                { "name": "text", "type": "string", "label": "Text", "defaultValue": "Hello World" },
+                { "name": "level", "type": "number", "label": "Level (1-6)", "defaultValue": 1 }
+            ]
+        },
+        {
+            "id": "task-list",
+            "name": "Task List",
+            "description": "Displays a table of all tasks with controls.",
+            "category": "Forms",
+            "properties": [
+                { "name": "title", "type": "string", "label": "Title", "defaultValue": "Task List" }
+            ]
+        },
+        {
+            "id": "create-task-form",
+            "name": "Create Task Form",
+            "description": "A form to add new tasks to the list.",
+            "category": "Forms",
+            "properties": [
+                { "name": "buttonText", "type": "string", "label": "Button Label", "defaultValue": "Create Task" }
+            ]
+        }
+    ]
+}

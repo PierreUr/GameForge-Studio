@@ -34,13 +34,18 @@ const TabSystem: React.FC<TabSystemProps> = ({ tabs, onTabChange }) => {
                 <div style={styles.tabHeader} role="tablist">
                     {tabs.map((tab, index) => {
                         const tabId = `tab-${tab.label.toLowerCase().replace(/\s+/g, '-')}`;
+                        const isActive = index === activeTab;
+                        const buttonStyle = {
+                            ...styles.tabButton,
+                            ...(isActive ? styles.activeTabButton : {}),
+                        };
                         return (
                             <DebugIdTooltip key={index} debugId={tabId}>
                                 <button
                                     onClick={() => handleTabClick(index)}
-                                    style={index === activeTab ? { ...styles.tabButton, ...styles.activeTabButton } : styles.tabButton}
+                                    style={buttonStyle}
                                     role="tab"
-                                    aria-selected={index === activeTab}
+                                    aria-selected={isActive}
                                 >
                                     {tab.label}
                                 </button>
@@ -68,26 +73,34 @@ const styles: { [key: string]: React.CSSProperties } = {
         flexShrink: 0,
         borderBottom: '1px solid #444',
         backgroundColor: '#333',
+        padding: '0.25rem 0.5rem 0 0.5rem',
+        gap: '4px',
     },
     tabButton: {
-        padding: '0.75rem 1rem',
+        padding: '0.6rem 1rem',
         cursor: 'pointer',
-        backgroundColor: 'transparent',
-        border: 'none',
+        backgroundColor: '#3e3e42',
+        border: '1px solid #555',
+        borderBottom: 'none',
         color: '#ccc',
         fontSize: '0.9rem',
-        borderBottom: '2px solid transparent',
-        marginBottom: '-1px', // Align with the container border
-        width: '100%', // Ensure the wrapper fills the space
+        borderTopLeftRadius: '4px',
+        borderTopRightRadius: '4px',
     },
     activeTabButton: {
+        backgroundColor: '#252526',
         color: '#fff',
-        borderBottom: '2px solid #007acc',
+        border: '1px solid #444',
+        borderBottom: '1px solid #252526',
+        position: 'relative',
+        top: '1px',
+        zIndex: 1,
     },
     tabContent: {
         flex: 1,
-        overflowY: 'auto', // FIX: Changed from 'hidden' to 'auto' to allow scrolling
-        position: 'relative'
+        overflowY: 'auto',
+        position: 'relative',
+        backgroundColor: '#252526', // Ensure content background matches active tab
     },
 };
 

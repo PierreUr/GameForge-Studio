@@ -37,6 +37,7 @@ import ProgressBarHeader from './src/core/ui/ProgressBarHeader';
 import { AuthProvider, useAuth } from './src/core/auth/AuthContext';
 import LoginPage from './src/core/ui/LoginPage';
 import AdminDashboard from './src/core/ui/admin/AdminDashboard';
+import UIEditorPanel, { SectionData } from './src/core/ui/UIEditorPanel';
 
 
 const getLayoutKeyFromConfig = (config: FrameConfig): string => {
@@ -52,7 +53,7 @@ const getLayoutKeyFromConfig = (config: FrameConfig): string => {
 const App = () => {
     const { user, token, logout } = useAuth();
     const [ecsWorld, setEcsWorld] = useState<World | null>(null);
-    const [activeView, setActiveView] = useState<'canvas' | 'logic-graph' | 'admin'>('canvas');
+    const [activeView, setActiveView] = useState<'canvas' | 'logic-graph' | 'admin' | 'ui-editor'>('canvas');
     const renderingSystemRef = useRef<RenderingSystem | null>(null);
     const graphRef = useRef<Graph | null>(null);
     const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
@@ -72,6 +73,10 @@ const App = () => {
         autoHeight: false,
     });
     const [activeLayoutKey, setActiveLayoutKey] = useState('default');
+    
+    // UI Builder State - Lifted up
+    const [uiLayout, setUiLayout] = useState<SectionData[]>([]);
+    const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -163,8 +168,26 @@ const App = () => {
                 }
             }
         };
+        
+        const handleWidgetPropertyUpdate = (payload: { widgetId: string, propName: string, propValue: any }) => {
+            setUiLayout(prevLayout => {
+                return prevLayout.map(section => ({
+                    ...section,
+                    columns: section.columns.map(column => ({
+                        ...column,
+                        widgets: column.widgets.map(widget => {
+                            if (widget.id === payload.widgetId) {
+                                return { ...widget, props: { ...widget.props, [payload.propName]: payload.propValue } };
+                            }
+                            return widget;
+                        })
+                    }))
+                }));
+            });
+        };
 
         EventBus.getInstance().subscribe('project:loaded', handleProjectLoaded);
+        EventBus.getInstance().subscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
 
         return () => {
             if (gameLoop && gameLoop.isRunning) {
@@ -174,6 +197,7 @@ const App = () => {
                 clearInterval(autoSaveInterval);
             }
             EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
+            EventBus.getInstance().unsubscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
         };
 
     }, [token]); // Rerun setup when token changes (on login)
@@ -272,14 +296,13 @@ const App = () => {
         CommandManager.getInstance().redo();
     }, []);
     
-    const handleViewChange = useCallback((viewId: 'canvas' | 'logic-graph' | 'admin') => {
+    const handleViewChange = useCallback((viewId: 'canvas' | 'logic-graph' | 'admin' | 'ui-editor') => {
         if (viewId === 'admin' && !user?.roles.includes('ADMIN')) {
             console.warn("Access denied: Admin view is restricted.");
-            // Optionally, you could switch to a default view or show an error
             return;
         }
         setActiveView(viewId);
-    }, [user]);
+    }, [user, activeView]);
 
     useEffect(() => {
         if (!token) return;
@@ -386,12 +409,22 @@ const App = () => {
                                 onToggleColliders={handleToggleColliders}
                             />
                         )}
+                        {activeView === 'ui-editor' && (
+                            <UIEditorPanel 
+                                layout={uiLayout}
+                                onLayoutChange={setUiLayout}
+                                selectedWidgetId={selectedWidgetId}
+                                onWidgetSelect={setSelectedWidgetId}
+                            />
+                        )}
                     </div>
 
                     <RightSidebar 
                         world={ecsWorld}
                         frameConfig={frameConfig}
                         onFrameConfigChange={handleFrameConfigChange}
+                        uiLayout={uiLayout}
+                        selectedWidgetId={selectedWidgetId}
                     />
                 </ResizablePanels>
             </main>

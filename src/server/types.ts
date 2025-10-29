@@ -27,3 +27,30 @@ export interface Module {
     isActive: boolean;
     configSchema: Record<string, any>; // JSON schema
 }
+
+export interface Tag {
+    id: number;
+    name: string;
+    color: string;
+}
+
+export interface Task {
+    id: number;
+    title: string;
+    description?: string;
+    status: 'backlog' | 'todo' | 'inprogress' | 'done' | 'canceled';
+    priority: 'none' | 'low' | 'medium' | 'high';
+    isMilestone: boolean;
+    
+    parentId?: number | null;
+    
+    assigneeIds: number[];
+    tagIds: number[];
+    dependencyIds: number[];
+    
+    checklist: { text: string; completed: boolean }[];
+    recurrenceRule?: string | null;
+
+    startDate?: string | null;
+    dueDate?: string | null;
+}

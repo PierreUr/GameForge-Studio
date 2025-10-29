@@ -8,7 +8,7 @@ import { useAuth } from '../../auth/AuthContext';
 import ModuleManagementPanel from './ModuleManagementPanel';
 
 interface AdminDashboardProps {
-    onRunTests: () => Promise<string>;
+    onRunTests: (slug?: string) => Promise<string>;
     onToggleColliders: () => void;
 }
 
@@ -74,12 +74,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRunTests, onToggleCol
     const tabs = [
         { label: 'Users', content: <UserManagementPanel /> },
         { label: 'Roles', content: <RoleManagementPanel /> },
-        { label: 'System Tests', content: <SystemTestPanel onRunTests={onRunTests} /> },
     ];
     
     if (isSuperAdmin) {
         tabs.push({ label: 'Modules', content: <ModuleManagementPanel /> });
     }
+    
+    tabs.push({ label: 'System Tests', content: <SystemTestPanel onRunTests={onRunTests} /> });
     
     return (
         <div style={styles.container}>

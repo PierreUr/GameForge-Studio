@@ -5,7 +5,7 @@ import AssetPanel from './AssetPanel';
 import { useAuth } from '../auth/AuthContext';
 
 interface LeftSidebarProps {
-    onViewChange: (viewId: 'canvas' | 'logic-graph' | 'admin') => void;
+    onViewChange: (viewId: 'canvas' | 'logic-graph' | 'admin' | 'ui-editor') => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
@@ -21,6 +21,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
             content: <div style={styles.panelContent}><p>Placeholder for scene layers.</p></div>
         },
         {
+            label: 'UI Editor',
+            content: <div style={styles.panelContent}><p>UI Editor is active in the main view.</p></div>
+        },
+        {
             label: 'Logic Graph',
             content: <div style={styles.panelContent}><p>Logic Graph editor is active in the main view.</p></div>
         },
@@ -33,11 +37,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onViewChange }) => {
     const handleTabChange = (tab: Tab) => {
         if (tab.label === 'Logic Graph') {
             onViewChange('logic-graph');
-        } else {
-            onViewChange('canvas');
+        } else if (tab.label === 'UI Editor') {
+            onViewChange('ui-editor');
         }
     };
-
+    
     return (
         <div style={styles.sidebarContainer}>
             <TabSystem tabs={tabs} onTabChange={handleTabChange} />

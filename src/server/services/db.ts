@@ -1,4 +1,4 @@
-import { User, Role, Permission, Module } from '../types';
+import { User, Role, Permission, Module, Task, Tag } from '../types';
 
 // Simulates a database using in-memory arrays.
 interface InMemoryDatabase {
@@ -6,10 +6,14 @@ interface InMemoryDatabase {
     roles: Role[];
     permissions: Permission[];
     modules: Module[];
+    tasks: Task[];
+    tags: Tag[];
     nextUserId: number;
     nextRoleId: number;
     nextPermissionId: number;
     nextModuleId: number;
+    nextTaskId: number;
+    nextTagId: number;
 }
 
 const DATABASE_KEY = 'gameforge-db-simulation';
@@ -32,10 +36,14 @@ const getDefaultDatabase = (): InMemoryDatabase => ({
         { id: 4, action: 'manage_modules', subject: 'Allows managing system modules.'}
     ],
     modules: [],
+    tasks: [],
+    tags: [],
     nextUserId: 4,
     nextRoleId: 4,
     nextPermissionId: 5,
     nextModuleId: 1,
+    nextTaskId: 1,
+    nextTagId: 1,
 });
 
 const loadDatabase = (): InMemoryDatabase => {

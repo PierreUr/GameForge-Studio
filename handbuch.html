@@ -42,6 +42,60 @@
                 <h2 class="text-2xl font-semibold text-white mb-6">Abgeschlossene Tasks</h2>
 
                 <div class="task-entry">
+                    <h3 class="font-semibold text-blue-400 mb-2">Task 019: Frontend UI: Aufgabenverwaltung (Erweitert)</h3>
+                    <p class="mb-4">Implementierung einer neuen Benutzeroberfläche zur grundlegenden Verwaltung von Aufgaben. Die neue Ansicht wurde als "Tasks"-Tab in das Admin-Dashboard integriert.</p>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>
+                    <ul class="list-disc ml-6 text-gray-400">
+                        <li>Eine neue React-Komponente <code>TaskManagementPanel.tsx</code> wurde erstellt, die das UI für die Aufgabenverwaltung kapselt.</li>
+                        <li>Die Komponente enthält ein Formular zum Erstellen neuer Aufgaben mit Titel, Beschreibung, Status und Priorität.</li>
+                        <li>Eine Tabelle zeigt alle vorhandenen Aufgaben an und bietet einen "Delete"-Button pro Aufgabe.</li>
+                        <li>Die Komponente kommuniziert über den client-seitigen <code>TasksService</code> mit dem simulierten Backend, um Aufgaben abzurufen, zu erstellen und zu löschen.</li>
+                        <li>Die neue Ansicht wurde als Tab in die <code>AdminDashboard.tsx</code>-Komponente integriert.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Test-Szenario & Erwartetes Ergebnis:</h4>
+                    <p class="text-gray-400">
+                        <strong>Test:</strong> Manuelles Erstellen und Löschen einer Aufgabe über die UI.<br>
+                        <strong>Anweisung:</strong> Navigieren Sie als Admin-Benutzer zum Admin-Dashboard und wählen Sie den "Tasks"-Tab. Füllen Sie das Formular aus, um eine neue Aufgabe zu erstellen, und klicken Sie auf "Create Task". Klicken Sie anschließend auf den "Delete"-Button bei der neu erstellten Aufgabe.<br>
+                        <strong>Erwartetes Ergebnis:</strong> Die neue Aufgabe erscheint nach der Erstellung in der Tabelle. Nach dem Klick auf "Delete" und Bestätigung des Dialogs wird die Aufgabe aus der Tabelle entfernt. Dies bestätigt die korrekte Funktion der UI und der angebundenen Service-Logik.
+                    </p>
+                </div>
+
+                <div class="task-entry">
+                    <h3 class="font-semibold text-blue-400 mb-2">Task 018: Aufgaben-CRUD API (Erweitert)</h3>
+                    <p class="mb-4">Implementierung der serverseitigen Logik für die Erstellung und Aktualisierung von Aufgaben gemäß dem erweiterten Schema. Da die Anwendung eine simulierte Datenbank verwendet, wurde ein neuer Service für diese Geschäftslogik erstellt.</p>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>
+                    <ul class="list-disc ml-6 text-gray-400">
+                        <li>Ein neuer, simulierter `TasksService` (<code>src/server/services/TasksService.ts</code>) wurde erstellt, um die CRUD-Operationen für Aufgaben zu kapseln.</li>
+                        <li>Die `create`-Methode akzeptiert ein Datenobjekt für eine neue Aufgabe, validiert die Eingaben (z.B. auf vorhandene Zuweisungen/Tags) und speichert das neue Task-Objekt in der In-Memory-Datenbank.</li>
+                        <li>Die `update`-Methode findet eine bestehende Aufgabe anhand ihrer ID und aktualisiert ihre Eigenschaften mit den übergebenen Daten.</li>
+                        <li>Ein client-seitiger Wrapper-Service (<code>src/core/auth/TasksService.ts</code>) wurde ebenfalls erstellt, um die simulierten Backend-Aufrufe asynchron für das Frontend bereitzustellen.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Test-Szenario & Erwartetes Ergebnis:</h4>
+                    <p class="text-gray-400">
+                        <strong>Test:</strong> Manuelles Erstellen und Aktualisieren einer Aufgabe über die Browser-Konsole.<br>
+                        <strong>Anweisung:</strong> Rufen Sie in der Entwicklerkonsole die Funktion `TasksService.create({ title: 'Test Task', assigneeIds: [1, 2], ... })` auf. Überprüfen Sie anschließend den `localStorage` (`gameforge-db-simulation` -> `tasks`), um zu sehen, ob die Aufgabe mit den korrekten Daten erstellt wurde. Rufen Sie danach `TasksService.update(taskId, { title: 'Updated Title' })` auf und überprüfen Sie erneut den `localStorage`.<br>
+                        <strong>Erwartetes Ergebnis:</strong> Die Aufgabe wird korrekt erstellt und aktualisiert, einschließlich der `assigneeIds` und anderer relationaler Daten. Dies bestätigt die korrekte Funktion der Service-Logik.
+                    </p>
+                </div>
+
+                <div class="task-entry">
+                    <h3 class="font-semibold text-blue-400 mb-2">Task 017: DB-Schema Aufgaben (Erweitert)</h3>
+                    <p class="mb-4">Erweiterung des Datenbankschemas zur Unterstützung einer detaillierten und hierarchischen Aufgabenverwaltung. Dies ist ein reiner Backend- und Schematask, der die Grundlage für zukünftige UI-Funktionen legt.</p>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>
+                    <ul class="list-disc ml-6 text-gray-400">
+                        <li>Neue TypeScript-Interfaces <code>Task</code> und <code>Tag</code> in <code>src/server/types.ts</code> definiert, die Felder für Hierarchie (<code>parentId</code>), Status, Priorität, Zuweisungen, Tags und Abhängigkeiten enthalten.</li>
+                        <li>Die In-Memory-Datenbank-Simulation in <code>src/server/services/db.ts</code> wurde um Speicher für <code>tasks</code> und <code>tags</code> erweitert.</li>
+                        <li>Ein neues Dokument <code>DOC_SETUP_BACKEND_SCHEMA_TASK.md</code> wurde erstellt, das die finale Zieldatenbank-Struktur mit vollständigen TypeORM-Entity-Definitionen beschreibt.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Test-Szenario & Erwartetes Ergebnis:</h4>
+                    <p class="text-gray-400">
+                        <strong>Test:</strong> Code-Review und Validierung der neuen Typen und Dokumentationen.<br>
+                        <strong>Anweisung:</strong> Überprüfen Sie die Datei <code>src/server/types.ts</code> auf die neuen Interfaces <code>Task</code> und <code>Tag</code>. Überprüfen Sie die Datei <code>DOC_SETUP_BACKEND_SCHEMA_TASK.md</code> auf die korrekte Definition der TypeORM-Entitäten.<br>
+                        <strong>Erwartetes Ergebnis:</strong> Die Typen und Entitätsdefinitionen entsprechen den Anforderungen aus der Task-Beschreibung (hierarchische Beziehungen, Many-to-Many für Zuweisungen/Tags, JSON-Felder etc.). Die Code-Kompilierung verläuft ohne Fehler.
+                    </p>
+                </div>
+
+                <div class="task-entry">
                     <h3 class="font-semibold text-blue-400 mb-2">Task 016: API für Modul-Konfiguration</h3>
                     <p class="mb-4">Implementierung eines simulierten API-Endpunkts, um die spezifische Konfiguration eines Moduls abzurufen. Dies ermöglicht es aktiven Modulen, ihre Einstellungen zentral vom Backend zu laden.</p>
                     <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>

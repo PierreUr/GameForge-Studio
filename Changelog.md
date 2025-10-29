@@ -1,5 +1,26 @@
 # Changelog - GameForge Studio
 
+## [1.24.0]
+- **[TASK-174]** [FEAT] Implemented Phase 2 of the UI Builder. Widgets dropped on the canvas can now be selected. The Inspector panel (right sidebar) dynamically displays editable properties for the selected widget. Implemented zoom (CTRL+Mousewheel) and pan (Middle Mouse Button) functionality in the UI Editor.
+
+## [1.23.0]
+- **[TASK-173]** [FEAT] Implemented the foundational layout system for the UI Builder. The `UIEditorPanel` was completely refactored to support a hierarchical structure of 'Sections' and 'Columns', replacing the previous absolute positioning system. Users can now drag 'Sections' onto the canvas and drop widgets into the resulting columns.
+
+## [1.22.0]
+- **[TASK-172]** [REFACTOR] Refactored the monolithic `SelfOrganisationPanel` into two atomic, reusable widgets: `TaskListWidget` and `CreateTaskFormWidget`. Created a new `ui-widget-manifest.json` to register these components for the upcoming UI builder.
+
+## [1.21.0]
+- **[TASK-172]** [REFACTOR] Refactored the monolithic `SelfOrganisationPanel` into two atomic, reusable widgets: `TaskListWidget` and `CreateTaskFormWidget`. Created a new `ui-widget-manifest.json` to register these components for the upcoming UI builder.
+
+## [1.20.0]
+- **[TASK-019]** [FEAT] Implemented the initial user interface for Task Management in the Admin Dashboard. Users can now create, view, and delete tasks through a new "Tasks" tab.
+
+## [1.19.0]
+- **[TASK-018]** [FEAT] Implemented the simulated CRUD API for the extended Task schema. A new `TasksService` handles the creation and updating of tasks, including their new properties like priority, assignees, and tags, within the in-memory database.
+
+## [1.18.0]
+- **[TASK-017]** [SCHEMA] Extended the database schema for tasks. This includes new interfaces for `Task` and `Tag`, and updates to the in-memory database simulation to support hierarchy, dependencies, assignees, and other advanced fields. Documented the target TypeORM schema.
+
 ## [1.17.0]
 - **[TASK-016]** [FEAT] Implemented a simulated API endpoint to retrieve module-specific configurations. A new method allows fetching the configuration for a module by its name, protected by authentication.
 

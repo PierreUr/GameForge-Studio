@@ -203,7 +203,7 @@
         }
     },
     "projectName": "GameForge Studio",
-    "version": "1.17.0",
+    "version": "1.24.0",
     "completedTasks": [
         "001-ui-setup-progress-bar",
         "002-handbuch-initialisierung",
@@ -233,6 +233,11 @@
         "013-db-schema-module",
         "014-modul-registry-api",
         "admin-ui-modulverwaltung",
-        "016-api-fuer-modul-konfiguration"
+        "016-api-fuer-modul-konfiguration",
+        "017-db-schema-aufgaben-erweitert",
+        "018-aufgaben-crud-api-erweitert",
+        "172-refactor-task-management-into-atomic-widgets",
+        "173-implement-ui-builder-phase-1-layout-system",
+        "174-implement-ui-builder-phase-2-widget-library-and-inspector"
     ]
 }

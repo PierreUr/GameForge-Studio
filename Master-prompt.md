@@ -27,6 +27,19 @@ GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (I
     - `[SUCCESS] [task-slug] produced the expected outcome.`
     - `[FAILURE] [task-slug] correctly handled invalid input.`
     - Andere Log-Typen (`[INFO]`, `[WARN]`, `[ERROR]`) werden für detailliertere Ausgaben verwendet.
+- **Anpassbares Komponenten-Styling:** Jede UI-Komponente, insbesondere `ComponentCard`-basierte `[ASSET]`-Module, muss so implementiert werden, dass ihre visuellen Eigenschaften (CSS-Attribute wie Farben, Abstände, Schriftgrößen) über den Inspector und die Layout-Tools dynamisch anpassbar sind. Vermeide hartcodierte Styles, die diese Flexibilität einschränken.
+
+---
+
+## UI Asset System - Kernprinzipien (Höchstes Gebot)
+
+Die Architektur des UI-Builders folgt einem streng datengesteuerten, manifest-basierten Ansatz, um maximale Flexibilität und Erweiterbarkeit zu gewährleisten.
+
+1.  **Das Widget (`*.tsx`):** Jede UI-Komponente ist ein atomares, in sich geschlossenes "Asset". Es ist eine reine React-Komponente, die nur ihre eigene Render-Logik kennt und keine Kenntnis vom Editor hat.
+2.  **Das Manifest (`*.json`):** Eine `ui-widget-manifest.json` dient als zentrales "Regelbuch" und Registrierungsstelle. Sie listet alle verfügbaren Widgets mit Metadaten (ID, Name, Beschreibung, editierbare Eigenschaften) auf. Die UI-Bibliothek liest ausschließlich diese Datei, um zu wissen, welche Widgets sie anzeigen soll.
+3.  **Der Editor & die Registry:** Der `UIEditorPanel` agiert als Vermittler. Beim Drag-and-Drop wird nur die **ID** aus dem Manifest übergeben. Eine interne "Component Registry" (eine Map) im Editor mappt diese ID zur tatsächlich importierten React-Komponente und rendert sie.
+
+Dieser Ansatz entkoppelt die UI-Komponenten strikt vom Editor, macht das System einfach durch neue Manifest-Einträge erweiterbar und schafft die Grundlage für einen dynamischen Inspector.
 
 ---
 
@@ -40,7 +53,8 @@ GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (I
 6.  **Architektur-Dokumentation:** Bei der Implementierung neuer Features oder der Erfüllung von Tasks muss die `Anwendungsarchitektur.json` aktualisiert werden. Abgeschlossene Tasks sind in die `completedTasks`-Liste einzutragen.
 7.  **Changelog-Archivierung:** Das `Changelog.md` dient als temporäres Log für die aktuelle Aufgabe. Nach Abschluss der Aufgabe werden diese Einträge in `Changelog-Archiv.md` überführt und mit Kommentaren (Aufgabe, Schwierigkeit, Lösung) versehen.
 8.  **Task-Abschluss:** Ein Task in `ToDo.md` wird erst dann als erledigt (`- [x]`) markiert, wenn der User explizit die Anweisung "Erledigt! Weiter" gibt.
-9.  **Datenbank-Simulation:** Bis auf Weiteres wird die gesamte Datenbank-Kommunikation simuliert (z.B. durch In-Memory-Datenstrukturen), um die Entwicklung zu beschleunigen. Dokumentationen sollen jedoch weiterhin die finale Zieldatenbank beschreiben.
+9.  **Datenbank-Simulation:** Bis auf Weiteres wird die gesamte Datenbank-Kommunikation simuliert (z.B. durch In-Memory-Datenstrukturen, die in `localStorage` persistiert werden), um die Entwicklung zu beschleunigen. Dokumentationen sollen jedoch weiterhin die finale Zieldatenbank beschreiben.
+10. **Chat-Antwort-Format:** Jede Chatanwort nach der Bearbeitung eines Tasks muss, zusätzlich zum optionalen Konversationsteil und dem obligatorischen XML-Block, eine Sektion enthalten, die das **erwartete Ergebnis** der durchgeführten Änderungen und klare **Testschritte** zur manuellen Überprüfung der Funktionalität beschreibt.
 
 ---
 

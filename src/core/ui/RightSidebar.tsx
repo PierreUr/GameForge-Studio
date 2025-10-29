@@ -10,22 +10,30 @@ import PreviewInspector from './PreviewInspector';
 import { FrameConfig } from '../rendering/Renderer';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
 import NumberInput from './inputs/NumberInput';
+import WidgetInspector from './WidgetInspector';
+import { SectionData } from './UIEditorPanel';
 
 interface RightSidebarProps {
     world: World | null;
     frameConfig: FrameConfig;
     onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
+    uiLayout: SectionData[];
+    selectedWidgetId: string | null;
 }
 
-const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrameConfigChange }) => {
+interface SelectedWidgetInfo {
+    widgetId: string;
+    widgetDefinition: any;
+}
+
+const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrameConfigChange, uiLayout, selectedWidgetId }) => {
     const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
     const [entityComponents, setEntityComponents] = useState<[string, IComponent][]>([]);
-    
     const [previewData, setPreviewData] = useState<{ type: 'template' | 'node', data: any } | null>(null);
     const [templates, setTemplates] = useState<any[]>([]);
     const [nodes, setNodes] = useState<any[]>([]);
+    const [selectedWidgetInfo, setSelectedWidgetInfo] = useState<SelectedWidgetInfo | null>(null);
 
-    // Fetch manifests for preview data
     useEffect(() => {
         const fetchManifests = async () => {
             try {
@@ -55,7 +63,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         const eventBus = EventBus.getInstance();
 
         const handleEntitySelection = (payload: { entityId: number }) => {
-            setPreviewData(null); // Clear preview when an entity is selected
+            setSelectedWidgetInfo(null);
+            setPreviewData(null);
             if (payload && typeof payload.entityId === 'number') {
                 setSelectedEntityId(payload.entityId);
                 updateComponents(payload.entityId);
@@ -78,7 +87,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
             if (item) {
                 setPreviewData({ type: 'template', data: item });
                 setSelectedEntityId(null);
-                setEntityComponents([]);
+                setSelectedWidgetInfo(null);
             }
         };
 
@@ -87,12 +96,16 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
             if (item) {
                 setPreviewData({ type: 'node', data: item });
                 setSelectedEntityId(null);
-                setEntityComponents([]);
+                setSelectedWidgetInfo(null);
             }
         };
         
-        const handlePreviewClear = () => {
+        const handlePreviewClear = () => setPreviewData(null);
+
+        const handleWidgetSelection = (payload: SelectedWidgetInfo) => {
+            setSelectedEntityId(null);
             setPreviewData(null);
+            setSelectedWidgetInfo(payload);
         };
 
         eventBus.subscribe('entity:selected', handleEntitySelection);
@@ -101,6 +114,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         eventBus.subscribe('preview:template', handlePreviewTemplate);
         eventBus.subscribe('preview:node', handlePreviewNode);
         eventBus.subscribe('preview:clear', handlePreviewClear);
+        eventBus.subscribe('ui-widget:selected', handleWidgetSelection);
 
         return () => {
             eventBus.unsubscribe('entity:selected', handleEntitySelection);
@@ -109,6 +123,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
             eventBus.unsubscribe('preview:template', handlePreviewTemplate);
             eventBus.unsubscribe('preview:node', handlePreviewNode);
             eventBus.unsubscribe('preview:clear', handlePreviewClear);
+            eventBus.unsubscribe('ui-widget:selected', handleWidgetSelection);
         };
     }, [world, updateComponents, selectedEntityId, templates, nodes]);
 
@@ -116,21 +131,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         if (world && selectedEntityId !== null) {
             const componentTuple = entityComponents.find(([name]) => name === componentName);
             if (componentTuple) {
-                const componentData = componentTuple[1];
-                const oldValue = (componentData as any)[propertyKey];
-
-                if (oldValue === value) {
-                    return; 
-                }
-
-                const command = new UpdateComponentCommand(
-                    world,
-                    selectedEntityId,
-                    componentName,
-                    propertyKey,
-                    oldValue,
-                    value
-                );
+                const oldValue = (componentTuple[1] as any)[propertyKey];
+                if (oldValue === value) return;
+                const command = new UpdateComponentCommand(world, selectedEntityId, componentName, propertyKey, oldValue, value);
                 CommandManager.getInstance().executeCommand(command);
             }
         }
@@ -140,51 +143,44 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         <div style={styles.layoutSettingsContainer}>
             <h5 style={styles.entityHeader}>Layout Settings</h5>
              <div style={styles.settingItem}>
-                <BooleanCheckbox
-                    label="Auto Height"
-                    value={frameConfig.autoHeight || false}
-                    onChange={(val) => onFrameConfigChange({ autoHeight: val })}
-                />
+                <BooleanCheckbox label="Auto Height" value={frameConfig.autoHeight || false} onChange={(val) => onFrameConfigChange({ autoHeight: val })} />
             </div>
             <div style={styles.settingItem}>
-                <NumberInput
-                    label="Height (px)"
-                    value={frameConfig.height}
-                    onChange={(val) => onFrameConfigChange({ height: val })}
-                    disabled={frameConfig.autoHeight}
-                />
+                <NumberInput label="Height (px)" value={frameConfig.height} onChange={(val) => onFrameConfigChange({ height: val })} disabled={frameConfig.autoHeight} />
             </div>
         </div>
     );
 
     let inspectorContent;
 
-    if (selectedEntityId !== null) {
+    const findWidgetData = (layout: SectionData[], widgetId: string | null) => {
+        if (!widgetId) return null;
+        for (const section of layout) {
+            for (const column of section.columns) {
+                const widget = column.widgets.find(w => w.id === widgetId);
+                if (widget) return widget;
+            }
+        }
+        return null;
+    };
+
+    const currentWidgetData = findWidgetData(uiLayout, selectedWidgetId);
+
+    if (currentWidgetData && selectedWidgetInfo) {
+        inspectorContent = <WidgetInspector widgetData={currentWidgetData} widgetDefinition={selectedWidgetInfo.widgetDefinition} />;
+    } else if (selectedEntityId !== null) {
         inspectorContent = (
             <div>
                 <h5 style={styles.entityHeader}>Entity: {selectedEntityId}</h5>
-                 {entityComponents.length > 0 ? (
-                    entityComponents.map(([name, data]) => (
-                        <ComponentInspector
-                            key={name}
-                            componentName={name}
-                            componentData={data}
-                            onDataChange={handleComponentUpdate}
-                        />
-                    ))
-                ) : (
-                    <p>This entity has no components.</p>
-                )}
+                 {entityComponents.map(([name, data]) => (
+                    <ComponentInspector key={name} componentName={name} componentData={data} onDataChange={handleComponentUpdate} />
+                 ))}
             </div>
         );
     } else if (previewData) {
-        inspectorContent = (
-            <PreviewInspector item={previewData.data} type={previewData.type} />
-        );
-    } else if (!frameConfig.isVisible) { // Only show this if no frame is visible
-        inspectorContent = (
-             <p>Select an entity on the canvas or an item in a library to inspect its properties.</p>
-        );
+        inspectorContent = <PreviewInspector item={previewData.data} type={previewData.type} />;
+    } else {
+        inspectorContent = <p>Select an item on the canvas or in a library to inspect its properties.</p>;
     }
     
     const tabs = [

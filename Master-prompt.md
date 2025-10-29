@@ -43,6 +43,112 @@ GameForge Studio ist eine webbasierte, fenstergesteuerte Entwicklungsumgebung (I
 9.  **Datenbank-Simulation:** Bis auf Weiteres wird die gesamte Datenbank-Kommunikation simuliert (z.B. durch In-Memory-Datenstrukturen), um die Entwicklung zu beschleunigen. Dokumentationen sollen jedoch weiterhin die finale Zieldatenbank beschreiben.
 
 ---
+
+## Testmechanismen und Qualitätssicherung
+
+Dieses Kapitel definiert die Architektur und die Prozesse für das Testen innerhalb von GameForge Studio, um eine hohe Code-Qualität und Systemstabilität sicherzustellen.
+
+### 1. Architekturübersicht
+
+Das Testsystem besteht aus einer manuellen Test-UI und einem automatisierten Testlauf, der im Hintergrund agiert.
+
+**Text-basiertes Architekturdiagramm:**
+```
+[UI: SystemTestPanel.tsx]
+ |
+ |-- Zeigt Liste aller registrierten Tests aus `testRegistry`
+ |
+ |-- "Run Test" Button (onClick) -> ruft `handleRunSingleTest(slug)`
+ |    |
+ |    '--> aktualisiert UI-Status auf 'running'
+ |    '--> ruft `onRunTests(slug)` Prop (aus index.tsx)
+ |
+ |-- "Run All" Button (onClick) -> ruft `handleRunAllTests()`
+ |    |
+ |    '--> iteriert durch alle Tests und führt sie sequenziell aus
+ |
+ '---> (aktualisiert UI nach jedem Test mit PASS/FAIL)
+
+[index.tsx]
+ |
+ |-- `handleRunTests(slug?)`: Kern-Testausführungsfunktion
+ |    |
+ |    '--> Empfängt optional einen `slug` zur Ausführung eines Einzeltests
+ |
+ |-- `testRegistry`: Globale Map, die `slug` auf eine Test-Funktion abbildet
+ |
+ |-- Test-Ausführung
+ |    |
+ |    '--> `TestLogger` fängt alle Log-Ausgaben auf
+ |
+ |-- `localStorage['test-execution-log']`: Nach JEDEM vollen Testlauf (Auto-Run) wird hier das Ergebnis gespeichert
+ |
+ '---> Gibt Log-String an den Aufrufer (UI) zurück
+```
+
+### 2. Implementierungsrichtlinien für neue Tests
+
+Jede neue, testbare Funktionalität muss von einem Test begleitet werden, der in der zentralen Test-Registry registriert wird.
+
+1.  **Test-Funktion erstellen:** Erstelle eine `async`-Funktion, die `logger: TestLogger` und `deps: TestDependencies` als Argumente akzeptiert.
+2.  **Test-Logik implementieren:**
+    *   Nutze `logger.logSuccess('task-slug')` für erfolgreiche Validierungen.
+    *   Nutze `logger.logFailure('task-slug')` für Tests, die korrekt auf ungültige Eingaben reagieren.
+    -   Nutze `logger.logCustom('message', 'ERROR')` für unerwartete Fehler.
+3.  **Test registrieren:** Füge die Funktion mit einem eindeutigen Slug in das `testRegistry`-Objekt in `src/core/dev/tests.ts` ein. Der Slug sollte dem Schema `NNN-kurzbeschreibung-des-tasks` folgen.
+
+### 3. Logfile-Format-Spezifikation (JSON-Schema)
+
+Das bei jedem automatischen Testlauf im `localStorage` gespeicherte Log soll zukünftig diesem JSON-Schema entsprechen, um eine maschinelle Auswertung zu ermöglichen.
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GameForge Test Execution Log",
+  "type": "object",
+  "properties": {
+    "runId": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer" },
+        "passed": { "type": "integer" },
+        "failed": { "type": "integer" }
+      },
+      "required": ["total", "passed", "failed"]
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string" },
+          "status": { "enum": ["PASS", "FAIL", "SKIPPED"] },
+          "duration": { "type": "number", "description": "Dauer in Millisekunden" },
+          "log": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["slug", "status", "duration", "log"]
+      }
+    }
+  },
+  "required": ["runId", "timestamp", "summary", "results"]
+}
+```
+
+### 4. Akzeptanzkriterien für einen erfolgreichen Test
+
+Ein Test gilt als **`PASS`**, wenn:
+-   Die Test-Funktion ohne unaufgefangene Exceptions durchläuft.
+-   Im `TestLogger` keine Meldung vom Typ `[ERROR]` oder `[CRITICAL]` protokolliert wurde.
+-   Alle `assert`-ähnlichen Prüfungen innerhalb des Tests erfolgreich waren.
+
+Ein Test gilt als **`FAIL`**, wenn eines der oben genannten Kriterien nicht erfüllt ist.
+
+---
 ### Self-Correction Workflow (Critical)
 
 Bevor du eine Aufgabe ausführst, die durch "Weiter" (oder einen ähnlichen Befehl) ausgelöst wird, MUSST du dieses Protokoll befolgen:

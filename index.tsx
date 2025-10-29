@@ -178,11 +178,22 @@ const App = () => {
 
     }, [token]); // Rerun setup when token changes (on login)
     
-    const handleRunTests = useCallback(async (): Promise<string> => {
+    const handleRunTests = useCallback(async (slugToRun?: string): Promise<string> => {
         const logger = new TestLogger();
         try {
-            // --- Run All Tests from Registry for localStorage logging ---
-            for (const slug in testRegistry) {
+            const testsToRun: Record<string, Function> = {};
+
+            if (slugToRun) {
+                if (testRegistry[slugToRun]) {
+                    testsToRun[slugToRun] = testRegistry[slugToRun];
+                } else {
+                    logger.logCustom(`Test with slug '${slugToRun}' not found in registry.`, 'ERROR');
+                }
+            } else {
+                Object.assign(testsToRun, testRegistry);
+            }
+
+            for (const slug in testsToRun) {
                 const testEntityManager = new EntityManager();
                 const testComponentManager = new ComponentManager();
                 const testSystemManager = new SystemManager(testEntityManager, testComponentManager);
@@ -198,20 +209,23 @@ const App = () => {
                 testWorld.registerComponent(ScoreComponent);
                 testWorld.registerComponent(AIPatrolComponent);
 
-                await testRegistry[slug](logger, { world: testWorld });
+                await testsToRun[slug](logger, { world: testWorld });
             }
 
             const logContent = logger.getLog();
             const cleanLog = logContent.replace(/\x1b\[[0-9;]*m/g, '');
 
             try {
-                const logLines = cleanLog.split('\n').filter(line => line.trim() !== '');
-                const logData = {
-                    timestamp: new Date().toISOString(),
-                    results: logLines,
-                };
-                localStorage.setItem('test-execution-log', JSON.stringify(logData));
-                console.log('[App] Test execution log saved to localStorage.');
+                // Only save full-run logs to local storage to avoid overwriting with single test runs
+                if (!slugToRun) {
+                    const logLines = cleanLog.split('\n').filter(line => line.trim() !== '');
+                    const logData = {
+                        timestamp: new Date().toISOString(),
+                        results: logLines,
+                    };
+                    localStorage.setItem('test-execution-log', JSON.stringify(logData));
+                    console.log('[App] Test execution log saved to localStorage.');
+                }
             } catch (e) {
                 console.error("Failed to save test log to localStorage", e);
             }
@@ -224,10 +238,12 @@ const App = () => {
             const errorLogContent = errorLogger.getLog();
             const cleanErrorLog = errorLogContent.replace(/\x1b\[[0-9;]*m/g, '');
             const errorLines = cleanErrorLog.split('\n').filter(line => line.trim() !== '');
-            localStorage.setItem('test-execution-log', JSON.stringify({
-                timestamp: new Date().toISOString(),
-                results: ['[CRITICAL] An unexpected error occurred during test execution.', ...errorLines]
-            }));
+             if (!slugToRun) {
+                localStorage.setItem('test-execution-log', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    results: ['[CRITICAL] An unexpected error occurred during test execution.', ...errorLines]
+                }));
+            }
             return cleanErrorLog;
         }
     }, []);

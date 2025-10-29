@@ -1,7 +1,7 @@
 # GameForge Studio - Entwicklungsplan
 
 **Projekt:** GameForge Studio  
-**Version:** 1.16.0  
+**Version:** 1.17.0  
 **Gesamtanzahl Tasks:** 160
 **Status:** In Entwicklung
 
@@ -20,8 +20,8 @@
 - [x] **Task 012:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Admin-UI Benutzer-/Rollenverwaltung
 - [x] **Task 013:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   DB-Schema Module
 - [x] **Task 014:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Modul-Registry API
-- [ ] **Task 015:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Admin-UI Modulverwaltung
-- [ ] **Task 016:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   API für Modul-Konfiguration
+- [x] **Task 015:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Admin-UI Modulverwaltung
+- [x] **Task 016:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   API für Modul-Konfiguration
 - [ ] **Task 017:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   DB-Schema Aufgaben (Erweitert)
 - [ ] **Task 018:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Aufgaben-CRUD API (Erweitert)
 - [ ] **Task 019:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Frontend UI: Aufgabenverwaltung (Erweitert)

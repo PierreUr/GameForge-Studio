@@ -45,9 +45,12 @@ const ModuleManagementPanel: React.FC = () => {
     };
 
     const handleDeleteModule = async (id: number) => {
-        if (window.confirm('Are you sure you want to delete this module?')) {
+        try {
             await ModulesService.deleteModule(id);
-            fetchModules();
+            fetchModules(); // Refresh the list after deletion
+        } catch (error) {
+            console.error(`Failed to delete module ${id}:`, error);
+            alert('An error occurred while deleting the module.');
         }
     };
 

@@ -35,6 +35,11 @@ class ClientModulesService {
         await new Promise(resolve => setTimeout(resolve, 300));
         return this.simulatedService.delete(id);
     }
+
+    public async getModuleConfig(moduleName: string): Promise<Record<string, any> | null> {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return this.simulatedService.getModuleConfig(moduleName);
+    }
 }
 
 export const ModulesService = ClientModulesService.getInstance();

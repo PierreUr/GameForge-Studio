@@ -40,6 +40,44 @@
 
             <section id="tasks">
                 <h2 class="text-2xl font-semibold text-white mb-6">Abgeschlossene Tasks</h2>
+
+                <div class="task-entry">
+                    <h3 class="font-semibold text-blue-400 mb-2">Task 016: API für Modul-Konfiguration</h3>
+                    <p class="mb-4">Implementierung eines simulierten API-Endpunkts, um die spezifische Konfiguration eines Moduls abzurufen. Dies ermöglicht es aktiven Modulen, ihre Einstellungen zentral vom Backend zu laden.</p>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>
+                    <ul class="list-disc ml-6 text-gray-400">
+                        <li>Eine neue Methode <code>getModuleConfig</code> wurde zum simulierten <code>ModulesService</code> (Server-Seite) hinzugefügt, die die Konfiguration anhand des Modulnamens findet.</li>
+                        <li>Eine entsprechende Wrapper-Methode wurde im clientseitigen <code>ModulesService</code> implementiert, um die Funktionalität im Frontend verfügbar zu machen.</li>
+                        <li>Der Zugriff ist auf authentifizierte Benutzer beschränkt.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Test-Szenario & Erwartetes Ergebnis:</h4>
+                    <p class="text-gray-400">
+                        <strong>Test:</strong> Manuelles Abrufen der Konfiguration eines Moduls.<br>
+                        <strong>Anweisung:</strong> Erstellen Sie ein Modul (z.B. über die Admin-UI) und fügen Sie manuell im LocalStorage (<code>gameforge-db-simulation</code> -> <code>modules</code>) ein <code>configSchema</code>-Objekt hinzu (z.B. <code>{"settingA": true, "value": 123}</code>). Rufen Sie dann die Funktion <code>ModulesService.getModuleConfig('modul-name')</code> in der Browser-Konsole auf.<br>
+                        <strong>Erwartetes Ergebnis:</strong> Die Konsole sollte das <code>configSchema</code>-Objekt (<code>{"settingA": true, "value": 123}</code>) ausgeben. Dies bestätigt, dass die API-Schicht korrekt funktioniert.
+                    </p>
+                </div>
+                
+                <div class="task-entry">
+                    <h3 class="font-semibold text-blue-400 mb-2">Task 015: Admin-UI Modulverwaltung</h3>
+                    <p class="mb-4">Implementierung eines neuen Panels im Admin-Dashboard zur Verwaltung von System-Modulen. Die Ansicht ist durch rollenbasierte Zugriffskontrolle geschützt und nur für Benutzer mit der Rolle 'SUPER_ADMIN' sichtbar.</p>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Implementierungsdetails:</h4>
+                    <ul class="list-disc ml-6 text-gray-400">
+                        <li>Neue React-Komponente <code>ModuleManagementPanel.tsx</code> erstellt.</li>
+                        <li>Die Komponente ruft die Modulliste über den <code>ModulesService</code> ab und stellt sie in einer Tabelle dar.</li>
+                        <li>Ein Formular ermöglicht das Erstellen neuer Module.</li>
+                        <li>Aktions-Buttons in jeder Tabellenzeile erlauben das Umschalten des Aktiv-Status und das Löschen von Modulen.</li>
+                        <li>Die Komponente wird nur dann im Admin-Dashboard gerendert, wenn der eingeloggte Benutzer die Rolle 'SUPER_ADMIN' besitzt.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-200 mt-4 mb-2">Test-Szenario & Erwartetes Ergebnis:</h4>
+                    <p class="text-gray-400">
+                        <strong>Test 1 (Zugriff):</strong> Einloggen mit einem 'ADMIN'-Benutzer (nicht Super-Admin).<br>
+                        <strong>Erwartetes Ergebnis:</strong> Der Tab "Modules" im Admin-Dashboard ist nicht sichtbar.<br><br>
+                        <strong>Test 2 (Funktionalität):</strong> Einloggen mit einem 'SUPER_ADMIN'-Benutzer.<br>
+                        <strong>Anweisung:</strong> Navigieren Sie zum Admin-Dashboard und zum "Modules"-Tab. Füllen Sie das Formular aus, um ein neues Modul zu erstellen. Klicken Sie auf den "Delete"-Button eines Moduls.<br>
+                        <strong>Erwartetes Ergebnis:</strong> Das neue Modul erscheint in der Liste. Nach dem Klick auf "Delete" wird das Modul aus der Liste entfernt. Die Aktionen bestätigen die korrekte Funktion der UI und der angebundenen Service-Logik.
+                    </p>
+                </div>
                 
                 <div class="task-entry">
                     <h3 class="font-semibold text-blue-400 mb-2">Task 002: Handbuch-Initialisierung</h3>

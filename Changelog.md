@@ -1,6 +1,10 @@
 # Changelog - GameForge Studio
 
+## [1.17.0]
+- **[TASK-016]** [FEAT] Implemented a simulated API endpoint to retrieve module-specific configurations. A new method allows fetching the configuration for a module by its name, protected by authentication.
+
 ## [1.16.0]
+- **[TASK-015]** [FEAT] Implemented the Module Management panel in the Admin Dashboard. SUPER_ADMIN users can now create, view, toggle activation, and delete system modules. The UI is integrated as a new tab and is protected by role-based access control.
 - **[TASK-014]** [FEAT] Implemented the simulated Module Registry API. This includes a new `ModulesService` for CRUD operations on system modules and a corresponding client-side wrapper. A `SUPER_ADMIN` role and user were added to the simulation to support future protected routes.
 - **[TASK-013]** [SCHEMA] Defined the database schema for system modules. In the current simulation phase, this includes a `Module` type definition and an in-memory data store. The official TypeORM entity was documented for future backend integration.
 - **[TASK-012]** [FEAT] Implemented a new Admin Dashboard for user and role management. The new view is protected and only accessible to users with the 'ADMIN' role via a dedicated tab in the left sidebar. It includes panels for viewing users, creating roles, and running system tests.

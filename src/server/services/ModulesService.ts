@@ -16,6 +16,18 @@ export class ModulesService {
         return db.modules.find(m => m.id === id);
     }
 
+    public findByName(name: string): Module | undefined {
+        return db.modules.find(m => m.name === name);
+    }
+
+    public getModuleConfig(moduleName: string): Record<string, any> | null {
+        const module = this.findByName(moduleName);
+        if (module) {
+            return module.configSchema;
+        }
+        return null;
+    }
+
     public create(data: Omit<Module, 'id'>): Module {
         if (db.modules.some(m => m.name === data.name)) {
             throw new Error(`Module with name "${data.name}" already exists.`);

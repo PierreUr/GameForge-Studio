@@ -203,7 +203,7 @@
         }
     },
     "projectName": "GameForge Studio",
-    "version": "1.16.0",
+    "version": "1.17.0",
     "completedTasks": [
         "001-ui-setup-progress-bar",
         "002-handbuch-initialisierung",
@@ -231,6 +231,8 @@
         "editor-erweiterte-layout-speicherung-und-ui-feedback",
         "012-admin-ui-benutzer-rollenverwaltung",
         "013-db-schema-module",
-        "014-modul-registry-api"
+        "014-modul-registry-api",
+        "admin-ui-modulverwaltung",
+        "016-api-fuer-modul-konfiguration"
     ]
 }

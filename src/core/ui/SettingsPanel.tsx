@@ -30,7 +30,23 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     };
 
     const numberToHex = (num: number) => '#' + ('000000' + num.toString(16)).slice(-6);
-    const hexToNumber = (hex: string) => parseInt(hex.replace('#', ''), 16);
+    
+    const colorStringToNumber = (color: string): number => {
+        // Handle hex format
+        if (color.startsWith('#')) {
+            return parseInt(color.substring(1), 16);
+        }
+        // Handle rgb/rgba format
+        const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (match) {
+            const r = parseInt(match[1], 10);
+            const g = parseInt(match[2], 10);
+            const b = parseInt(match[3], 10);
+            return (r << 16) | (g << 8) | b;
+        }
+        // Fallback for invalid formats
+        return 0;
+    };
     
     return (
         <div style={styles.overlay}>
@@ -58,14 +74,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             <ColorPicker 
                                 label="Color 1" 
                                 value={numberToHex(gridConfig.color1)}
-                                onChange={(val) => handleGridValueChange('color1', hexToNumber(val))} 
+                                onChange={(val) => handleGridValueChange('color1', colorStringToNumber(val))} 
                             />
                         </div>
                          <div style={styles.settingItem}>
                             <ColorPicker 
                                 label="Color 2" 
                                 value={numberToHex(gridConfig.color2)}
-                                onChange={(val) => handleGridValueChange('color2', hexToNumber(val))} 
+                                onChange={(val) => handleGridValueChange('color2', colorStringToNumber(val))} 
                             />
                         </div>
                     </div>

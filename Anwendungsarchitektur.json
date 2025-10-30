@@ -203,7 +203,7 @@
         }
     },
     "projectName": "GameForge Studio",
-    "version": "1.24.0",
+    "version": "1.25.0",
     "completedTasks": [
         "001-ui-setup-progress-bar",
         "002-handbuch-initialisierung",
@@ -238,6 +238,8 @@
         "018-aufgaben-crud-api-erweitert",
         "172-refactor-task-management-into-atomic-widgets",
         "173-implement-ui-builder-phase-1-layout-system",
-        "174-implement-ui-builder-phase-2-widget-library-and-inspector"
+        "174-implement-ui-builder-phase-2-widget-library-and-inspector",
+        "175-ui-builder-verbesserungen-phase-1-input-fix-layout-und-bibliotheks-organisation",
+        "176-ui-builder-reordering-von-layout-sektionen-per-drag-and-drop"
     ]
 }

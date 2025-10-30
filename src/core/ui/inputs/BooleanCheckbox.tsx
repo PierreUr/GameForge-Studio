@@ -1,19 +1,25 @@
 import React from 'react';
+import InspectorHelpTooltip from '../InspectorHelpTooltip';
 
 interface BooleanCheckboxProps {
     label: string;
     value: boolean;
     onChange: (newValue: boolean) => void;
+    isHelpVisible?: boolean;
+    helpText?: string;
 }
 
-const BooleanCheckbox: React.FC<BooleanCheckboxProps> = ({ label, value, onChange }) => {
+const BooleanCheckbox: React.FC<BooleanCheckboxProps> = ({ label, value, onChange, isHelpVisible, helpText }) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onChange(e.target.checked);
     };
 
     return (
         <div style={styles.container}>
-            <label style={styles.label}>{label}</label>
+            <div style={styles.labelContainer}>
+                <label style={styles.label}>{label}</label>
+                {isHelpVisible && helpText && <InspectorHelpTooltip text={helpText} />}
+            </div>
             <input
                 type="checkbox"
                 checked={value}
@@ -31,9 +37,13 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         width: '100%',
     },
+    labelContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+    },
     label: {
         color: '#ccc',
-        marginRight: '1rem',
         fontSize: '0.85rem',
         textTransform: 'capitalize',
     },

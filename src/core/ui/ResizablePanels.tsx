@@ -95,7 +95,7 @@ const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children }) => {
 
     return (
         <div ref={containerRef} style={styles.resizableContainer}>
-            <div style={{ width: `${leftPanelWidth}%`, ...styles.panel }}>
+            <div style={{ width: `${leftPanelWidth}%`, ...styles.panel, overflow: 'auto' }}>
                 {left}
             </div>
             <div
@@ -106,7 +106,7 @@ const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children }) => {
                 aria-orientation="vertical"
                 tabIndex={0}
             />
-            <div style={{ flex: 1, ...styles.panel, minWidth: 0 }}>
+            <div style={{ flex: 1, ...styles.panel, minWidth: 0, overflow: 'hidden' }}>
                 {middle}
             </div>
             <div
@@ -129,13 +129,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flex: 1,
         width: '100%',
-        overflow: 'hidden',
     },
     panel: {
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         minWidth: '10%', // Minimum width for side panels
+        position: 'relative', // Create stacking context
     },
     resizer: {
         flexShrink: 0,
@@ -143,7 +142,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         cursor: 'col-resize',
         backgroundColor: '#333333',
         userSelect: 'none',
-        zIndex: 10,
+        zIndex: 30, // Resizer should be on top of everything
     }
 };
 

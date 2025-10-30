@@ -1,36 +1,100 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WidgetData } from './UIEditorPanel';
 import NumberInput from './inputs/NumberInput';
 import TextInput from './inputs/TextInput';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
+import ColorPicker from './inputs/ColorPicker';
+import SelectInput from './inputs/SelectInput';
 import { EventBus } from '../ecs/EventBus';
+import InspectorHelpTooltip from './InspectorHelpTooltip';
 
 interface WidgetInspectorProps {
     widgetData: WidgetData;
     widgetDefinition: any;
+    isHelpVisible: boolean;
+    onSelectParentColumn: () => void;
 }
 
-const WidgetInspector: React.FC<WidgetInspectorProps> = ({ widgetData, widgetDefinition }) => {
-    
+const InspectorGroup: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => {
+    const [isOpen, setIsOpen] = useState(true);
+    return (
+        <div style={styles.groupContainer}>
+            <button style={styles.groupHeader} onClick={() => setIsOpen(!isOpen)}>
+                <span style={{...styles.arrow, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}}>►</span>
+                {title}
+            </button>
+            {isOpen && <div style={styles.groupContent}>{children}</div>}
+        </div>
+    );
+};
+
+const WidgetInspector: React.FC<WidgetInspectorProps> = ({ widgetData, widgetDefinition, isHelpVisible, onSelectParentColumn }) => {
+
     const handlePropertyChange = (propName: string, propValue: any) => {
         EventBus.getInstance().publish('ui-widget:update-prop', {
-            widgetId: widgetData.id,
-            propName,
-            propValue
+            widgetId: widgetData.id, propName, propValue
         });
     };
 
-    const renderPropertyControl = (prop: any) => {
-        const key = prop.name;
-        const value = widgetData.props[key] ?? prop.defaultValue;
+    const handleStyleChange = (groupName: string, propName: string, propValue: any) => {
+        let valueToSave = propValue;
         
+        // Find the property definition to check its type
+        const propDef = widgetDefinition.styles?.[groupName]?.find((p: any) => p.name === propName);
+
+        // If the property is defined as a number, append 'px'
+        if (propDef && propDef.type === 'number') {
+            valueToSave = `${propValue}px`;
+        }
+
+        const newGroupStyles = { ...(widgetData.styles?.[groupName] || {}), [propName]: valueToSave };
+        const newStyles = { ...(widgetData.styles || {}), [groupName]: newGroupStyles };
+        
+        EventBus.getInstance().publish('ui-widget:update-prop', {
+            widgetId: widgetData.id, propName: 'styles', propValue: newStyles
+        });
+    };
+    
+    const handleDeleteWidget = () => {
+        if (window.confirm('Are you sure you want to delete this widget?')) {
+            EventBus.getInstance().publish('ui-widget:delete', { widgetId: widgetData.id });
+        }
+    };
+
+    const renderPropertyControl = (prop: any, isStyle: boolean = false, groupName: string = '') => {
+        const key = prop.name;
+        let value = isStyle 
+            ? widgetData.styles?.[groupName]?.[key] ?? prop.defaultValue
+            : widgetData.props[key] ?? prop.defaultValue;
+
+        // If the manifest type is 'number', parse the stored string value (e.g., "24px") back to a number for the input.
+        if (prop.type === 'number' && typeof value === 'string') {
+            value = parseFloat(value) || 0;
+        }
+        
+        const onChange = isStyle 
+            ? (newValue: any) => handleStyleChange(groupName, key, newValue)
+            : (newValue: any) => handlePropertyChange(key, newValue);
+
+        const commonProps = {
+            label: prop.label || key,
+            value: value,
+            onChange: onChange,
+            isHelpVisible: isHelpVisible,
+            helpText: prop.description
+        };
+
         switch (prop.type) {
             case 'number':
-                return <NumberInput label={prop.label} value={value} onChange={(newValue) => handlePropertyChange(key, newValue)} />;
+                return <NumberInput {...commonProps} />;
             case 'string':
-                return <TextInput label={prop.label} value={value} onChange={(newValue) => handlePropertyChange(key, newValue)} />;
+                return <TextInput {...commonProps} />;
             case 'boolean':
-                return <BooleanCheckbox label={prop.label} value={value} onChange={(newValue) => handlePropertyChange(key, newValue)} />;
+                return <BooleanCheckbox {...commonProps} />;
+            case 'color':
+                return <ColorPicker {...commonProps} />;
+            case 'select':
+                return <SelectInput {...commonProps} options={prop.options} />;
             default:
                  return (
                     <div style={styles.readOnlyItem}>
@@ -44,18 +108,37 @@ const WidgetInspector: React.FC<WidgetInspectorProps> = ({ widgetData, widgetDef
     return (
         <div>
             <h5 style={styles.header}>Widget: {widgetDefinition.name}</h5>
-            <div style={styles.container}>
-                <div style={styles.propertyList}>
-                    {(widgetDefinition.properties || []).length > 0 ? (
-                        widgetDefinition.properties.map((prop: any) => (
-                            <div key={prop.name} style={styles.propertyItem}>
-                                {renderPropertyControl(prop)}
-                            </div>
-                        ))
-                    ) : (
-                        <p style={styles.noPropsText}>No editable properties.</p>
-                    )}
-                </div>
+            
+            <div style={styles.columnEditContainer}>
+                <button onClick={onSelectParentColumn} style={styles.columnEditButton}>
+                    Edit Column Styles
+                </button>
+            </div>
+
+            {widgetDefinition.properties && widgetDefinition.properties.length > 0 && (
+                 <InspectorGroup title="Properties">
+                    {widgetDefinition.properties.map((prop: any) => (
+                        <div key={prop.name} style={styles.propertyItem}>
+                            {renderPropertyControl(prop)}
+                        </div>
+                    ))}
+                </InspectorGroup>
+            )}
+
+            {widgetDefinition.styles && Object.entries(widgetDefinition.styles).map(([groupName, props]: [string, any]) => (
+                <InspectorGroup key={groupName} title={groupName.charAt(0).toUpperCase() + groupName.slice(1)}>
+                     {props.map((prop: any) => (
+                        <div key={prop.name} style={styles.propertyItem}>
+                            {renderPropertyControl(prop, true, groupName)}
+                        </div>
+                    ))}
+                </InspectorGroup>
+            ))}
+
+             <div style={styles.deleteContainer}>
+                <button onClick={handleDeleteWidget} style={styles.deleteButton}>
+                    Delete Widget
+                </button>
             </div>
         </div>
     );
@@ -69,14 +152,47 @@ const styles: { [key: string]: React.CSSProperties } = {
         paddingBottom: '0.5rem',
         fontSize: '1rem'
     },
-    container: {
+    columnEditContainer: {
+        marginBottom: '1rem',
+    },
+    columnEditButton: {
+        width: '100%',
+        backgroundColor: '#4a4a4a',
+        color: '#eee',
+        border: '1px solid #666',
+        padding: '0.5rem',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '0.85rem',
+        textAlign: 'center',
+    },
+    groupContainer: {
         backgroundColor: '#3a3a3a',
         borderRadius: '4px',
+        marginBottom: '1rem',
         border: '1px solid #4a4a4a',
     },
-    propertyList: {
+    groupHeader: {
+        backgroundColor: '#4a4a4a',
+        padding: '0.5rem 0.75rem',
+        margin: 0,
+        fontSize: '0.9rem',
+        color: '#eee',
+        border: 'none',
+        borderBottom: '1px solid #333',
+        width: '100%',
+        textAlign: 'left',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+    },
+    arrow: {
+        display: 'inline-block',
+        marginRight: '0.5rem',
+        transition: 'transform 0.2s',
+    },
+    groupContent: {
         padding: '0.75rem',
-        fontSize: '0.85rem',
     },
     propertyItem: {
         marginBottom: '0.5rem',
@@ -87,11 +203,21 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         color: '#999',
     },
-    noPropsText: {
-        fontSize: '0.8rem',
-        color: '#888',
-        fontStyle: 'italic',
-        margin: 0,
+    deleteContainer: {
+        marginTop: '1.5rem',
+        paddingTop: '1rem',
+        borderTop: '1px solid #444',
+    },
+    deleteButton: {
+        width: '100%',
+        backgroundColor: '#9e2b25',
+        color: 'white',
+        border: '1px solid #bf3f39',
+        padding: '0.75rem 1rem',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        textAlign: 'center',
     }
 };
 

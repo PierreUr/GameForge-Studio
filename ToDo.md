@@ -6,11 +6,20 @@
 **Status:** In Entwicklung
 
 ## Arbeitsschritte
+- [ ] **[SYSTEM]** **Task 177:** UI-Builder Bugfixes & Layout-Verbesserungen
+    - [X] **BUG:** Drag & Drop für Sektionen ist fehlerhaft.
+    - [X] **BUG:** Drag & Drop für Widgets innerhalb von Spalten ist instabil, führt zu Abstürzen und verhindert das Stapeln von >2 Elementen.
+    - [X] **BUG:** Vertikales Scrollen im UI-Editor Canvas ist nicht möglich.
+    - [ ] **FEATURE:** Abstand zwischen Spalten in einer Sektion ist nicht einstellbar.
+    - [ ] **FEATURE:** es soll sich soverhalten wie ein Websiten Designer kein Abstand zum rand usw. es gibt ohne ihn eingesstellt zu haben der Rahmen z.B. eines Section soll sehr schmall sien um 0 PX zum randhaben
+    - [ ] **FEATURE:** Die Modies für Table / Mobile / Desktop sollen je weil als eigenes design gespeichert werden können der Switch sollen oben link als overlay im Bearbeitungscanvas sei, die gänigen Optionen wie Backgound-Color oder Image sowie generelle H1 und classen eingenschaften usw. soll beim auswählen im INspektor eingestellt werden können
+    - [X] **FEATURE:** Spacer-Verhalten ist unklar (erstellt eine komplette Sektion).
+- [ ] **[SYSTEM]** **Task 178:** Implementierung von Inspector-Hilfe-Tooltips für alle Komponenten
 - [x] **[SYSTEM]** **Task 171:** Implementierung eines Systems zum Rendern von UI-Assets im Editor
 - [x] **[ASSET]** **Task 172:** Refactoring des Aufgaben-Moduls in atomare Widgets
 - [x] **[SYSTEM]** **Task 173:** Implementierung des UI-Builders (Phase 1: Layout-System)
 - [x] **[SYSTEM]** **Task 174:** Implementierung des UI-Builders (Phase 2: Widget-Bibliothek & Inspector)
-- [ ] **[SYSTEM]** **Task 175:** UI-Builder-Verbesserungen (Phase 1: Input-Fix, Layout & Bibliotheks-Organisation)
+- [x] **[SYSTEM]** **Task 175:** UI-Builder-Verbesserungen (Phase 1: Input-Fix, Layout & Bibliotheks-Organisation)
 - [ ] **[SYSTEM]** **Task 176:** UI-Builder: Reordering von Layout-Sektionen per Drag & Drop
 - [x] **Task 001:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   UI-Setup (Progress-Bar)
 - [x] **Task 002:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Handbuch-Initialisierung

@@ -9,19 +9,21 @@ interface ManifestItem {
     name: string;
     description: string;
     category: string;
+    type: 'widget' | 'template';
 }
 
 const LibraryPanel: React.FC<LibraryPanelProps> = () => {
-    const [templates, setTemplates] = useState<ManifestItem[]>([]);
-    const [widgets, setWidgets] = useState<ManifestItem[]>([]);
+    const [libraryItems, setLibraryItems] = useState<ManifestItem[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         const fetchManifests = async () => {
             try {
+                setIsLoading(true);
                 const [templateRes, widgetRes] = await Promise.all([
                     fetch('./src/core/assets/template-manifest.json'),
                     fetch('./src/core/assets/ui-widget-manifest.json')
@@ -31,9 +33,19 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
                 }
                 const templateData = await templateRes.json();
                 const widgetData = await widgetRes.json();
-                // Add category to templates for consistency if missing
-                setTemplates(templateData.templates.map((t: any) => ({ ...t, category: t.category || 'Entity' })));
-                setWidgets(widgetData.widgets);
+
+                const processedTemplates: ManifestItem[] = templateData.templates.map((t: any) => ({
+                    ...t,
+                    category: t.category || 'Entity Templates',
+                    type: 'template' as 'template',
+                }));
+
+                const processedWidgets: ManifestItem[] = widgetData.widgets.map((w: any) => ({
+                    ...w,
+                    type: 'widget' as 'widget',
+                }));
+
+                setLibraryItems([...processedWidgets, ...processedTemplates]);
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -42,27 +54,34 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
         };
 
         fetchManifests();
+    }, []);
 
+    useEffect(() => {
         const handleDeselect = () => {
-             if (selectedItemId) {
+            if (selectedItemId) {
                 setSelectedItemId(null);
+                EventBus.getInstance().publish('preview:clear');
             }
         };
 
         EventBus.getInstance().subscribe('entity:selected', handleDeselect);
+        EventBus.getInstance().subscribe('ui-widget:selected', handleDeselect);
 
         return () => {
-             EventBus.getInstance().unsubscribe('entity:selected', handleDeselect);
-        }
+            EventBus.getInstance().unsubscribe('entity:selected', handleDeselect);
+            EventBus.getInstance().unsubscribe('ui-widget:selected', handleDeselect);
+        };
     }, [selectedItemId]);
     
-    const handleSelectItem = (itemId: string, itemType: 'widget' | 'template') => {
+    const handleSelectItem = (item: ManifestItem) => {
         setSelectedItemId(prevId => {
-            const newSelectedId = prevId === itemId ? null : itemId;
+            const newSelectedId = prevId === item.id ? null : item.id;
             
             if (newSelectedId) {
-                if(itemType === 'template') {
+                if (item.type === 'template') {
                     EventBus.getInstance().publish('preview:template', { templateId: newSelectedId });
+                } else {
+                    EventBus.getInstance().publish('preview:clear');
                 }
             } else {
                 EventBus.getInstance().publish('preview:clear');
@@ -73,25 +92,38 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
     };
 
     const handleCategoryChange = (widgetId: string, newCategory: string) => {
-        setWidgets(prevWidgets => prevWidgets.map(w => w.id === widgetId ? { ...w, category: newCategory } : w));
+        setLibraryItems(prevItems => prevItems.map(item => 
+            item.id === widgetId ? { ...item, category: newCategory } : item
+        ));
     };
 
-    const filteredWidgets = useMemo(() => {
-        return widgets.filter(w => w.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [widgets, searchTerm]);
+    const toggleCategory = (category: string) => {
+        setExpandedCategories(prev => ({
+            ...prev,
+            [category]: !prev[category]
+        }));
+    };
 
-    const groupedWidgets = useMemo(() => {
-        return filteredWidgets.reduce((acc, widget) => {
-            const category = widget.category || 'Uncategorized';
+    const filteredItems = useMemo(() => {
+        if (!searchTerm) return libraryItems;
+        return libraryItems.filter(item => 
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            item.category.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [libraryItems, searchTerm]);
+
+    const groupedItems = useMemo(() => {
+        return filteredItems.reduce((acc, item) => {
+            const category = item.category || 'Uncategorized';
             if (!acc[category]) {
                 acc[category] = [];
             }
-            acc[category].push(widget);
+            acc[category].push(item);
             return acc;
         }, {} as Record<string, ManifestItem[]>);
-    }, [filteredWidgets]);
+    }, [filteredItems]);
 
-    const allCategories = useMemo(() => [...new Set(widgets.map(w => w.category || 'Uncategorized'))], [widgets]);
+    const allCategories = useMemo(() => [...new Set(libraryItems.filter(item => item.type === 'widget').map(w => w.category || 'Uncategorized'))], [libraryItems]);
 
     return (
         <div style={styles.panelContainer}>
@@ -107,45 +139,43 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
 
             {isLoading && <p>Loading library...</p>}
             {error && <p style={styles.errorText}>Error: {error}</p>}
-            {!isLoading && !error && (
-                <>
-                    <h5 style={styles.groupHeader}>UI Widgets</h5>
-                    {Object.entries(groupedWidgets).sort(([a], [b]) => a.localeCompare(b)).map(([category, items]) => (
-                        <div key={category}>
-                            <h6 style={styles.categoryHeader}>{category}</h6>
+            
+            {!isLoading && !error && Object.entries(groupedItems).sort(([a], [b]) => {
+                const order = ['Layout', 'Entity Templates'];
+                const aIndex = order.indexOf(a);
+                const bIndex = order.indexOf(b);
+                if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+                if (aIndex !== -1) return -1;
+                if (bIndex !== -1) return 1;
+                return a.localeCompare(b);
+            }).map(([category, items]) => {
+                const isExpanded = !!expandedCategories[category];
+                return (
+                    <div key={category}>
+                        <h5 style={styles.groupHeader} onClick={() => toggleCategory(category)}>
+                             <span style={{ ...styles.arrow, transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>►</span>
+                            {category}
+                        </h5>
+                        {isExpanded && (
                             <div style={styles.grid}>
-                                {items.map(widget => (
+                                {items.map(item => (
                                     <ComponentCard 
-                                        key={widget.id}
-                                        templateId={widget.id}
-                                        name={widget.name} 
-                                        description={widget.description}
-                                        isSelected={selectedItemId === widget.id}
-                                        onClick={() => handleSelectItem(widget.id, 'widget')}
-                                        categories={allCategories}
-                                        currentCategory={widget.category}
-                                        onCategoryChange={(newCat) => handleCategoryChange(widget.id, newCat)}
+                                        key={item.id}
+                                        templateId={item.id}
+                                        name={item.name} 
+                                        description={item.description}
+                                        isSelected={selectedItemId === item.id}
+                                        onClick={() => handleSelectItem(item)}
+                                        categories={item.type === 'widget' ? allCategories : undefined}
+                                        currentCategory={item.type === 'widget' ? item.category : undefined}
+                                        onCategoryChange={item.type === 'widget' ? (newCat) => handleCategoryChange(item.id, newCat) : undefined}
                                     />
                                 ))}
                             </div>
-                        </div>
-                    ))}
-
-                    <h5 style={styles.groupHeader}>Entity Templates</h5>
-                    <div style={styles.grid}>
-                        {templates.map(template => (
-                            <ComponentCard 
-                                key={template.id}
-                                templateId={template.id}
-                                name={template.name} 
-                                description={template.description}
-                                isSelected={selectedItemId === template.id}
-                                onClick={() => handleSelectItem(template.id, 'template')}
-                            />
-                        ))}
+                        )}
                     </div>
-                </>
-            )}
+                )
+            })}
         </div>
     );
 };
@@ -179,19 +209,19 @@ const styles: { [key: string]: React.CSSProperties } = {
         paddingBottom: '0.5rem',
         marginTop: '1.5rem',
         marginBottom: '1rem',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
     },
-    categoryHeader: {
-        color: '#aaa',
-        fontSize: '0.7rem',
-        fontWeight: 'normal',
-        textTransform: 'uppercase',
-        marginBottom: '0.5rem',
+    arrow: {
+        display: 'inline-block',
+        marginRight: '0.5rem',
+        transition: 'transform 0.2s',
     },
     grid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
         gap: '1rem',
-        marginBottom: '1.5rem',
     }
 };
 

@@ -48,13 +48,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     
     return (
         <div style={styles.toolbar}>
-            <DebugIdTooltip debugId="toolbar-undo">
-                <button style={styles.button} onClick={onUndo}>Undo</button>
-            </DebugIdTooltip>
-            <DebugIdTooltip debugId="toolbar-redo">
-                <button style={styles.button} onClick={onRedo}>Redo</button>
-            </DebugIdTooltip>
-            <div style={styles.divider}></div>
             <div ref={fileMenuRef} style={styles.fileMenuContainer}>
                 <DebugIdTooltip debugId="toolbar-file-menu">
                     <button style={styles.button} onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}>
@@ -76,6 +69,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 )}
             </div>
             <div style={styles.divider}></div>
+            <DebugIdTooltip debugId="toolbar-undo">
+                <button style={{...styles.button, ...styles.iconButton}} onClick={onUndo} aria-label="Undo">↺</button>
+            </DebugIdTooltip>
+            <DebugIdTooltip debugId="toolbar-redo">
+                <button style={{...styles.button, ...styles.iconButton}} onClick={onRedo} aria-label="Redo">↻</button>
+            </DebugIdTooltip>
+            
             <div style={styles.spacer}></div>
             <DebugIdTooltip debugId="toolbar-live-preview">
                 <button style={{...styles.button, ...styles.previewButton}} onClick={onPreview}>Live Preview</button>
@@ -101,7 +101,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '0.5rem 1rem',
         backgroundColor: '#333333',
         borderBottom: '1px solid #444',
-        gap: '1rem',
+        gap: '0.75rem',
         flexShrink: 0,
     },
     button: {
@@ -113,6 +113,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         cursor: 'pointer',
         fontSize: '0.9rem',
         transition: 'background-color 0.2s'
+    },
+    iconButton: {
+        padding: '0.5rem',
+        width: '40px',
+        fontSize: '1.2rem',
+        lineHeight: 1,
     },
     divider: {
         width: '1px',

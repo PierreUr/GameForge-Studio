@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import TabSystem from './TabSystem';
+import TabSystem, { Tab } from './TabSystem';
 import { EventBus } from '../ecs/EventBus';
 import { World } from '../ecs/World';
 import { IComponent } from '../ecs/Component';
@@ -11,7 +11,9 @@ import { FrameConfig } from '../rendering/Renderer';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
 import NumberInput from './inputs/NumberInput';
 import WidgetInspector from './WidgetInspector';
-import { SectionData } from './UIEditorPanel';
+import { SectionData, ColumnData } from './UIEditorPanel';
+import SectionInspector from './SectionInspector';
+import ColumnInspector from './ColumnInspector';
 
 interface RightSidebarProps {
     world: World | null;
@@ -19,6 +21,13 @@ interface RightSidebarProps {
     onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
     uiLayout: SectionData[];
     selectedWidgetId: string | null;
+    selectedSectionId: string | null;
+    onSectionPropertyChange: (sectionId: string, propName: string, value: any) => void;
+    selectedColumnId: string | null;
+    onColumnPropertyChange: (columnId: string, propName: string, value: any) => void;
+    onColumnSelect: (columnId: string | null) => void;
+    isInspectorHelpVisible: boolean;
+    onToggleInspectorHelp: () => void;
 }
 
 interface SelectedWidgetInfo {
@@ -26,7 +35,20 @@ interface SelectedWidgetInfo {
     widgetDefinition: any;
 }
 
-const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrameConfigChange, uiLayout, selectedWidgetId }) => {
+const RightSidebar: React.FC<RightSidebarProps> = ({ 
+    world, 
+    frameConfig, 
+    onFrameConfigChange, 
+    uiLayout, 
+    selectedWidgetId, 
+    selectedSectionId, 
+    onSectionPropertyChange,
+    selectedColumnId,
+    onColumnPropertyChange,
+    onColumnSelect,
+    isInspectorHelpVisible,
+    onToggleInspectorHelp
+}) => {
     const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
     const [entityComponents, setEntityComponents] = useState<[string, IComponent][]>([]);
     const [previewData, setPreviewData] = useState<{ type: 'template' | 'node', data: any } | null>(null);
@@ -158,16 +180,42 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         for (const section of layout) {
             for (const column of section.columns) {
                 const widget = column.widgets.find(w => w.id === widgetId);
-                if (widget) return widget;
+                if (widget) return { widget, columnId: column.id };
             }
         }
         return null;
     };
 
-    const currentWidgetData = findWidgetData(uiLayout, selectedWidgetId);
+    const findColumnData = (layout: SectionData[], columnId: string | null): ColumnData | null => {
+        if (!columnId) return null;
+        for (const section of layout) {
+            const column = section.columns.find(c => c.id === columnId);
+            if (column) return column;
+        }
+        return null;
+    };
 
-    if (currentWidgetData && selectedWidgetInfo) {
-        inspectorContent = <WidgetInspector widgetData={currentWidgetData} widgetDefinition={selectedWidgetInfo.widgetDefinition} />;
+    const widgetInfo = findWidgetData(uiLayout, selectedWidgetId);
+    const currentSectionData = uiLayout.find(s => s.id === selectedSectionId);
+    const currentColumnData = findColumnData(uiLayout, selectedColumnId);
+
+    const handleSelectParentColumn = (columnId: string | null) => {
+        onColumnSelect(columnId);
+    };
+
+    if (widgetInfo && selectedWidgetInfo) {
+        inspectorContent = (
+            <WidgetInspector 
+                widgetData={widgetInfo.widget} 
+                widgetDefinition={selectedWidgetInfo.widgetDefinition} 
+                isHelpVisible={isInspectorHelpVisible}
+                onSelectParentColumn={() => handleSelectParentColumn(widgetInfo.columnId)}
+            />
+        );
+    } else if (currentSectionData) {
+        inspectorContent = <SectionInspector sectionData={currentSectionData} onPropertyChange={onSectionPropertyChange} isHelpVisible={isInspectorHelpVisible} />;
+    } else if (currentColumnData) {
+        inspectorContent = <ColumnInspector columnData={currentColumnData} onPropertyChange={onColumnPropertyChange} isHelpVisible={isInspectorHelpVisible} />;
     } else if (selectedEntityId !== null) {
         inspectorContent = (
             <div>
@@ -183,9 +231,17 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ world, frameConfig, onFrame
         inspectorContent = <p>Select an item on the canvas or in a library to inspect its properties.</p>;
     }
     
-    const tabs = [
+    const tabs: Tab[] = [
         {
-            label: 'Inspector',
+            id: 'inspector',
+            label: (
+                <div style={styles.inspectorTabHeader}>
+                    <span>Inspector</span>
+                    <button onClick={onToggleInspectorHelp} style={styles.helpToggle} title="Toggle help tooltips">
+                        ⓘ
+                    </button>
+                </div>
+            ),
             content: <div style={styles.panelContent}>
                 {frameConfig.isVisible && <LayoutSettingsPanel />}
                 {inspectorContent}
@@ -211,8 +267,21 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '1rem',
         fontSize: '0.9rem',
         color: '#ccc',
-        height: '100%',
-        overflowY: 'auto'
+    },
+    inspectorTabHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%'
+    },
+    helpToggle: {
+        background: 'none',
+        border: 'none',
+        color: '#aaa',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        lineHeight: 1,
+        padding: '0 4px',
     },
     entityHeader: {
         margin: '0 0 1rem 0',

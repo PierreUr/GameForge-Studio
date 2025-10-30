@@ -37,7 +37,32 @@ import ProgressBarHeader from './src/core/ui/ProgressBarHeader';
 import { AuthProvider, useAuth } from './src/core/auth/AuthContext';
 import LoginPage from './src/core/ui/LoginPage';
 import AdminDashboard from './src/core/ui/admin/AdminDashboard';
-import UIEditorPanel, { SectionData } from './src/core/ui/UIEditorPanel';
+import UIEditorPanel, { SectionData, WidgetData, ColumnData } from './src/core/ui/UIEditorPanel';
+
+type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers';
+
+const MainViewTabs: React.FC<{ activeTab: MainView, onTabChange: (tabId: MainView) => void }> = ({ activeTab, onTabChange }) => {
+    const tabs: { id: MainView; label: string }[] = [
+        { id: 'scene', label: 'Scene' },
+        { id: 'ui-editor', label: 'UI Editor' },
+        { id: 'logic-graph', label: 'Logic Graph' },
+        { id: 'layers', label: 'Layers' },
+    ];
+    
+    return (
+        <div style={styles.mainViewTabsContainer}>
+            {tabs.map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => onTabChange(tab.id)}
+                    style={activeTab === tab.id ? { ...styles.mainViewTab, ...styles.activeMainViewTab } : styles.mainViewTab}
+                >
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    );
+};
 
 
 const getLayoutKeyFromConfig = (config: FrameConfig): string => {
@@ -53,7 +78,8 @@ const getLayoutKeyFromConfig = (config: FrameConfig): string => {
 const App = () => {
     const { user, token, logout } = useAuth();
     const [ecsWorld, setEcsWorld] = useState<World | null>(null);
-    const [activeView, setActiveView] = useState<'canvas' | 'logic-graph' | 'admin' | 'ui-editor'>('canvas');
+    const [activeMainView, setActiveMainView] = useState<MainView>('ui-editor');
+    const [isAdminView, setIsAdminView] = useState(false);
     const renderingSystemRef = useRef<RenderingSystem | null>(null);
     const graphRef = useRef<Graph | null>(null);
     const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
@@ -74,9 +100,67 @@ const App = () => {
     });
     const [activeLayoutKey, setActiveLayoutKey] = useState('default');
     
-    // UI Builder State - Lifted up
+    // UI Builder State
     const [uiLayout, setUiLayout] = useState<SectionData[]>([]);
     const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+    const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+    const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
+    const [isInspectorHelpVisible, setIsInspectorHelpVisible] = useState(false);
+
+    const toggleInspectorHelp = useCallback(() => {
+        setIsInspectorHelpVisible(prev => !prev);
+    }, []);
+
+    const handleWidgetSelect = useCallback((widgetId: string | null) => {
+        setSelectedWidgetId(widgetId);
+        if (widgetId !== null) {
+            setSelectedSectionId(null);
+            setSelectedColumnId(null);
+        }
+    }, []);
+
+    const handleSectionSelect = useCallback((sectionId: string | null) => {
+        setSelectedSectionId(sectionId);
+        if (sectionId !== null) {
+            setSelectedWidgetId(null);
+            setSelectedColumnId(null);
+        }
+    }, []);
+
+    const handleColumnSelect = useCallback((columnId: string | null) => {
+        setSelectedColumnId(columnId);
+        if (columnId !== null) {
+            setSelectedWidgetId(null);
+            setSelectedSectionId(null);
+        }
+    }, []);
+
+    const handleSectionPropertyChange = useCallback((sectionId: string, propName: string, propValue: any) => {
+        setUiLayout(prevLayout =>
+            prevLayout.map(section =>
+                section.id === sectionId
+                    ? { ...section, [propName]: propValue }
+                    : section
+            )
+        );
+    }, []);
+
+    const handleColumnPropertyChange = useCallback((columnId: string, propName: string, propValue: any) => {
+        setUiLayout(prevLayout =>
+            prevLayout.map(section => ({
+                ...section,
+                columns: section.columns.map(column => {
+                    if (column.id === columnId) {
+                        return { 
+                            ...column, 
+                            styles: { ...column.styles, [propName]: propValue } 
+                        };
+                    }
+                    return column;
+                })
+            }))
+        );
+    }, []);
 
 
     useEffect(() => {
@@ -177,6 +261,11 @@ const App = () => {
                         ...column,
                         widgets: column.widgets.map(widget => {
                             if (widget.id === payload.widgetId) {
+                                // BUGFIX: Differentiate between updating 'props' and 'styles'
+                                if (payload.propName === 'styles') {
+                                    return { ...widget, styles: payload.propValue };
+                                }
+        
                                 return { ...widget, props: { ...widget.props, [payload.propName]: payload.propValue } };
                             }
                             return widget;
@@ -185,9 +274,81 @@ const App = () => {
                 }));
             });
         };
+        
+        const handleWidgetDelete = (payload: { widgetId: string }) => {
+            setUiLayout(prevLayout => {
+                const newLayout = prevLayout.map(section => ({
+                    ...section,
+                    columns: section.columns.map(column => ({
+                        ...column,
+                        widgets: column.widgets.filter(widget => widget.id !== payload.widgetId)
+                    }))
+                }));
+                return newLayout;
+            });
+            // Deselect the widget after deleting it
+            setSelectedWidgetId(null);
+        };
+        
+        const handleWidgetMove = (payload: { source: { widgetId: string; sourceSectionId: string; sourceColumnIndex: number; }; target: { targetSectionId: string; targetColumnIndex: number; targetDropIndex: number; }; }) => {
+            const { source, target } = payload;
+            
+            setUiLayout(prevLayout => {
+                const newLayout = JSON.parse(JSON.stringify(prevLayout)); // Deep copy
+                
+                // 1. Find and remove the widget from the source
+                const sourceSection = newLayout.find((s: SectionData) => s.id === source.sourceSectionId);
+                if (!sourceSection) {
+                    console.error("Drag-and-drop failed: Source section not found.");
+                    return prevLayout;
+                }
+
+                const sourceColumn = sourceSection.columns[source.sourceColumnIndex];
+                if (!sourceColumn) {
+                    console.error("Drag-and-drop failed: Source column not found.");
+                    return prevLayout;
+                }
+
+                const widgetIndex = sourceColumn.widgets.findIndex((w: WidgetData) => w.id === source.widgetId);
+                if (widgetIndex === -1) {
+                    console.error("Drag-and-drop failed: Could not find widget in source.");
+                    return prevLayout;
+                }
+
+                const [removedWidget] = sourceColumn.widgets.splice(widgetIndex, 1);
+
+                // 2. Find the target and insert the widget
+                const targetSection = newLayout.find((s: SectionData) => s.id === target.targetSectionId);
+                 if (!targetSection) {
+                    console.error("Drag-and-drop failed: Target section not found.");
+                    return prevLayout;
+                }
+                
+                const targetColumn = targetSection.columns[target.targetColumnIndex];
+                if (!targetColumn) {
+                    console.error("Drag-and-drop failed: Target column not found.");
+                    return prevLayout;
+                }
+
+                let actualDropIndex = target.targetDropIndex;
+                
+                // If moving within the same column, adjust the index
+                if (source.sourceSectionId === target.targetSectionId && source.sourceColumnIndex === target.targetColumnIndex) {
+                    if (widgetIndex < target.targetDropIndex) {
+                        actualDropIndex -= 1;
+                    }
+                }
+                
+                targetColumn.widgets.splice(actualDropIndex, 0, removedWidget);
+
+                return newLayout;
+            });
+        };
 
         EventBus.getInstance().subscribe('project:loaded', handleProjectLoaded);
         EventBus.getInstance().subscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
+        EventBus.getInstance().subscribe('ui-widget:delete', handleWidgetDelete);
+        EventBus.getInstance().subscribe('ui-widget:move', handleWidgetMove);
 
         return () => {
             if (gameLoop && gameLoop.isRunning) {
@@ -198,6 +359,8 @@ const App = () => {
             }
             EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
             EventBus.getInstance().unsubscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
+            EventBus.getInstance().unsubscribe('ui-widget:delete', handleWidgetDelete);
+            EventBus.getInstance().unsubscribe('ui-widget:move', handleWidgetMove);
         };
 
     }, [token]); // Rerun setup when token changes (on login)
@@ -296,13 +459,22 @@ const App = () => {
         CommandManager.getInstance().redo();
     }, []);
     
-    const handleViewChange = useCallback((viewId: 'canvas' | 'logic-graph' | 'admin' | 'ui-editor') => {
-        if (viewId === 'admin' && !user?.roles.includes('ADMIN')) {
+    const showAdminView = useCallback(() => {
+        if (user?.roles.includes('ADMIN')) {
+            setIsAdminView(true);
+        } else {
             console.warn("Access denied: Admin view is restricted.");
-            return;
         }
-        setActiveView(viewId);
-    }, [user, activeView]);
+    }, [user]);
+
+    const handleCloseAdminView = useCallback(() => {
+        setIsAdminView(false);
+    }, []);
+
+    const handleMainViewChange = useCallback((viewId: MainView) => {
+        setIsAdminView(false);
+        setActiveMainView(viewId);
+    }, []);
 
     useEffect(() => {
         if (!token) return;
@@ -383,40 +555,54 @@ const App = () => {
                     onPreview={handlePreviewProject}
                     onExportHTML={handleExportHTML}
                     onLogout={logout}
-                    onAdminClick={() => handleViewChange('admin')}
+                    onAdminClick={showAdminView}
                 />
                 <ResizablePanels>
-                    <LeftSidebar 
-                        onViewChange={handleViewChange} 
-                    />
+                    <LeftSidebar />
                     
-                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
-                        {activeView === 'canvas' && (
-                            <CanvasContainer 
-                                world={ecsWorld} 
-                                renderingSystem={renderingSystemRef.current}
-                                frameConfig={frameConfig}
-                                onFrameConfigChange={handleFrameConfigChange}
-                                onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
-                            />
-                        )}
-                        {activeView === 'logic-graph' && (
-                            <LogicGraphPanel />
-                        )}
-                        {activeView === 'admin' && (
-                            <AdminDashboard 
-                                onRunTests={handleRunTests} 
-                                onToggleColliders={handleToggleColliders}
-                            />
-                        )}
-                        {activeView === 'ui-editor' && (
-                            <UIEditorPanel 
-                                layout={uiLayout}
-                                onLayoutChange={setUiLayout}
-                                selectedWidgetId={selectedWidgetId}
-                                onWidgetSelect={setSelectedWidgetId}
-                            />
-                        )}
+                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0, backgroundColor: '#2d2d2d' }}>
+                        {!isAdminView && <MainViewTabs activeTab={activeMainView} onTabChange={handleMainViewChange} />}
+                        
+                        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                            {isAdminView && (
+                                <AdminDashboard 
+                                    onRunTests={handleRunTests} 
+                                    onToggleColliders={handleToggleColliders}
+                                    onClose={handleCloseAdminView}
+                                />
+                            )}
+                            {!isAdminView && (
+                                <>
+                                    <div style={{ display: activeMainView === 'scene' ? 'block' : 'none', height: '100%' }}>
+                                        <CanvasContainer 
+                                            world={ecsWorld} 
+                                            renderingSystem={renderingSystemRef.current}
+                                            frameConfig={frameConfig}
+                                            onFrameConfigChange={handleFrameConfigChange}
+                                            onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
+                                        />
+                                    </div>
+                                    <div style={{ display: activeMainView === 'logic-graph' ? 'block' : 'none', height: '100%' }}>
+                                        <LogicGraphPanel />
+                                    </div>
+                                     <div style={{ display: activeMainView === 'ui-editor' ? 'flex' : 'none', height: '100%' }}>
+                                        <UIEditorPanel 
+                                            layout={uiLayout}
+                                            onLayoutChange={setUiLayout}
+                                            selectedWidgetId={selectedWidgetId}
+                                            onWidgetSelect={handleWidgetSelect}
+                                            selectedSectionId={selectedSectionId}
+                                            onSectionSelect={handleSectionSelect}
+                                            selectedColumnId={selectedColumnId}
+                                            onColumnSelect={handleColumnSelect}
+                                        />
+                                    </div>
+                                    <div style={{ display: activeMainView === 'layers' ? 'block' : 'none', height: '100%', padding: '1rem' }}>
+                                        <p>Layers View Placeholder</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     <RightSidebar 
@@ -425,6 +611,13 @@ const App = () => {
                         onFrameConfigChange={handleFrameConfigChange}
                         uiLayout={uiLayout}
                         selectedWidgetId={selectedWidgetId}
+                        selectedSectionId={selectedSectionId}
+                        onSectionPropertyChange={handleSectionPropertyChange}
+                        selectedColumnId={selectedColumnId}
+                        onColumnPropertyChange={handleColumnPropertyChange}
+                        onColumnSelect={handleColumnSelect}
+                        isInspectorHelpVisible={isInspectorHelpVisible}
+                        onToggleInspectorHelp={toggleInspectorHelp}
                     />
                 </ResizablePanels>
             </main>
@@ -454,6 +647,25 @@ const styles: { [key: string]: React.CSSProperties } = {
         flex: 1,
         overflow: 'hidden',
         flexDirection: 'column',
+    },
+    mainViewTabsContainer: {
+        display: 'flex',
+        flexShrink: 0,
+        backgroundColor: '#1e1e1e',
+        borderBottom: '1px solid #444',
+    },
+    mainViewTab: {
+        padding: '0.6rem 1.2rem',
+        cursor: 'pointer',
+        backgroundColor: '#2d2d2d',
+        border: 'none',
+        borderRight: '1px solid #1e1e1e',
+        color: '#ccc',
+        fontSize: '0.9rem',
+    },
+    activeMainViewTab: {
+        backgroundColor: '#333',
+        color: '#fff',
     },
 };
 

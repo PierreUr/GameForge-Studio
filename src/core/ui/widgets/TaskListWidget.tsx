@@ -5,9 +5,12 @@ import { EventBus } from '../../ecs/EventBus';
 
 interface TaskListWidgetProps {
     title?: string;
+    styles?: {
+        typography?: React.CSSProperties;
+    };
 }
 
-const TaskListWidget: React.FC<TaskListWidgetProps> = ({ title = "Task List" }) => {
+const TaskListWidget: React.FC<TaskListWidgetProps> = ({ title = "Task List", styles }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -49,31 +52,36 @@ const TaskListWidget: React.FC<TaskListWidgetProps> = ({ title = "Task List" }) 
             alert('An error occurred while deleting the task.');
         }
     };
+    
+    const titleStyle: React.CSSProperties = {
+        ...defaultStyles.title,
+        ...styles?.typography
+    };
 
     return (
-        <div style={styles.container}>
-            <h4>{title}</h4>
+        <div style={defaultStyles.container}>
+            <h4 style={titleStyle}>{title}</h4>
             {isLoading && <p>Loading tasks...</p>}
             {error && <p style={{ color: '#ff8080' }}>{error}</p>}
             
-            <div style={styles.tableContainer}>
-                <table style={styles.table}>
+            <div style={defaultStyles.tableContainer}>
+                <table style={defaultStyles.table}>
                     <thead>
                         <tr>
-                            <th style={styles.th}>Title</th>
-                            <th style={styles.th}>Status</th>
-                            <th style={styles.th}>Priority</th>
-                            <th style={styles.th}>Actions</th>
+                            <th style={defaultStyles.th}>Title</th>
+                            <th style={defaultStyles.th}>Status</th>
+                            <th style={defaultStyles.th}>Priority</th>
+                            <th style={defaultStyles.th}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {tasks.map(task => (
                             <tr key={task.id}>
-                                <td style={styles.td}>{task.title}</td>
-                                <td style={styles.td}>{task.status}</td>
-                                <td style={styles.td}>{task.priority}</td>
-                                <td style={styles.td}>
-                                    <button onClick={() => handleDeleteTask(task.id)} style={{...styles.actionButton, ...styles.deleteButton}}>Delete</button>
+                                <td style={defaultStyles.td}>{task.title}</td>
+                                <td style={defaultStyles.td}>{task.status}</td>
+                                <td style={defaultStyles.td}>{task.priority}</td>
+                                <td style={defaultStyles.td}>
+                                    <button onClick={() => handleDeleteTask(task.id)} style={{...defaultStyles.actionButton, ...defaultStyles.deleteButton}}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -84,8 +92,11 @@ const TaskListWidget: React.FC<TaskListWidgetProps> = ({ title = "Task List" }) 
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const defaultStyles: { [key: string]: React.CSSProperties } = {
     container: { padding: '1rem', display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#252526' },
+    title: {
+        margin: '0 0 1rem 0'
+    },
     tableContainer: {
         flex: 1,
         overflowY: 'auto'

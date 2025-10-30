@@ -1,16 +1,17 @@
 import React from 'react';
 import InspectorHelpTooltip from '../InspectorHelpTooltip';
 
-interface TextInputProps {
+interface SelectInputProps {
     label: string;
     value: string;
+    options: string[];
     onChange: (newValue: string) => void;
     isHelpVisible?: boolean;
     helpText?: string;
 }
 
-const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, isHelpVisible, helpText }) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+const SelectInput: React.FC<SelectInputProps> = ({ label, value, options, onChange, isHelpVisible, helpText }) => {
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         onChange(e.target.value);
     };
 
@@ -20,12 +21,17 @@ const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, isHelpVis
                 <label style={styles.label}>{label}</label>
                 {isHelpVisible && helpText && <InspectorHelpTooltip text={helpText} />}
             </div>
-            <input
-                type="text"
+            <select
                 value={value}
                 onChange={handleChange}
-                style={styles.input}
-            />
+                style={styles.select}
+            >
+                {options.map(option => (
+                    <option key={option} value={option}>
+                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                    </option>
+                ))}
+            </select>
         </div>
     );
 };
@@ -47,16 +53,16 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: '0.85rem',
         textTransform: 'capitalize',
     },
-    input: {
+    select: {
         width: '120px',
         backgroundColor: '#2a2a2a',
         color: '#eee',
         border: '1px solid #555',
         borderRadius: '3px',
         padding: '0.2rem 0.4rem',
-        fontFamily: 'monospace',
+        fontFamily: 'inherit',
         fontSize: '0.8rem',
     }
 };
 
-export default TextInput;
+export default SelectInput;

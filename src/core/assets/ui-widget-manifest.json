@@ -12,7 +12,7 @@
             "description": "Adds vertical space.",
             "category": "Layout",
             "properties": [
-                { "name": "height", "type": "number", "label": "Height (px)", "defaultValue": 20 }
+                { "name": "height", "type": "number", "label": "Height (px)", "defaultValue": 20, "description": "The vertical height of the spacer in pixels." }
             ]
         },
         {
@@ -21,23 +21,74 @@
             "description": "A text heading (h1, h2, etc.).",
             "category": "Content",
             "properties": [
-                { "name": "text", "type": "string", "label": "Text", "defaultValue": "Hello World" },
-                { "name": "level", "type": "number", "label": "Level (1-6)", "defaultValue": 1 }
-            ]
+                { "name": "text", "type": "string", "label": "Text", "defaultValue": "Hello World", "description": "The content of the heading." },
+                { "name": "level", "type": "number", "label": "Level (1-6)", "defaultValue": 1, "description": "The HTML heading level (e.g., 1 for <h1>, 2 for <h2>)." }
+            ],
+            "styles": {
+                "typography": [
+                    { "name": "color", "type": "color", "label": "Color", "defaultValue": "#eeeeee", "description": "The text color of the heading." },
+                    { "name": "fontSize", "type": "number", "label": "Font Size (px)", "defaultValue": 24, "description": "The size of the font in pixels." },
+                    { "name": "fontWeight", "type": "select", "label": "Font Weight", "defaultValue": "bold", "options": ["normal", "bold", "lighter", "100", "200", "300", "400", "500", "600", "700", "800", "900"], "description": "The thickness of the font characters." },
+                    { "name": "textAlign", "type": "select", "label": "Alignment", "defaultValue": "left", "options": ["left", "center", "right", "justify"], "description": "The horizontal alignment of the text." }
+                ],
+                "spacing": [
+                    { "name": "padding", "type": "string", "label": "Padding", "defaultValue": "0px", "description": "Space inside the element's border. Units are required (e.g., '10px' or '10px 20px')." },
+                    { "name": "margin", "type": "string", "label": "Margin", "defaultValue": "0px", "description": "Space outside the element's border. Units are required (e.g., '10px' or '0 auto')." }
+                ],
+                "background": [
+                    { "name": "backgroundColor", "type": "color", "label": "Background Color", "defaultValue": "transparent", "description": "The background color of the heading's container." }
+                ],
+                "border": [
+                    { "name": "borderWidth", "type": "number", "label": "Border Width (px)", "defaultValue": 0, "description": "The width of the border in pixels." },
+                    { "name": "borderStyle", "type": "select", "label": "Border Style", "defaultValue": "solid", "options": ["none", "solid", "dashed", "dotted"], "description": "The style of the border line." },
+                    { "name": "borderColor", "type": "color", "label": "Border Color", "defaultValue": "#ffffff", "description": "The color of the border." },
+                    { "name": "borderRadius", "type": "number", "label": "Border Radius (px)", "defaultValue": 0, "description": "Rounds the corners of the border in pixels." }
+                ]
+            }
+        },
+        {
+            "id": "image",
+            "name": "Image",
+            "description": "Displays an image from a URL.",
+            "category": "Content",
+            "properties": [
+                { "name": "src", "type": "string", "label": "Image URL (src)", "defaultValue": "https://picsum.photos/200/300", "description": "The web address (URL) of the image to display." },
+                { "name": "alt", "type": "string", "label": "Alt Text", "defaultValue": "Placeholder image", "description": "Descriptive text for screen readers if the image cannot be loaded." },
+                { "name": "objectFit", "type": "select", "label": "Fit", "defaultValue": "cover", "options": ["fill", "contain", "cover", "none", "scale-down"], "description": "How the image should be resized to fit its container." }
+            ],
+             "styles": {
+                "spacing": [
+                    { "name": "padding", "type": "string", "label": "Padding", "defaultValue": "0px", "description": "Space inside the element's border. Units are required (e.g., '10px' or '10px 20px')." },
+                    { "name": "margin", "type": "string", "label": "Margin", "defaultValue": "0px", "description": "Space outside the element's border. Units are required (e.g., '10px' or '0 auto')." }
+                ],
+                "border": [
+                    { "name": "borderWidth", "type": "number", "label": "Border Width (px)", "defaultValue": 0, "description": "The width of the border in pixels." },
+                    { "name": "borderStyle", "type": "select", "label": "Border Style", "defaultValue": "solid", "options": ["none", "solid", "dashed", "dotted"], "description": "The style of the border line." },
+                    { "name": "borderColor", "type": "color", "label": "Border Color", "defaultValue": "#ffffff", "description": "The color of the border." },
+                    { "name": "borderRadius", "type": "number", "label": "Border Radius (px)", "defaultValue": 0, "description": "Rounds the corners of the border and clips the image in pixels." }
+                ]
+            }
         },
         {
             "id": "task-list",
             "name": "Task List",
-            "description": "Displays a table of all tasks with controls.",
+            "description": "Displays a table of all tasks.",
             "category": "Forms",
             "properties": [
                 { "name": "title", "type": "string", "label": "Title", "defaultValue": "Task List" }
-            ]
+            ],
+            "styles": {
+                 "typography": [
+                    { "name": "color", "type": "color", "label": "Title Color", "defaultValue": "#eeeeee" },
+                    { "name": "fontSize", "type": "number", "label": "Title Size (px)", "defaultValue": 18 },
+                    { "name": "fontWeight", "type": "select", "label": "Title Weight", "defaultValue": "bold", "options": ["normal", "bold"] }
+                ]
+            }
         },
         {
             "id": "create-task-form",
             "name": "Create Task Form",
-            "description": "A form to add new tasks to the list.",
+            "description": "A form to add new tasks.",
             "category": "Forms",
             "properties": [
                 { "name": "buttonText", "type": "string", "label": "Button Label", "defaultValue": "Create Task" }

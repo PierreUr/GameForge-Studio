@@ -1,72 +1,172 @@
-import React from 'react';
-import { WidgetData, componentRegistry } from '../UIEditorPanel';
+import React, { useState } from 'react';
+import { WidgetData, componentRegistry, ColumnData } from '../UIEditorPanel';
 
 interface ColumnProps {
-    widgets: WidgetData[];
+    columnData: ColumnData;
+    sectionId: string;
+    columnIndex: number;
     onDrop: (widgetType: string) => void;
     selectedWidgetId: string | null;
     onWidgetSelect: (widgetData: WidgetData) => void;
+    onWidgetMove: (source: any, target: any) => void;
+    isSelected: boolean;
+    onSelect: (columnId: string) => void;
 }
 
-const Column: React.FC<ColumnProps> = ({ widgets, onDrop, selectedWidgetId, onWidgetSelect }) => {
-    
+const WIDGET_DRAG_TYPE = 'application/gameforge-widget';
+
+const Column: React.FC<ColumnProps> = ({ 
+    columnData, 
+    sectionId, 
+    columnIndex, 
+    onDrop, 
+    selectedWidgetId, 
+    onWidgetSelect, 
+    onWidgetMove,
+    isSelected,
+    onSelect
+}) => {
+    const { id: columnId, widgets } = columnData;
+    const [dropIndex, setDropIndex] = useState<number | null>(null);
+
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
+        e.stopPropagation();
+
+        if (e.dataTransfer.types.includes(WIDGET_DRAG_TYPE)) {
+            e.dataTransfer.dropEffect = 'move';
+            const children = Array.from((e.currentTarget as HTMLDivElement).children).filter(el => el.getAttribute('data-widget-index'));
+            let newDropIndex = children.length;
+
+            for (let i = 0; i < children.length; i++) {
+                const childRect = children[i].getBoundingClientRect();
+                const midY = childRect.top + childRect.height / 2;
+                if (e.clientY < midY) {
+                    newDropIndex = i;
+                    break;
+                }
+            }
+            setDropIndex(newDropIndex);
+        } else if (e.dataTransfer.types.includes('text/plain')) {
+            e.dataTransfer.dropEffect = 'copy';
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDropIndex(null);
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.stopPropagation(); // Prevent the event from bubbling up to parent drop zones
-        const widgetType = e.dataTransfer.getData('text/plain');
-        onDrop(widgetType);
+        e.stopPropagation();
+        
+        const widgetPayload = e.dataTransfer.getData(WIDGET_DRAG_TYPE);
+
+        if (widgetPayload) {
+            try {
+                const sourceInfo = JSON.parse(widgetPayload);
+                if (dropIndex !== null) {
+                    onWidgetMove(sourceInfo, {
+                        targetSectionId: sectionId,
+                        targetColumnIndex: columnIndex,
+                        targetDropIndex: dropIndex
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to parse widget drag data", err);
+            }
+        } else {
+            const widgetType = e.dataTransfer.getData('text/plain');
+            onDrop(widgetType);
+        }
+        
+        setDropIndex(null);
+    };
+
+    const handleWidgetDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+        e.stopPropagation();
+        const payload = JSON.stringify({ 
+            widgetId: widgets[index].id,
+            sourceSectionId: sectionId,
+            sourceColumnIndex: columnIndex,
+        });
+        e.dataTransfer.setData(WIDGET_DRAG_TYPE, payload);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const getCombinedStyles = (widget: WidgetData): React.CSSProperties => {
+        if (!widget.styles) return {};
+        // Flatten all style groups (spacing, background, border, etc.) into a single style object.
+        return Object.values(widget.styles).reduce((acc, group) => ({ ...acc, ...group }), {});
+    };
+
+    const handleColumnClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onSelect(columnId);
+    };
+
+    const columnStyle: React.CSSProperties = {
+        ...styles.column,
+        border: isSelected ? '2px solid #28a745' : '1px dashed #555',
+        backgroundColor: columnData.styles?.backgroundColor || 'transparent',
+        padding: columnData.styles?.padding || '0.5rem',
+        gap: `${columnData.styles?.rowGap || 8}px`,
     };
 
     return (
         <div 
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            style={styles.column}
+            onDragLeave={handleDragLeave}
+            onClick={handleColumnClick}
+            style={columnStyle}
         >
-            {widgets.length === 0 ? (
+            {widgets.length === 0 && dropIndex === null && (
                 <div style={styles.placeholder}>Drop Widget Here</div>
-            ) : (
-                widgets.map(widget => {
-                    const Component = componentRegistry[widget.componentType];
-                    const isSelected = widget.id === selectedWidgetId;
-                    const wrapperStyle = isSelected 
-                        ? { ...styles.widgetWrapper, ...styles.selectedWidgetWrapper } 
-                        : styles.widgetWrapper;
-
-                    return Component ? (
-                        <div 
-                            key={widget.id} 
-                            style={wrapperStyle}
-                            onClick={() => onWidgetSelect(widget)}
-                        >
-                            <Component {...widget.props} />
-                        </div>
-                    ) : (
-                         <div key={widget.id} style={{...styles.widgetWrapper, ...styles.errorWrapper}}>
-                            Unknown Widget: {widget.componentType}
-                        </div>
-                    );
-                })
             )}
+            {widgets.map((widget, index) => {
+                const Component = componentRegistry[widget.componentType];
+                const isWidgetSelected = widget.id === selectedWidgetId;
+                const combinedStyles = getCombinedStyles(widget);
+
+                const wrapperStyle = isWidgetSelected 
+                    ? { ...styles.widgetWrapper, ...combinedStyles, ...styles.selectedWidgetWrapper } 
+                    : { ...styles.widgetWrapper, ...combinedStyles };
+
+                return (
+                    <React.Fragment key={widget.id}>
+                        {dropIndex === index && <div style={styles.dropIndicator} />}
+                        <div 
+                            data-widget-index={index}
+                            style={wrapperStyle}
+                            onClick={(e) => { e.stopPropagation(); onWidgetSelect(widget); }}
+                            draggable
+                            onDragStart={(e) => handleWidgetDragStart(e, index)}
+                        >
+                            {Component ? (
+                                <Component {...widget.props} styles={widget.styles} />
+                            ) : (
+                                <div style={styles.errorWrapper}>
+                                    Unknown Widget: {widget.componentType}
+                                </div>
+                            )}
+                        </div>
+                    </React.Fragment>
+                );
+            })}
+             {dropIndex === widgets.length && <div style={styles.dropIndicator} />}
         </div>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
     column: {
-        minHeight: '200px',
-        backgroundColor: '#333',
+        minHeight: '100px',
         borderRadius: '4px',
-        padding: '0.5rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
-        border: '1px dashed #555',
+        position: 'relative',
+        transition: 'border-color 0.2s, background-color 0.2s',
     },
     placeholder: {
         flex: 1,
@@ -76,12 +176,13 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#666',
         fontSize: '0.9rem',
         textAlign: 'center',
+        minHeight: '60px',
     },
     widgetWrapper: {
         border: '2px solid transparent',
-        backgroundColor: '#252526',
         borderRadius: '3px',
         cursor: 'pointer',
+        overflow: 'hidden', // This is crucial for border-radius to clip content
     },
     selectedWidgetWrapper: {
         borderColor: '#007acc',
@@ -91,6 +192,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#ffc1c1',
         padding: '1rem',
         borderColor: '#ff8080',
+    },
+    dropIndicator: {
+        height: '4px',
+        backgroundColor: '#00aaff',
+        borderRadius: '2px',
+        margin: '-2px 0',
     }
 };
 

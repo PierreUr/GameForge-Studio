@@ -6,13 +6,15 @@ import SystemTestPanel from './SystemTestPanel';
 import { useDebugContext } from '../dev/DebugContext';
 import { useAuth } from '../../auth/AuthContext';
 import ModuleManagementPanel from './ModuleManagementPanel';
+import TaskManagementPanel from './TaskManagementPanel';
 
 interface AdminDashboardProps {
     onRunTests: (slug?: string) => Promise<string>;
     onToggleColliders: () => void;
+    onClose?: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRunTests, onToggleColliders }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRunTests, onToggleColliders, onClose }) => {
     const { toggleDebugVisibility } = useDebugContext();
     const { user } = useAuth();
     const isSuperAdmin = user?.roles.includes('SUPER_ADMIN');
@@ -72,33 +74,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRunTests, onToggleCol
     };
 
     const tabs = [
-        { label: 'Users', content: <UserManagementPanel /> },
-        { label: 'Roles', content: <RoleManagementPanel /> },
+        { id: 'tasks', label: 'Tasks', content: <TaskManagementPanel /> },
+        { id: 'users', label: 'Users', content: <UserManagementPanel /> },
+        { id: 'roles', label: 'Roles', content: <RoleManagementPanel /> },
     ];
     
     if (isSuperAdmin) {
-        tabs.push({ label: 'Modules', content: <ModuleManagementPanel /> });
+        tabs.push({ id: 'modules', label: 'Modules', content: <ModuleManagementPanel /> });
     }
     
-    tabs.push({ label: 'System Tests', content: <SystemTestPanel onRunTests={onRunTests} /> });
+    tabs.push({ id: 'tests', label: 'System Tests', content: <SystemTestPanel onRunTests={onRunTests} /> });
     
     return (
         <div style={styles.container}>
             <div style={styles.header}>
                 <h3>Admin Dashboard</h3>
-                <div style={styles.buttonGroup}>
-                    <button onClick={handleExportDb} style={styles.debugButton}>
-                        Export DB
-                    </button>
-                    <button onClick={handleImportDb} style={styles.debugButton}>
-                        Import DB
-                    </button>
-                    <button onClick={onToggleColliders} style={styles.debugButton}>
-                        Toggle Colliders
-                    </button>
-                    <button onClick={toggleDebugVisibility} style={styles.debugButton}>
-                        Toggle Debug IDs
-                    </button>
+                <div style={styles.headerActions}>
+                    <div style={styles.buttonGroup}>
+                        <button onClick={handleExportDb} style={styles.debugButton}>
+                            Export DB
+                        </button>
+                        <button onClick={handleImportDb} style={styles.debugButton}>
+                            Import DB
+                        </button>
+                        <button onClick={onToggleColliders} style={styles.debugButton}>
+                            Toggle Colliders
+                        </button>
+                        <button onClick={toggleDebugVisibility} style={styles.debugButton}>
+                            Toggle Debug IDs
+                        </button>
+                    </div>
+                    {onClose && (
+                        <button onClick={onClose} style={styles.closeButton} aria-label="Close Admin Panel">
+                            &times;
+                        </button>
+                    )}
                 </div>
             </div>
             <TabSystem tabs={tabs} />
@@ -120,6 +130,23 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '1rem',
         backgroundColor: '#333333',
         borderBottom: '1px solid #444',
+        flexShrink: 0,
+    },
+    headerActions: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+    },
+    closeButton: {
+        background: 'none',
+        border: 'none',
+        color: '#aaa',
+        cursor: 'pointer',
+        fontSize: '1.75rem',
+        lineHeight: 1,
+        padding: '0 0.5rem',
+        marginLeft: '1rem',
+        transition: 'color 0.2s',
     },
     buttonGroup: {
         display: 'flex',

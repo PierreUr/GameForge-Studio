@@ -2,9 +2,11 @@ import React, { useState, ReactNode } from 'react';
 import DebugIdTooltip from './dev/DebugIdTooltip';
 
 // FIX: Exported Tab interface so it can be used by parent components.
+// FIX: Updated `label` to be `ReactNode` to support complex components in tab headers. Added `id` for stable keys.
 export interface Tab {
-    label: string;
+    label: ReactNode;
     content: ReactNode;
+    id?: string;
 }
 
 interface TabSystemProps {
@@ -33,14 +35,16 @@ const TabSystem: React.FC<TabSystemProps> = ({ tabs, onTabChange }) => {
             <div style={styles.tabContainer}>
                 <div style={styles.tabHeader} role="tablist">
                     {tabs.map((tab, index) => {
-                        const tabId = `tab-${tab.label.toLowerCase().replace(/\s+/g, '-')}`;
+                        // FIX: Use the optional `id` or fallback to a string representation for generating a stable debug ID.
+                        const tabIdentifier = tab.id || (typeof tab.label === 'string' ? tab.label : index.toString());
+                        const tabId = `tab-${tabIdentifier.toLowerCase().replace(/\s+/g, '-')}`;
                         const isActive = index === activeTab;
                         const buttonStyle = {
                             ...styles.tabButton,
                             ...(isActive ? styles.activeTabButton : {}),
                         };
                         return (
-                            <DebugIdTooltip key={index} debugId={tabId}>
+                            <DebugIdTooltip key={tabIdentifier} debugId={tabId}>
                                 <button
                                     onClick={() => handleTabClick(index)}
                                     style={buttonStyle}
@@ -101,6 +105,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         overflowY: 'auto',
         position: 'relative',
         backgroundColor: '#252526', // Ensure content background matches active tab
+        minHeight: 0,
     },
 };
 

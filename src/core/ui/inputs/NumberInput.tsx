@@ -1,20 +1,26 @@
 import React from 'react';
+import InspectorHelpTooltip from '../InspectorHelpTooltip';
 
 interface NumberInputProps {
     label: string;
     value: number;
     onChange: (newValue: number) => void;
     disabled?: boolean;
+    isHelpVisible?: boolean;
+    helpText?: string;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange, disabled = false }) => {
+const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange, disabled = false, isHelpVisible, helpText }) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onChange(parseFloat(e.target.value));
     };
 
     return (
         <div style={styles.container}>
-            <label style={styles.label}>{label}</label>
+            <div style={styles.labelContainer}>
+                <label style={styles.label}>{label}</label>
+                {isHelpVisible && helpText && <InspectorHelpTooltip text={helpText} />}
+            </div>
             <input
                 type="number"
                 value={value}
@@ -33,9 +39,13 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         width: '100%',
     },
+    labelContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+    },
     label: {
         color: '#ccc',
-        marginRight: '1rem',
         fontSize: '0.85rem',
         textTransform: 'capitalize',
     },

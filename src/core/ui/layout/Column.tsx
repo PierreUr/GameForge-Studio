@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { WidgetData, componentRegistry, ColumnData } from '../UIEditorPanel';
 
 interface ColumnProps {
     columnData: ColumnData;
     sectionId: string;
     columnIndex: number;
-    onDrop: (widgetType: string) => void;
+    onDrop: (widgetType: string, dropIndex: number) => void;
     selectedWidgetId: string | null;
     onWidgetSelect: (widgetData: WidgetData) => void;
     onWidgetMove: (source: any, target: any) => void;
     isSelected: boolean;
     onSelect: (columnId: string) => void;
+    onAddWidgetClick: (insertIndex: number, anchorEl: HTMLElement) => void;
 }
 
 const WIDGET_DRAG_TYPE = 'application/gameforge-widget';
+const SECTION_DRAG_TYPE = 'application/gameforge-section-id';
 
 const Column: React.FC<ColumnProps> = ({ 
     columnData, 
@@ -24,17 +26,25 @@ const Column: React.FC<ColumnProps> = ({
     onWidgetSelect, 
     onWidgetMove,
     isSelected,
-    onSelect
+    onSelect,
+    onAddWidgetClick
 }) => {
     const { id: columnId, widgets } = columnData;
     const [dropIndex, setDropIndex] = useState<number | null>(null);
+    const addButtonRef = useRef<HTMLButtonElement>(null);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (e.dataTransfer.types.includes(SECTION_DRAG_TYPE)) {
+            setDropIndex(null);
+            return;
+        }
+        
         e.preventDefault();
         e.stopPropagation();
 
-        if (e.dataTransfer.types.includes(WIDGET_DRAG_TYPE)) {
-            e.dataTransfer.dropEffect = 'move';
+        if (e.dataTransfer.types.includes(WIDGET_DRAG_TYPE) || e.dataTransfer.types.includes('text/plain')) {
+            e.dataTransfer.dropEffect = e.dataTransfer.types.includes(WIDGET_DRAG_TYPE) ? 'move' : 'copy';
+            
             const children = Array.from((e.currentTarget as HTMLDivElement).children).filter(el => el.getAttribute('data-widget-index'));
             let newDropIndex = children.length;
 
@@ -47,8 +57,6 @@ const Column: React.FC<ColumnProps> = ({
                 }
             }
             setDropIndex(newDropIndex);
-        } else if (e.dataTransfer.types.includes('text/plain')) {
-            e.dataTransfer.dropEffect = 'copy';
         }
     };
 
@@ -57,6 +65,10 @@ const Column: React.FC<ColumnProps> = ({
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (e.dataTransfer.types.includes(SECTION_DRAG_TYPE)) {
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
         
@@ -77,7 +89,9 @@ const Column: React.FC<ColumnProps> = ({
             }
         } else {
             const widgetType = e.dataTransfer.getData('text/plain');
-            onDrop(widgetType);
+            if (dropIndex !== null) {
+                onDrop(widgetType, dropIndex);
+            }
         }
         
         setDropIndex(null);
@@ -105,12 +119,20 @@ const Column: React.FC<ColumnProps> = ({
         onSelect(columnId);
     };
 
+    const handleAddClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        if (addButtonRef.current) {
+            onAddWidgetClick(widgets.length, addButtonRef.current);
+        }
+    };
+
     const columnStyle: React.CSSProperties = {
         ...styles.column,
         border: isSelected ? '2px solid #28a745' : '1px dashed #555',
         backgroundColor: columnData.styles?.backgroundColor || 'transparent',
         padding: columnData.styles?.padding || '0.5rem',
         gap: `${columnData.styles?.rowGap || 8}px`,
+        zIndex: 2, // Fix for ensuring column is clickable over section
     };
 
     return (
@@ -155,18 +177,23 @@ const Column: React.FC<ColumnProps> = ({
                 );
             })}
              {dropIndex === widgets.length && <div style={styles.dropIndicator} />}
+            <div style={styles.addButtonContainer}>
+                <button ref={addButtonRef} onClick={handleAddClick} style={styles.addButton} title="Add Widget">
+                    +
+                </button>
+            </div>
         </div>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
     column: {
-        minHeight: '100px',
         borderRadius: '4px',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
         transition: 'border-color 0.2s, background-color 0.2s',
+        minHeight: '60px', // Ensure column is droppable even when empty
     },
     placeholder: {
         flex: 1,
@@ -174,9 +201,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         justifyContent: 'center',
         alignItems: 'center',
         color: '#666',
-        fontSize: '0.9rem',
+        fontSize: '0.8rem',
         textAlign: 'center',
-        minHeight: '60px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        minHeight: '40px',
     },
     widgetWrapper: {
         border: '2px solid transparent',
@@ -198,6 +228,25 @@ const styles: { [key: string]: React.CSSProperties } = {
         backgroundColor: '#00aaff',
         borderRadius: '2px',
         margin: '-2px 0',
+    },
+    addButtonContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '8px 0',
+    },
+    addButton: {
+        backgroundColor: 'rgba(74, 74, 74, 0.5)',
+        border: '1px dashed #666',
+        color: '#999',
+        cursor: 'pointer',
+        borderRadius: '50%',
+        width: '28px',
+        height: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '20px',
+        lineHeight: '28px',
     }
 };
 

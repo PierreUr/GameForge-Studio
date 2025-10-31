@@ -10,8 +10,8 @@
     - [X] **BUG:** Drag & Drop für Sektionen ist fehlerhaft.
     - [X] **BUG:** Drag & Drop für Widgets innerhalb von Spalten ist instabil, führt zu Abstürzen und verhindert das Stapeln von >2 Elementen.
     - [X] **BUG:** Vertikales Scrollen im UI-Editor Canvas ist nicht möglich.
-    - [ ] **FEATURE:** Abstand zwischen Spalten in einer Sektion ist nicht einstellbar.
-    - [ ] **FEATURE:** es soll sich soverhalten wie ein Websiten Designer kein Abstand zum rand usw. es gibt ohne ihn eingesstellt zu haben der Rahmen z.B. eines Section soll sehr schmall sien um 0 PX zum randhaben
+    - [X] **FEATURE:** Abstand zwischen Spalten in einer Sektion ist nicht einstellbar.
+    - [X] **FEATURE:** es soll sich soverhalten wie ein Websiten Designer kein Abstand zum rand usw. es gibt ohne ihn eingesstellt zu haben der Rahmen z.B. eines Section soll sehr schmall sien um 0 PX zum randhaben
     - [ ] **FEATURE:** Die Modies für Table / Mobile / Desktop sollen je weil als eigenes design gespeichert werden können der Switch sollen oben link als overlay im Bearbeitungscanvas sei, die gänigen Optionen wie Backgound-Color oder Image sowie generelle H1 und classen eingenschaften usw. soll beim auswählen im INspektor eingestellt werden können
     - [X] **FEATURE:** Spacer-Verhalten ist unklar (erstellt eine komplette Sektion).
 - [ ] **[SYSTEM]** **Task 178:** Implementierung von Inspector-Hilfe-Tooltips für alle Komponenten

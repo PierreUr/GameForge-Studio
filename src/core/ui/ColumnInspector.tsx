@@ -6,15 +6,14 @@ import NumberInput from './inputs/NumberInput';
 
 interface ColumnInspectorProps {
     columnData: ColumnData;
-    onPropertyChange: (columnId: string, propName: string, value: any, isDirectProp?: boolean) => void;
+    onPropertyChange: (columnId: string, propName: string, value: any) => void;
     isHelpVisible: boolean;
 }
 
 const ColumnInspector: React.FC<ColumnInspectorProps> = ({ columnData, onPropertyChange, isHelpVisible }) => {
 
     const handleStyleChange = (propName: string, value: any) => {
-        // 'rowGap' is a direct property on the styles object, not nested
-        onPropertyChange(columnData.id, propName, value, true);
+        onPropertyChange(columnData.id, propName, value);
     };
 
     return (

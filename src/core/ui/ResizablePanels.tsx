@@ -106,7 +106,7 @@ const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children }) => {
                 aria-orientation="vertical"
                 tabIndex={0}
             />
-            <div style={{ flex: 1, ...styles.panel, minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ flex: 1, ...styles.panel, minWidth: 0 }}>
                 {middle}
             </div>
             <div
@@ -129,12 +129,14 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flex: 1,
         width: '100%',
+        overflow: 'hidden', // Keep this to prevent horizontal page scroll from rounding errors
     },
     panel: {
         display: 'flex',
         flexDirection: 'column',
         minWidth: '10%', // Minimum width for side panels
         position: 'relative', // Create stacking context
+        minHeight: 0, // CRITICAL FIX: Allows flex items to shrink below their content size.
     },
     resizer: {
         flexShrink: 0,

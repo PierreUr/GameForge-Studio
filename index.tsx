@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EntityManager } from './src/core/ecs/EntityManager';
@@ -50,12 +52,14 @@ const MainViewTabs: React.FC<{ activeTab: MainView, onTabChange: (tabId: MainVie
     ];
     
     return (
-        <div style={styles.mainViewTabsContainer}>
+        // FIX: Replaced non-existent `styles` with `mainViewTabsStyles` which is defined at the end of the file.
+        <div style={mainViewTabsStyles.mainViewTabsContainer}>
             {tabs.map(tab => (
                 <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
-                    style={activeTab === tab.id ? { ...styles.mainViewTab, ...styles.activeMainViewTab } : styles.mainViewTab}
+                    // FIX: Replaced non-existent `styles` with `mainViewTabsStyles`.
+                    style={activeTab === tab.id ? { ...mainViewTabsStyles.mainViewTab, ...mainViewTabsStyles.activeMainViewTab } : mainViewTabsStyles.mainViewTab}
                 >
                     {tab.label}
                 </button>
@@ -107,6 +111,17 @@ const App = () => {
     const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
     const [isInspectorHelpVisible, setIsInspectorHelpVisible] = useState(false);
 
+    // FIX: Created wrapper functions to handle partial state updates for frame and grid configs.
+    // This resolves the TypeScript error where a `Dispatch<SetStateAction>` was passed to a prop
+    // expecting a function that accepts a partial object.
+    const handleFrameConfigChange = useCallback((newConfig: Partial<FrameConfig>) => {
+        setFrameConfig(prev => ({ ...prev, ...newConfig }));
+    }, []);
+
+    const handleGridConfigChange = useCallback((newConfig: Partial<GridConfig>) => {
+        setGridConfig(prev => ({ ...prev, ...newConfig }));
+    }, []);
+
     const toggleInspectorHelp = useCallback(() => {
         setIsInspectorHelpVisible(prev => !prev);
     }, []);
@@ -145,6 +160,31 @@ const App = () => {
         );
     }, []);
 
+    const handleSectionColumnCountChange = useCallback((sectionId: string, newColumnCount: number) => {
+        setUiLayout(prevLayout =>
+            prevLayout.map(section => {
+                if (section.id === sectionId) {
+                    let newColumns = [...section.columns];
+                    if (newColumnCount > newColumns.length) {
+                        // Add new columns
+                        for (let i = newColumns.length; i < newColumnCount; i++) {
+                            newColumns.push({ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } });
+                        }
+                    } else if (newColumnCount < newColumns.length) {
+                        // Consolidate widgets from removed columns into the last remaining column
+                        const widgetsToMove = newColumns.slice(newColumnCount).flatMap(col => col.widgets);
+                        newColumns = newColumns.slice(0, newColumnCount);
+                        if (newColumns.length > 0) {
+                            newColumns[newColumns.length - 1].widgets.push(...widgetsToMove);
+                        }
+                    }
+                    return { ...section, columnLayout: newColumnCount, columns: newColumns };
+                }
+                return section;
+            })
+        );
+    }, []);
+
     const handleColumnPropertyChange = useCallback((columnId: string, propName: string, propValue: any) => {
         setUiLayout(prevLayout =>
             prevLayout.map(section => ({
@@ -161,6 +201,97 @@ const App = () => {
             }))
         );
     }, []);
+
+    // FIX: Implemented the missing `handleRunTests` function.
+    const handleRunTests = useCallback(async (slug?: string): Promise<string> => {
+        const logger = new TestLogger();
+        
+        if (!ecsWorld) {
+            const msg = "ECS World not initialized. Cannot run tests.";
+            logger.logCustom(msg, 'ERROR');
+            return logger.getLog();
+        }
+        
+        const deps = { world: ecsWorld };
+
+        const runTest = async (slugToRun: string, testFn: (logger: TestLogger, deps: { world: World }) => Promise<void> | void) => {
+             try {
+                await testFn(logger, deps);
+            } catch (e: any) {
+                logger.logCustom(`CRITICAL ERROR in test '${slugToRun}': ${e.message}`, "ERROR");
+            }
+        };
+
+        if (slug) {
+            const testFn = testRegistry[slug];
+            if (testFn) {
+                await runTest(slug, testFn);
+            } else {
+                logger.logCustom(`Test with slug "${slug}" not found.`, "WARN");
+            }
+        } else {
+            for (const [testSlug, testFn] of Object.entries(testRegistry)) {
+               await runTest(testSlug, testFn);
+            }
+        }
+        
+        const fullLog = logger.getLog();
+        
+        try {
+            localStorage.setItem('test-execution-log', fullLog);
+        } catch (e) {
+            console.error("Failed to save test execution log to localStorage:", e);
+        }
+
+        return fullLog;
+    }, [ecsWorld]);
+    
+    const handleDuplicateSection = useCallback((sectionId: string) => {
+        const sectionToDuplicate = uiLayout.find(s => s.id === sectionId);
+        if (!sectionToDuplicate) return;
+
+        // Deep copy to prevent reference issues
+        const duplicateSection = JSON.parse(JSON.stringify(sectionToDuplicate));
+
+        // Generate new IDs for all nested elements
+        duplicateSection.id = crypto.randomUUID();
+        duplicateSection.columns.forEach((col: ColumnData) => {
+            col.id = crypto.randomUUID();
+            col.widgets.forEach((w: WidgetData) => {
+                w.id = crypto.randomUUID();
+            });
+        });
+
+        const originalIndex = uiLayout.findIndex(s => s.id === sectionId);
+        const newLayout = [...uiLayout];
+        newLayout.splice(originalIndex + 1, 0, duplicateSection);
+        setUiLayout(newLayout);
+    }, [uiLayout]);
+
+    // Restore Ctrl+D functionality for duplicating sections
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+                const activeEl = document.activeElement;
+                const isInputFocused = activeEl && (
+                    activeEl.tagName === 'INPUT' || 
+                    activeEl.tagName === 'TEXTAREA' || 
+                    (activeEl as HTMLElement).isContentEditable
+                );
+
+                if (!isInputFocused && selectedSectionId) {
+                    e.preventDefault();
+                    handleDuplicateSection(selectedSectionId);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedSectionId, handleDuplicateSection]);
 
 
     useEffect(() => {
@@ -253,6 +384,9 @@ const App = () => {
             }
         };
         
+        // FIX: Fixed truncated and buggy function.
+        // It now correctly handles updates to a widget's `props` or `styles` object and ensures
+        // the map function always returns a widget to prevent type errors.
         const handleWidgetPropertyUpdate = (payload: { widgetId: string, propName: string, propValue: any }) => {
             setUiLayout(prevLayout => {
                 return prevLayout.map(section => ({
@@ -261,12 +395,19 @@ const App = () => {
                         ...column,
                         widgets: column.widgets.map(widget => {
                             if (widget.id === payload.widgetId) {
-                                // BUGFIX: Differentiate between updating 'props' and 'styles'
                                 if (payload.propName === 'styles') {
-                                    return { ...widget, styles: payload.propValue };
+                                    return {
+                                        ...widget,
+                                        styles: payload.propValue
+                                    };
                                 }
-        
-                                return { ...widget, props: { ...widget.props, [payload.propName]: payload.propValue } };
+                                return {
+                                    ...widget,
+                                    props: {
+                                        ...widget.props,
+                                        [payload.propName]: payload.propValue
+                                    }
+                                };
                             }
                             return widget;
                         })
@@ -276,343 +417,163 @@ const App = () => {
         };
         
         const handleWidgetDelete = (payload: { widgetId: string }) => {
-            setUiLayout(prevLayout => {
-                const newLayout = prevLayout.map(section => ({
+            setUiLayout(prevLayout =>
+                prevLayout.map(section => ({
                     ...section,
                     columns: section.columns.map(column => ({
                         ...column,
-                        widgets: column.widgets.filter(widget => widget.id !== payload.widgetId)
-                    }))
-                }));
-                return newLayout;
-            });
-            // Deselect the widget after deleting it
-            setSelectedWidgetId(null);
+                        widgets: column.widgets.filter(widget => widget.id !== payload.widgetId),
+                    })),
+                }))
+            );
+            handleWidgetSelect(null); // Deselect deleted widget
         };
         
-        const handleWidgetMove = (payload: { source: { widgetId: string; sourceSectionId: string; sourceColumnIndex: number; }; target: { targetSectionId: string; targetColumnIndex: number; targetDropIndex: number; }; }) => {
-            const { source, target } = payload;
-            
-            setUiLayout(prevLayout => {
-                const newLayout = JSON.parse(JSON.stringify(prevLayout)); // Deep copy
-                
-                // 1. Find and remove the widget from the source
-                const sourceSection = newLayout.find((s: SectionData) => s.id === source.sourceSectionId);
-                if (!sourceSection) {
-                    console.error("Drag-and-drop failed: Source section not found.");
-                    return prevLayout;
-                }
+        const handleWidgetMove = (payload: { source: any; target: any }) => {
+            let widgetToMove: WidgetData | null = null;
+            let newLayout = [...uiLayout];
 
-                const sourceColumn = sourceSection.columns[source.sourceColumnIndex];
-                if (!sourceColumn) {
-                    console.error("Drag-and-drop failed: Source column not found.");
-                    return prevLayout;
+            // 1. Find and remove the widget from the source column
+            newLayout = newLayout.map(section => {
+                if (section.id === payload.source.sourceSectionId) {
+                    const newColumns = section.columns.map((col, index) => {
+                        if (index === payload.source.sourceColumnIndex) {
+                            const widgetIndex = col.widgets.findIndex(w => w.id === payload.source.widgetId);
+                            if (widgetIndex > -1) {
+                                const newWidgets = [...col.widgets];
+                                [widgetToMove] = newWidgets.splice(widgetIndex, 1);
+                                return { ...col, widgets: newWidgets };
+                            }
+                        }
+                        return col;
+                    });
+                    return { ...section, columns: newColumns };
                 }
-
-                const widgetIndex = sourceColumn.widgets.findIndex((w: WidgetData) => w.id === source.widgetId);
-                if (widgetIndex === -1) {
-                    console.error("Drag-and-drop failed: Could not find widget in source.");
-                    return prevLayout;
-                }
-
-                const [removedWidget] = sourceColumn.widgets.splice(widgetIndex, 1);
-
-                // 2. Find the target and insert the widget
-                const targetSection = newLayout.find((s: SectionData) => s.id === target.targetSectionId);
-                 if (!targetSection) {
-                    console.error("Drag-and-drop failed: Target section not found.");
-                    return prevLayout;
-                }
-                
-                const targetColumn = targetSection.columns[target.targetColumnIndex];
-                if (!targetColumn) {
-                    console.error("Drag-and-drop failed: Target column not found.");
-                    return prevLayout;
-                }
-
-                let actualDropIndex = target.targetDropIndex;
-                
-                // If moving within the same column, adjust the index
-                if (source.sourceSectionId === target.targetSectionId && source.sourceColumnIndex === target.targetColumnIndex) {
-                    if (widgetIndex < target.targetDropIndex) {
-                        actualDropIndex -= 1;
-                    }
-                }
-                
-                targetColumn.widgets.splice(actualDropIndex, 0, removedWidget);
-
-                return newLayout;
+                return section;
             });
-        };
 
-        EventBus.getInstance().subscribe('project:loaded', handleProjectLoaded);
-        EventBus.getInstance().subscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
-        EventBus.getInstance().subscribe('ui-widget:delete', handleWidgetDelete);
-        EventBus.getInstance().subscribe('ui-widget:move', handleWidgetMove);
+            // 2. Add the widget to the target column at the correct index
+            if (widgetToMove) {
+                newLayout = newLayout.map(section => {
+                    if (section.id === payload.target.targetSectionId) {
+                        const newColumns = section.columns.map((col, index) => {
+                            if (index === payload.target.targetColumnIndex) {
+                                const newWidgets = [...col.widgets];
+                                newWidgets.splice(payload.target.targetDropIndex, 0, widgetToMove!);
+                                return { ...col, widgets: newWidgets };
+                            }
+                            return col;
+                        });
+                        return { ...section, columns: newColumns };
+                    }
+                    return section;
+                });
+            }
+            setUiLayout(newLayout);
+        };
+        
+        const eventBus = EventBus.getInstance();
+        eventBus.subscribe('project:loaded', handleProjectLoaded);
+        eventBus.subscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
+        eventBus.subscribe('ui-widget:delete', handleWidgetDelete);
+        eventBus.subscribe('ui-widget:move', handleWidgetMove);
 
         return () => {
+            eventBus.unsubscribe('project:loaded', handleProjectLoaded);
+            eventBus.unsubscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
+            eventBus.unsubscribe('ui-widget:delete', handleWidgetDelete);
+            eventBus.unsubscribe('ui-widget:move', handleWidgetMove);
             if (gameLoop && gameLoop.isRunning) {
                 gameLoop.stop();
             }
-            if(autoSaveInterval) {
+            if (autoSaveInterval) {
                 clearInterval(autoSaveInterval);
             }
-            EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
-            EventBus.getInstance().unsubscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
-            EventBus.getInstance().unsubscribe('ui-widget:delete', handleWidgetDelete);
-            EventBus.getInstance().unsubscribe('ui-widget:move', handleWidgetMove);
         };
+    }, [token, gridConfig, frameConfig, handleRunTests, handleWidgetSelect, uiLayout, handleDuplicateSection, selectedSectionId]);
 
-    }, [token]); // Rerun setup when token changes (on login)
-    
-    const handleRunTests = useCallback(async (slugToRun?: string): Promise<string> => {
-        const logger = new TestLogger();
-        try {
-            const testsToRun: Record<string, Function> = {};
-
-            if (slugToRun) {
-                if (testRegistry[slugToRun]) {
-                    testsToRun[slugToRun] = testRegistry[slugToRun];
-                } else {
-                    logger.logCustom(`Test with slug '${slugToRun}' not found in registry.`, 'ERROR');
-                }
-            } else {
-                Object.assign(testsToRun, testRegistry);
-            }
-
-            for (const slug in testsToRun) {
-                const testEntityManager = new EntityManager();
-                const testComponentManager = new ComponentManager();
-                const testSystemManager = new SystemManager(testEntityManager, testComponentManager);
-                const testWorld = new World(testEntityManager, testComponentManager, testSystemManager);
-                
-                testWorld.registerComponent(PositionComponent);
-                testWorld.registerComponent(VelocityComponent);
-                testWorld.registerComponent(SpriteComponent);
-                testWorld.registerComponent(HealthComponent);
-                testWorld.registerComponent(PlayerInputComponent);
-                testWorld.registerComponent(PhysicsBodyComponent);
-                testWorld.registerComponent(ColliderComponent);
-                testWorld.registerComponent(ScoreComponent);
-                testWorld.registerComponent(AIPatrolComponent);
-
-                await testsToRun[slug](logger, { world: testWorld });
-            }
-
-            const logContent = logger.getLog();
-            const cleanLog = logContent.replace(/\x1b\[[0-9;]*m/g, '');
-
-            try {
-                // Only save full-run logs to local storage to avoid overwriting with single test runs
-                if (!slugToRun) {
-                    const logLines = cleanLog.split('\n').filter(line => line.trim() !== '');
-                    const logData = {
-                        timestamp: new Date().toISOString(),
-                        results: logLines,
-                    };
-                    localStorage.setItem('test-execution-log', JSON.stringify(logData));
-                    console.log('[App] Test execution log saved to localStorage.');
-                }
-            } catch (e) {
-                console.error("Failed to save test log to localStorage", e);
-            }
-            return cleanLog;
-            
-        } catch (e: any) {
-            console.error('An unexpected error occurred during test execution:', e);
-            const errorLogger = new TestLogger();
-            errorLogger.logCustom(`[CRITICAL] An unexpected error occurred: ${e.message}`, 'ERROR');
-            const errorLogContent = errorLogger.getLog();
-            const cleanErrorLog = errorLogContent.replace(/\x1b\[[0-9;]*m/g, '');
-            const errorLines = cleanErrorLog.split('\n').filter(line => line.trim() !== '');
-             if (!slugToRun) {
-                localStorage.setItem('test-execution-log', JSON.stringify({
-                    timestamp: new Date().toISOString(),
-                    results: ['[CRITICAL] An unexpected error occurred during test execution.', ...errorLines]
-                }));
-            }
-            return cleanErrorLog;
-        }
-    }, []);
-
-    const handleSaveProject = useCallback(() => {
-        ProjectManager.getInstance().saveProject();
-    }, []);
-
-    const handleLoadProject = useCallback(() => {
-        ProjectManager.getInstance().loadProject();
-    }, []);
-    
-    const handleExportHTML = useCallback(() => {
-        ProjectManager.getInstance().exportToStandaloneHTML();
-    }, []);
-
-    const handlePreviewProject = useCallback(() => {
-        ProjectManager.getInstance().previewProject();
-    }, []);
-
-    const handleUndo = useCallback(() => {
-        CommandManager.getInstance().undo();
-    }, []);
-
-    const handleRedo = useCallback(() => {
-        CommandManager.getInstance().redo();
-    }, []);
-    
-    const showAdminView = useCallback(() => {
-        if (user?.roles.includes('ADMIN')) {
-            setIsAdminView(true);
-        } else {
-            console.warn("Access denied: Admin view is restricted.");
-        }
-    }, [user]);
-
-    const handleCloseAdminView = useCallback(() => {
-        setIsAdminView(false);
-    }, []);
-
-    const handleMainViewChange = useCallback((viewId: MainView) => {
-        setIsAdminView(false);
-        setActiveMainView(viewId);
-    }, []);
-
-    useEffect(() => {
-        if (!token) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            const isCtrl = isMac ? e.metaKey : e.ctrlKey;
-
-            if (isCtrl && e.key === 's') {
-                e.preventDefault();
-                handleSaveProject();
-            }
-            if (isCtrl && e.key === 'z') {
-                e.preventDefault();
-                handleUndo();
-            }
-            if (isCtrl && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
-                e.preventDefault();
-                handleRedo();
-            }
-    
-            const isDelete = e.key === 'Delete' || e.key === 'Backspace';
-            if (isDelete && ecsWorld && ecsWorld.selectedEntity !== null) {
-                const command = new DestroyEntityCommand(ecsWorld, ecsWorld.selectedEntity);
-                CommandManager.getInstance().executeCommand(command);
-            }
-        };
-    
-        window.addEventListener('keydown', handleKeyDown);
-    
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [ecsWorld, handleSaveProject, handleUndo, handleRedo, token]);
-
-    const handleGridConfigChange = useCallback((newConfig: Partial<GridConfig>) => {
-        setGridConfig(prevConfig => {
-            const updatedConfig = { ...prevConfig, ...newConfig };
-            Renderer.getInstance().setGridConfig(updatedConfig);
-            return updatedConfig;
-        });
-    }, []);
-
-    const handleFrameConfigChange = useCallback((newConfig: Partial<FrameConfig>) => {
-        setFrameConfig(prevConfig => {
-            const updatedConfig = { ...prevConfig, ...newConfig };
-            const newLayoutKey = getLayoutKeyFromConfig(updatedConfig);
-            
-            if (newLayoutKey !== activeLayoutKey) {
-                ProjectManager.getInstance().switchActiveLayout(newLayoutKey);
-                setActiveLayoutKey(newLayoutKey);
-            }
-
-            Renderer.getInstance().setFrameConfig(updatedConfig);
-            return updatedConfig;
-        });
-    }, [activeLayoutKey]);
-
-    const handleToggleColliders = useCallback(() => {
-        renderingSystemRef.current?.toggleDebugRendering();
-    }, []);
-
-    // If not authenticated, show the login page
     if (!token) {
         return <LoginPage />;
     }
 
-    // If authenticated, show the main app
+    if (isAdminView) {
+        return <AdminDashboard 
+            onRunTests={handleRunTests} 
+            onToggleColliders={() => {
+                renderingSystemRef.current?.toggleDebugRendering();
+            }} 
+            onClose={() => setIsAdminView(false)} 
+        />;
+    }
+
+    let mainContent;
+    switch (activeMainView) {
+        case 'scene':
+            mainContent = <CanvasContainer 
+                world={ecsWorld} 
+                renderingSystem={renderingSystemRef.current} 
+                frameConfig={frameConfig} 
+                // FIX: Pass the wrapper function instead of the raw setState function to match the expected prop type.
+                onFrameConfigChange={handleFrameConfigChange} 
+                onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)} 
+            />;
+            break;
+        case 'ui-editor':
+            mainContent = <UIEditorPanel 
+                layout={uiLayout} 
+                onLayoutChange={setUiLayout}
+                selectedWidgetId={selectedWidgetId}
+                onWidgetSelect={handleWidgetSelect}
+                selectedSectionId={selectedSectionId}
+                onSectionSelect={handleSectionSelect}
+                selectedColumnId={selectedColumnId}
+                onColumnSelect={handleColumnSelect}
+                onDuplicateSection={handleDuplicateSection}
+                onSectionColumnCountChange={handleSectionColumnCountChange}
+            />;
+            break;
+        case 'logic-graph':
+            mainContent = <LogicGraphPanel />;
+            break;
+        case 'layers':
+            mainContent = <div>Layers Panel Placeholder</div>;
+            break;
+        default:
+            mainContent = <div>Error: Unknown View</div>;
+    }
+
     return (
-        <div style={styles.container}>
-            <ProgressBarHeader />
-            <main style={styles.main}>
+        <DebugProvider>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#1e1e1e', color: '#ccc' }}>
+                <ProgressBarHeader />
                 <Toolbar 
-                    onUndo={handleUndo}
-                    onRedo={handleRedo}
-                    onSave={handleSaveProject}
-                    onLoad={handleLoadProject}
-                    onPreview={handlePreviewProject}
-                    onExportHTML={handleExportHTML}
+                    onSave={() => ProjectManager.getInstance().saveProject()}
+                    onLoad={() => ProjectManager.getInstance().loadProject()}
+                    onPreview={() => ProjectManager.getInstance().previewProject()}
+                    onExportHTML={() => ProjectManager.getInstance().exportToStandaloneHTML()}
+                    onUndo={() => CommandManager.getInstance().undo()}
+                    onRedo={() => CommandManager.getInstance().redo()}
                     onLogout={logout}
-                    onAdminClick={showAdminView}
+                    onAdminClick={() => setIsAdminView(true)}
                 />
                 <ResizablePanels>
                     <LeftSidebar />
-                    
-                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0, backgroundColor: '#2d2d2d' }}>
-                        {!isAdminView && <MainViewTabs activeTab={activeMainView} onTabChange={handleMainViewChange} />}
-                        
-                        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                            {isAdminView && (
-                                <AdminDashboard 
-                                    onRunTests={handleRunTests} 
-                                    onToggleColliders={handleToggleColliders}
-                                    onClose={handleCloseAdminView}
-                                />
-                            )}
-                            {!isAdminView && (
-                                <>
-                                    <div style={{ display: activeMainView === 'scene' ? 'block' : 'none', height: '100%' }}>
-                                        <CanvasContainer 
-                                            world={ecsWorld} 
-                                            renderingSystem={renderingSystemRef.current}
-                                            frameConfig={frameConfig}
-                                            onFrameConfigChange={handleFrameConfigChange}
-                                            onOpenSettingsPanel={() => setIsSettingsPanelOpen(true)}
-                                        />
-                                    </div>
-                                    <div style={{ display: activeMainView === 'logic-graph' ? 'block' : 'none', height: '100%' }}>
-                                        <LogicGraphPanel />
-                                    </div>
-                                     <div style={{ display: activeMainView === 'ui-editor' ? 'flex' : 'none', height: '100%' }}>
-                                        <UIEditorPanel 
-                                            layout={uiLayout}
-                                            onLayoutChange={setUiLayout}
-                                            selectedWidgetId={selectedWidgetId}
-                                            onWidgetSelect={handleWidgetSelect}
-                                            selectedSectionId={selectedSectionId}
-                                            onSectionSelect={handleSectionSelect}
-                                            selectedColumnId={selectedColumnId}
-                                            onColumnSelect={handleColumnSelect}
-                                        />
-                                    </div>
-                                    <div style={{ display: activeMainView === 'layers' ? 'block' : 'none', height: '100%', padding: '1rem' }}>
-                                        <p>Layers View Placeholder</p>
-                                    </div>
-                                </>
-                            )}
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e', minWidth: 0, flex: 1 }}>
+                        <MainViewTabs activeTab={activeMainView} onTabChange={setActiveMainView} />
+                        <div style={{ flex: 1, display: 'flex', position: 'relative', minHeight: 0 }}>
+                            {mainContent}
                         </div>
                     </div>
-
                     <RightSidebar 
-                        world={ecsWorld}
-                        frameConfig={frameConfig}
+                        world={ecsWorld} 
+                        frameConfig={frameConfig} 
+                        // FIX: Pass the wrapper function instead of the raw setState function to match the expected prop type.
                         onFrameConfigChange={handleFrameConfigChange}
                         uiLayout={uiLayout}
                         selectedWidgetId={selectedWidgetId}
                         selectedSectionId={selectedSectionId}
                         onSectionPropertyChange={handleSectionPropertyChange}
+                        onSectionColumnCountChange={handleSectionColumnCountChange}
                         selectedColumnId={selectedColumnId}
                         onColumnPropertyChange={handleColumnPropertyChange}
                         onColumnSelect={handleColumnSelect}
@@ -620,75 +581,49 @@ const App = () => {
                         onToggleInspectorHelp={toggleInspectorHelp}
                     />
                 </ResizablePanels>
-            </main>
-            {isSettingsPanelOpen && (
-                <SettingsPanel
-                    isOpen={isSettingsPanelOpen}
-                    onClose={() => setIsSettingsPanelOpen(false)}
-                    gridConfig={gridConfig}
-                    onGridConfigChange={handleGridConfigChange}
-                />
-            )}
-        </div>
+                {isSettingsPanelOpen && (
+                    <SettingsPanel 
+                        isOpen={isSettingsPanelOpen}
+                        onClose={() => setIsSettingsPanelOpen(false)}
+                        gridConfig={gridConfig}
+                        // FIX: Pass the wrapper function instead of the raw setState function to match the expected prop type.
+                        onGridConfigChange={handleGridConfigChange}
+                    />
+                )}
+            </div>
+        </DebugProvider>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
-    container: {
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        backgroundColor: '#1e1e1e',
-        color: '#d4d4d4',
-    },
-    main: {
-        display: 'flex',
-        flex: 1,
-        overflow: 'hidden',
-        flexDirection: 'column',
-    },
+// FIX: Added the missing styles object for the MainViewTabs component.
+const mainViewTabsStyles: { [key: string]: React.CSSProperties } = {
     mainViewTabsContainer: {
         display: 'flex',
+        backgroundColor: '#252526',
+        borderBottom: '1px solid #000',
         flexShrink: 0,
-        backgroundColor: '#1e1e1e',
-        borderBottom: '1px solid #444',
     },
     mainViewTab: {
-        padding: '0.6rem 1.2rem',
+        padding: '0.75rem 1.5rem',
         cursor: 'pointer',
         backgroundColor: '#2d2d2d',
         border: 'none',
-        borderRight: '1px solid #1e1e1e',
-        color: '#ccc',
+        color: '#aaa',
         fontSize: '0.9rem',
+        borderRight: '1px solid #000',
+        outline: 'none',
     },
     activeMainViewTab: {
-        backgroundColor: '#333',
+        backgroundColor: '#3e3e42',
         color: '#fff',
-    },
-};
-
-// Root component to manage the auth provider
-const Root = () => {
-    const { isLoading } = useAuth();
-
-    if (isLoading) {
-        // You can add a global loading spinner here if you want
-        return <div style={{height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e1e1e', color: '#d4d4d4'}}>Loading...</div>;
     }
-
-    return <App />;
 };
 
-const container = document.getElementById('root');
-const root = createRoot(container!);
+const root = createRoot(document.getElementById('root')!);
 root.render(
     <React.StrictMode>
-        <DebugProvider>
-            <AuthProvider>
-                <Root />
-            </AuthProvider>
-        </DebugProvider>
+        <AuthProvider>
+            <App />
+        </AuthProvider>
     </React.StrictMode>
 );

@@ -23,6 +23,7 @@ interface RightSidebarProps {
     selectedWidgetId: string | null;
     selectedSectionId: string | null;
     onSectionPropertyChange: (sectionId: string, propName: string, value: any) => void;
+    onSectionColumnCountChange: (sectionId: string, count: number) => void;
     selectedColumnId: string | null;
     onColumnPropertyChange: (columnId: string, propName: string, value: any) => void;
     onColumnSelect: (columnId: string | null) => void;
@@ -43,6 +44,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     selectedWidgetId, 
     selectedSectionId, 
     onSectionPropertyChange,
+    onSectionColumnCountChange,
     selectedColumnId,
     onColumnPropertyChange,
     onColumnSelect,
@@ -213,7 +215,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             />
         );
     } else if (currentSectionData) {
-        inspectorContent = <SectionInspector sectionData={currentSectionData} onPropertyChange={onSectionPropertyChange} isHelpVisible={isInspectorHelpVisible} />;
+        inspectorContent = (
+            <SectionInspector 
+                sectionData={currentSectionData} 
+                onPropertyChange={onSectionPropertyChange} 
+                onColumnCountChange={onSectionColumnCountChange}
+                isHelpVisible={isInspectorHelpVisible} 
+            />
+        );
     } else if (currentColumnData) {
         inspectorContent = <ColumnInspector columnData={currentColumnData} onPropertyChange={onColumnPropertyChange} isHelpVisible={isInspectorHelpVisible} />;
     } else if (selectedEntityId !== null) {

@@ -6,6 +6,8 @@ import Section from './layout/Section';
 import { EventBus } from '../ecs/EventBus';
 import SpacerWidget from './widgets/SpacerWidget';
 import ImageWidget from './widgets/ImageWidget';
+import ContextMenu from './ContextMenu';
+import WidgetPicker from './WidgetPicker';
 
 // --- DATA TYPES for the new Layout System ---
 export interface WidgetData {
@@ -32,6 +34,9 @@ export interface SectionData {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    height?: string;
+    minHeight?: string;
+    alignItems?: string;
 }
 
 interface UIEditorPanelProps {
@@ -43,6 +48,8 @@ interface UIEditorPanelProps {
     onSectionSelect: (sectionId: string | null) => void;
     selectedColumnId: string | null;
     onColumnSelect: (columnId: string | null) => void;
+    onDuplicateSection: (sectionId: string) => void;
+    onSectionColumnCountChange: (sectionId: string, count: number) => void;
 }
 
 // A map to resolve component names from the manifest to actual React components
@@ -54,14 +61,23 @@ export const componentRegistry: Record<string, React.ComponentType<any>> = {
     'image': ImageWidget,
 };
 
-const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, selectedWidgetId, onWidgetSelect, selectedSectionId, onSectionSelect, selectedColumnId, onColumnSelect }) => {
-    const [zoom, setZoom] = useState(1);
-    const [pan, setPan] = useState({ x: 0, y: 0 });
-    const isPanning = useRef(false);
-    const lastPanPoint = useRef({ x: 0, y: 0 });
+const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ 
+    layout, 
+    onLayoutChange, 
+    selectedWidgetId, 
+    onWidgetSelect, 
+    selectedSectionId, 
+    onSectionSelect, 
+    selectedColumnId, 
+    onColumnSelect,
+    onDuplicateSection,
+    onSectionColumnCountChange
+}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [widgetManifest, setWidgetManifest] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; sectionId: string } | null>(null);
+    const [pickerState, setPickerState] = useState<{ anchorEl: HTMLElement, onSelect: (widgetType: string) => void } | null>(null);
 
     useEffect(() => {
         const fetchManifest = async () => {
@@ -80,49 +96,6 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
         };
         fetchManifest();
     }, []);
-    
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault();
-
-            if (e.ctrlKey) {
-                // Zooming logic
-                const rect = container.getBoundingClientRect();
-                const pointer = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-                
-                const oldScale = zoom;
-                const zoomFactor = 1.1;
-                const newScale = e.deltaY < 0 ? oldScale * zoomFactor : oldScale / zoomFactor;
-                const clampedNewScale = Math.max(0.2, Math.min(newScale, 5));
-
-                // Position of the pointer relative to the content before zoom
-                const worldX = (pointer.x - pan.x) / oldScale;
-                const worldY = (pointer.y - pan.y) / oldScale;
-
-                // New pan position to keep the world point under the cursor
-                const newPanX = pointer.x - worldX * clampedNewScale;
-                const newPanY = pointer.y - worldY * clampedNewScale;
-
-                setZoom(clampedNewScale);
-                setPan({ x: newPanX, y: newPanY });
-            } else {
-                // Scrolling (panning) logic
-                setPan(prevPan => ({
-                    x: prevPan.x - e.deltaX,
-                    y: prevPan.y - e.deltaY
-                }));
-            }
-        };
-
-        container.addEventListener('wheel', handleWheel, { passive: false });
-
-        return () => {
-            container.removeEventListener('wheel', handleWheel);
-        };
-    }, [zoom, pan]);
 
     const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -139,7 +112,11 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
                 id: crypto.randomUUID(),
                 columnLayout: 1,
                 columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } }],
-                margin: '0 0 16px 0',
+                padding: '16px',
+                margin: '0',
+                height: 'auto',
+                minHeight: '100px',
+                alignItems: 'flex-start',
             };
             onLayoutChange([...layout, newSection]);
         } else if (droppedType === 'spacer') {
@@ -161,7 +138,7 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
 
     }, [layout, onLayoutChange, widgetManifest]);
 
-    const handleWidgetDrop = useCallback((sectionId: string, columnIndex: number, widgetType: string) => {
+    const handleWidgetDrop = useCallback((sectionId: string, columnIndex: number, widgetType: string, dropIndex: number) => {
         if (!widgetManifest || widgetType === 'layout-section' || !componentRegistry[widgetType]) return;
 
         const widgetDef = widgetManifest.widgets.find((w: any) => w.id === widgetType);
@@ -192,7 +169,9 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
             if (section.id === sectionId) {
                 const newColumns = section.columns.map((col, index) => {
                     if (index === columnIndex) {
-                        return { ...col, widgets: [...col.widgets, newWidget] };
+                        const newWidgets = [...col.widgets];
+                        newWidgets.splice(dropIndex, 0, newWidget); // Use splice to insert at drop index
+                        return { ...col, widgets: newWidgets };
                     }
                     return col;
                 });
@@ -229,28 +208,6 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
         });
     }, []);
 
-    const handleLayoutChange = useCallback((sectionId: string, newColumnCount: number) => {
-        const newLayout = layout.map(section => {
-            if (section.id === sectionId) {
-                let newColumns = [...section.columns];
-                if (newColumnCount > newColumns.length) {
-                    for (let i = newColumns.length; i < newColumnCount; i++) {
-                        newColumns.push({ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } });
-                    }
-                } else if (newColumnCount < newColumns.length) {
-                    const widgetsToMove = newColumns.slice(newColumnCount).flatMap(col => col.widgets);
-                    newColumns = newColumns.slice(0, newColumnCount);
-                    if (newColumns.length > 0) {
-                        newColumns[newColumns.length - 1].widgets.push(...widgetsToMove);
-                    }
-                }
-                return { ...section, columnLayout: newColumnCount, columns: newColumns };
-            }
-            return section;
-        });
-        onLayoutChange(newLayout);
-    }, [layout, onLayoutChange]);
-    
     const handleWidgetSelect = (widgetData: WidgetData) => {
         if (!widgetManifest) return;
         onWidgetSelect(widgetData.id);
@@ -258,35 +215,33 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
         EventBus.getInstance().publish('ui-widget:selected', { widgetId: widgetData.id, widgetDefinition });
     };
 
-    const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button === 1 && containerRef.current) { // Middle mouse button
-            e.preventDefault();
-            isPanning.current = true;
-            lastPanPoint.current = { x: e.clientX, y: e.clientY };
-            containerRef.current.style.cursor = 'grabbing';
-            containerRef.current.setPointerCapture(e.pointerId);
-        }
-    }, []);
+    const handleContextMenuRequest = (e: React.MouseEvent, sectionId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({ x: e.clientX, y: e.clientY, sectionId });
+    };
 
-    const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-        if (isPanning.current) {
-            const dx = e.clientX - lastPanPoint.current.x;
-            const dy = e.clientY - lastPanPoint.current.y;
-            setPan(prevPan => ({
-                x: prevPan.x + dx,
-                y: prevPan.y + dy
-            }));
-            lastPanPoint.current = { x: e.clientX, y: e.clientY };
-        }
-    }, []);
+    const handleCloseContextMenu = () => {
+        setContextMenu(null);
+    };
 
-    const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button === 1 && containerRef.current) {
-            isPanning.current = false;
-            containerRef.current.style.cursor = 'default';
-            containerRef.current.releasePointerCapture(e.pointerId);
-        }
-    }, []);
+    const handleDeleteSection = (sectionId: string) => {
+        onLayoutChange(layout.filter(s => s.id !== sectionId));
+        onSectionSelect(null); // Deselect if it was selected
+    };
+    
+    const handleOpenPicker = (sectionId: string, columnIndex: number, insertIndex: number, anchorEl: HTMLElement) => {
+        const onSelect = (widgetType: string) => {
+            handleWidgetDrop(sectionId, columnIndex, widgetType, insertIndex);
+            setPickerState(null);
+        };
+        setPickerState({ anchorEl, onSelect });
+    };
+
+    const contextMenuItems = contextMenu ? [
+        { label: 'Duplicate Section', onClick: () => onDuplicateSection(contextMenu.sectionId) },
+        { label: 'Delete Section', onClick: () => handleDeleteSection(contextMenu.sectionId) },
+    ] : [];
 
     if (isLoading) {
         return <div style={styles.container}><p style={styles.loadingText}>Loading UI Editor...</p></div>;
@@ -298,37 +253,54 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ layout, onLayoutChange, s
             style={styles.container}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
             onContextMenu={(e) => e.preventDefault()}
+            onClick={() => {
+                handleCloseContextMenu();
+                setPickerState(null);
+            }}
         >
-            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'top left' }}>
-                {layout.length === 0 ? (
-                    <div style={styles.placeholder}>
-                        <p>Drag a "Section" from the Library panel to get started.</p>
-                    </div>
-                ) : (
-                    <div style={styles.canvas}>
-                        {layout.map(sectionData => (
-                            <Section
-                                key={sectionData.id}
-                                sectionData={sectionData}
-                                onWidgetDrop={handleWidgetDrop}
-                                onLayoutChange={handleLayoutChange}
-                                selectedWidgetId={selectedWidgetId}
-                                onWidgetSelect={handleWidgetSelect}
-                                onSectionDrop={handleSectionReorder}
-                                onWidgetMove={handleWidgetMove}
-                                isSectionSelected={sectionData.id === selectedSectionId}
-                                onSectionSelect={onSectionSelect}
-                                selectedColumnId={selectedColumnId}
-                                onColumnSelect={onColumnSelect}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
+            {layout.length === 0 ? (
+                <div style={styles.placeholder}>
+                    <p>Drag a "Section" from the Library panel to get started.</p>
+                </div>
+            ) : (
+                <div style={styles.canvas}>
+                    {layout.map(sectionData => (
+                        <Section
+                            key={sectionData.id}
+                            sectionData={sectionData}
+                            onWidgetDrop={handleWidgetDrop}
+                            selectedWidgetId={selectedWidgetId}
+                            onWidgetSelect={handleWidgetSelect}
+                            onSectionDrop={handleSectionReorder}
+                            onWidgetMove={handleWidgetMove}
+                            isSectionSelected={sectionData.id === selectedSectionId}
+                            onSectionSelect={onSectionSelect}
+                            selectedColumnId={selectedColumnId}
+                            onColumnSelect={onColumnSelect}
+                            onContextMenuRequest={handleContextMenuRequest}
+                            onColumnCountChange={onSectionColumnCountChange}
+                            onAddWidgetClick={handleOpenPicker}
+                        />
+                    ))}
+                </div>
+            )}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    items={contextMenuItems}
+                    onClose={handleCloseContextMenu}
+                />
+            )}
+            {pickerState && widgetManifest && (
+                <WidgetPicker
+                    widgetManifest={widgetManifest}
+                    anchorEl={pickerState.anchorEl}
+                    onSelect={pickerState.onSelect}
+                    onClose={() => setPickerState(null)}
+                />
+            )}
         </div>
     );
 };
@@ -337,10 +309,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     container: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#2d2d2d',
+        backgroundColor: '#1e1e1e',
         position: 'relative',
-        overflow: 'hidden', // This is correct for manual panning
-        cursor: 'default',
+        padding: '0',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
     },
     loadingText: {
         color: '#999',
@@ -350,20 +323,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     canvas: {
         display: 'flex',
         flexDirection: 'column',
-        minWidth: '100%',
+        width: '100%',
+        backgroundColor: '#2d2d2d',
         boxSizing: 'border-box',
+        boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
     },
     placeholder: {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: 'calc(100vh - 100px)',
+        minHeight: '100%',
         color: '#666',
         border: '2px dashed #444',
         textAlign: 'center',
-        margin: '0',
-        width: '100%',
-        borderRadius: '0',
+        backgroundColor: '#2d2d2d',
+        borderRadius: '8px',
     },
 };
 

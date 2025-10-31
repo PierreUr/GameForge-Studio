@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SectionData, WidgetData } from '../UIEditorPanel';
 import Column from './Column';
 
 interface SectionProps {
     sectionData: SectionData;
-    onWidgetDrop: (sectionId: string, columnIndex: number, widgetType: string) => void;
-    onLayoutChange: (sectionId: string, newColumnCount: number) => void;
+    onWidgetDrop: (sectionId: string, columnIndex: number, widgetType: string, dropIndex: number) => void;
     selectedWidgetId: string | null;
     onWidgetSelect: (widgetData: WidgetData) => void;
     onSectionDrop: (draggedId: string, targetId: string, position: 'before' | 'after') => void;
@@ -14,6 +13,9 @@ interface SectionProps {
     onSectionSelect: (sectionId: string) => void;
     selectedColumnId: string | null;
     onColumnSelect: (columnId: string) => void;
+    onContextMenuRequest: (e: React.MouseEvent, sectionId: string) => void;
+    onColumnCountChange: (sectionId: string, count: number) => void;
+    onAddWidgetClick: (sectionId: string, columnIndex: number, insertIndex: number, anchorEl: HTMLElement) => void;
 }
 
 const SECTION_DRAG_TYPE = 'application/gameforge-section-id';
@@ -21,7 +23,6 @@ const SECTION_DRAG_TYPE = 'application/gameforge-section-id';
 const Section: React.FC<SectionProps> = ({ 
     sectionData, 
     onWidgetDrop, 
-    onLayoutChange, 
     selectedWidgetId, 
     onWidgetSelect, 
     onSectionDrop, 
@@ -30,11 +31,13 @@ const Section: React.FC<SectionProps> = ({
     onSectionSelect,
     selectedColumnId,
     onColumnSelect,
+    onContextMenuRequest,
+    onColumnCountChange,
+    onAddWidgetClick
 }) => {
-    const { id, columns, columnLayout, isSpacer, padding, columnGap, margin, backgroundColor } = sectionData;
+    const { id, columns, columnLayout, isSpacer, padding, columnGap, margin, backgroundColor, height, minHeight, alignItems } = sectionData;
     const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
-
-    const columnLayouts = [1, 2, 3, 4];
+    const [isHovered, setIsHovered] = useState(false);
 
     const handleDragStart = (e: React.DragEvent) => {
         e.dataTransfer.setData(SECTION_DRAG_TYPE, id);
@@ -43,12 +46,16 @@ const Section: React.FC<SectionProps> = ({
     };
 
     const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); // Always allow dropping on the section itself.
         if (e.dataTransfer.types.includes(SECTION_DRAG_TYPE)) {
+            e.stopPropagation(); // Only stop propagation if we are handling a section drag
             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
             const middleY = rect.top + rect.height / 2;
             setDropPosition(e.clientY < middleY ? 'before' : 'after');
+        } else {
+            // If it's not a section drag (e.g., a widget), don't show a section drop indicator.
+            // Let the event continue to the column.
+            setDropPosition(null);
         }
     };
 
@@ -59,15 +66,17 @@ const Section: React.FC<SectionProps> = ({
     };
 
     const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
+        // Only handle the drop if it's a section being dropped.
         if (e.dataTransfer.types.includes(SECTION_DRAG_TYPE)) {
+            e.preventDefault();
+            e.stopPropagation(); // Stop here, we've handled it.
             const draggedId = e.dataTransfer.getData(SECTION_DRAG_TYPE);
             if (draggedId && draggedId !== id && dropPosition) {
                 onSectionDrop(draggedId, id, dropPosition);
             }
         }
+        // If it's not a section drop, we do nothing and let the event bubble
+        // or be handled by a child (like Column).
         setDropPosition(null);
     };
 
@@ -75,11 +84,19 @@ const Section: React.FC<SectionProps> = ({
         e.stopPropagation();
         onSectionSelect(id);
     };
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onContextMenuRequest(e, id);
+    };
     
     // Minimalist view for spacer sections
     if (isSpacer) {
         const spacerWidget = sectionData.columns[0]?.widgets[0];
         if (!spacerWidget) return null;
+
+        const spacerStyle = isSectionSelected ? {...styles.spacerWrapper, ...styles.selectedSpacer} : styles.spacerWrapper;
 
         return (
              <div 
@@ -87,11 +104,17 @@ const Section: React.FC<SectionProps> = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onContextMenu={handleContextMenu}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onClick={handleSectionClick}
              >
                 {dropPosition === 'before' && <div style={{...styles.dropIndicator, top: -2}} />}
-                <div style={styles.spacerWrapper}>
-                    <div style={styles.spacerDragHandle} draggable onDragStart={handleDragStart}>⠿</div>
-                    <div style={{height: `${spacerWidget.props.height || 20}px`, backgroundColor: '#444', width: '100%', borderRadius: '2px'}} onClick={() => onWidgetSelect(spacerWidget)}></div>
+                <div style={spacerStyle}>
+                    {(isHovered || isSectionSelected) && (
+                         <div style={styles.dragHandle} draggable onDragStart={handleDragStart} onClick={(e) => { e.stopPropagation(); onSectionSelect(id); }}>⠿</div>
+                    )}
+                    <div style={{height: `${spacerWidget.props.height || 20}px`, backgroundColor: '#444', width: '100%', borderRadius: '2px'}} onClick={(e) => { e.stopPropagation(); onWidgetSelect(spacerWidget)}}></div>
                 </div>
                 {dropPosition === 'after' && <div style={{...styles.dropIndicator, bottom: -2}} />}
             </div>
@@ -110,8 +133,10 @@ const Section: React.FC<SectionProps> = ({
         ...styles.columnsContainer,
         gridTemplateColumns: `repeat(${columnLayout}, 1fr)`,
         gap: `${columnGap ?? 16}px`,
+        height: height,
+        minHeight: minHeight,
+        alignItems: alignItems,
     };
-
 
     return (
         <div 
@@ -120,21 +145,22 @@ const Section: React.FC<SectionProps> = ({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={handleSectionClick}
+            onContextMenu={handleContextMenu}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             {dropPosition === 'before' && <div style={{...styles.dropIndicator, top: -4}} />}
-            <div style={styles.controls}>
-                <div style={styles.dragHandle} draggable onDragStart={handleDragStart}>⠿</div>
-                <span>Columns:</span>
-                {columnLayouts.map(count => (
-                     <button 
-                        key={count} 
-                        onClick={(e) => { e.stopPropagation(); onLayoutChange(id, count); }}
-                        style={columnLayout === count ? {...styles.controlButton, ...styles.activeButton} : styles.controlButton}
-                    >
-                        {count}
-                    </button>
-                ))}
-            </div>
+            {(isHovered || isSectionSelected) && (
+                 <div 
+                    style={styles.dragHandle} 
+                    draggable 
+                    onDragStart={handleDragStart} 
+                    onClick={(e) => { e.stopPropagation(); onSectionSelect(id); }}
+                    title="Drag to reorder section. Click to select."
+                >
+                    ⠿
+                </div>
+            )}
             <div style={columnsContainerStyle}>
                 {columns.map((col, index) => (
                     <Column
@@ -142,12 +168,13 @@ const Section: React.FC<SectionProps> = ({
                         columnData={col}
                         sectionId={id}
                         columnIndex={index}
-                        onDrop={(widgetType) => onWidgetDrop(id, index, widgetType)}
+                        onDrop={(widgetType, dropIdx) => onWidgetDrop(id, index, widgetType, dropIdx)}
                         selectedWidgetId={selectedWidgetId}
                         onWidgetSelect={onWidgetSelect}
                         onWidgetMove={onWidgetMove}
                         isSelected={col.id === selectedColumnId}
                         onSelect={onColumnSelect}
+                        onAddWidgetClick={(insertIndex, anchorEl) => onAddWidgetClick(id, index, insertIndex, anchorEl)}
                     />
                 ))}
             </div>
@@ -165,60 +192,37 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     spacerSection: {
         position: 'relative',
-        padding: '4px 0',
+        padding: '4px 20px', // Add padding to make space for handle
     },
     spacerWrapper: {
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
-    },
-    spacerDragHandle: {
-        cursor: 'grab',
-        color: '#888',
-        padding: '4px',
-    },
-    controls: {
-        position: 'absolute',
-        top: '-15px',
-        left: '10px',
-        backgroundColor: '#333',
-        color: 'white',
-        borderRadius: '4px',
-        padding: '4px 8px',
-        display: 'flex',
-        alignItems: 'center',
         gap: '8px',
-        fontSize: '12px',
-        zIndex: 10,
-        border: '1px solid #555'
+        position: 'relative',
+        border: '2px solid transparent',
+        borderRadius: '4px',
+    },
+    selectedSpacer: {
+        borderColor: '#007acc',
     },
     dragHandle: {
+        position: 'absolute',
+        top: '50%',
+        left: '8px',
+        transform: 'translateY(-50%)',
         cursor: 'grab',
-        paddingRight: '8px',
-        fontSize: '16px',
-        color: '#ccc',
-    },
-    controlButton: {
-        backgroundColor: '#555',
-        border: '1px solid #777',
-        color: 'white',
-        cursor: 'pointer',
-        borderRadius: '50%',
-        width: '20px',
-        height: '20px',
+        color: '#aaa',
+        padding: '8px 4px',
+        borderRadius: '4px',
+        fontSize: '18px',
+        lineHeight: 1,
+        zIndex: 10,
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'center',
-        lineHeight: '1',
-    },
-    activeButton: {
-        backgroundColor: '#007acc',
-        borderColor: '#007acc',
-        fontWeight: 'bold',
+        justifyContent: 'center',
     },
     columnsContainer: {
         display: 'grid',
-        paddingTop: '1rem', // Space for controls
     },
     dropIndicator: {
         position: 'absolute',

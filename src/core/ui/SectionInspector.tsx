@@ -3,24 +3,40 @@ import { SectionData } from './UIEditorPanel';
 import NumberInput from './inputs/NumberInput';
 import TextInput from './inputs/TextInput';
 import ColorPicker from './inputs/ColorPicker';
+import SelectInput from './inputs/SelectInput';
 
 interface SectionInspectorProps {
     sectionData: SectionData;
     onPropertyChange: (sectionId: string, propName: string, value: any) => void;
+    onColumnCountChange: (sectionId: string, count: number) => void;
     isHelpVisible: boolean;
 }
 
-const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onPropertyChange, isHelpVisible }) => {
+const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onPropertyChange, onColumnCountChange, isHelpVisible }) => {
 
     const handlePropChange = (propName: string, value: any) => {
         onPropertyChange(sectionData.id, propName, value);
+    };
+
+    const handleColumnChange = (value: number) => {
+        const count = Math.max(1, Math.min(12, value)); // Clamp between 1 and 12
+        onColumnCountChange(sectionData.id, count);
     };
 
     return (
         <div>
             <h5 style={styles.header}>Section Properties</h5>
             <div style={styles.propertyList}>
-                 <div style={styles.propertyItem}>
+                <div style={styles.propertyItem}>
+                    <NumberInput
+                        label="Columns"
+                        value={sectionData.columnLayout}
+                        onChange={handleColumnChange}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The number of columns in this section (1-12)."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
                     <ColorPicker
                         label="Background Color"
                         value={sectionData.backgroundColor ?? 'transparent'}
@@ -50,10 +66,38 @@ const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onProp
                 <div style={styles.propertyItem}>
                     <TextInput
                         label="Margin"
-                        value={sectionData.margin ?? '0 0 16px 0'}
+                        value={sectionData.margin ?? '0'}
                         onChange={(value) => handlePropChange('margin', value)}
                         isHelpVisible={isHelpVisible}
                         helpText="The outer space of the section, for spacing between sections."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
+                    <TextInput
+                        label="Height"
+                        value={sectionData.height ?? 'auto'}
+                        onChange={(value) => handlePropChange('height', value)}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The fixed height of the section. Use CSS units (e.g., '300px' or '50vh'). 'auto' is default."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
+                    <TextInput
+                        label="Min Height"
+                        value={sectionData.minHeight ?? '100px'}
+                        onChange={(value) => handlePropChange('minHeight', value)}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The minimum height of the section. Use CSS units (e.g., '100px')."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
+                    <SelectInput
+                        label="Vertical Align"
+                        value={sectionData.alignItems ?? 'flex-start'}
+                        onChange={(value) => handlePropChange('alignItems', value)}
+                        options={['flex-start', 'center', 'flex-end']}
+                        isHelpVisible={isHelpVisible}
+                        helpText="Vertically align the content within the columns (Top, Center, Bottom)."
                     />
                 </div>
             </div>

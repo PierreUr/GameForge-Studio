@@ -11,12 +11,12 @@ import ViewportControls from './ViewportControls';
 interface CanvasContainerProps {
     world: World | null;
     renderingSystem: RenderingSystem | null;
-    frameConfig: FrameConfig;
-    onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
-    onOpenSettingsPanel: () => void;
 }
 
-const CanvasContainer: React.FC<CanvasContainerProps> = ({ world, renderingSystem, frameConfig, onFrameConfigChange, onOpenSettingsPanel }) => {
+const CanvasContainer: React.FC<CanvasContainerProps> = ({ 
+    world, 
+    renderingSystem, 
+}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const animationFrameId = useRef<number>(0);
 
@@ -125,30 +125,15 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ world, renderingSyste
     };
     
     return (
-        <div style={styles.canvasWrapper}>
-            <div 
-                ref={containerRef}
-                style={{ width: '100%', height: '100%' }}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={handleClick}
-                onContextMenu={(e) => e.preventDefault()}
-            >
-                {/* Pixi.js canvas will be appended here by Renderer.init() */}
-            </div>
-
-            {/* Overlays */}
-            <div style={styles.topLeftControls}>
-                <ViewportControls 
-                    frameConfig={frameConfig}
-                    onFrameConfigChange={onFrameConfigChange}
-                />
-            </div>
-            <div style={styles.topRightControls}>
-                <button onClick={onOpenSettingsPanel} style={styles.settingsButton} aria-label="Open Settings">
-                    ⚙️
-                </button>
-            </div>
+        <div 
+            ref={containerRef}
+            style={styles.canvasWrapper}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            onContextMenu={(e) => e.preventDefault()}
+        >
+            {/* Pixi.js canvas will be appended here by Renderer.init() */}
         </div>
     );
 };
@@ -159,35 +144,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         flex: 1,
         overflow: 'hidden',
         position: 'relative' // Needed for PIXI canvas positioning and overlays
-    },
-    topLeftControls: {
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        zIndex: 10,
-        backgroundColor: 'rgba(45, 45, 45, 0.75)',
-        borderRadius: '8px',
-        padding: '0.25rem'
-    },
-    topRightControls: {
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        zIndex: 10
-    },
-    settingsButton: {
-        backgroundColor: 'rgba(45, 45, 45, 0.75)',
-        border: '1px solid #666',
-        color: '#eee',
-        cursor: 'pointer',
-        borderRadius: '4px',
-        fontSize: '1.2rem',
-        width: '40px',
-        height: '40px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        transition: 'background-color 0.2s'
     }
 };
 

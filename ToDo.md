@@ -6,15 +6,29 @@
 **Status:** In Entwicklung
 
 ## Arbeitsschritte
+
 - [ ] **[SYSTEM]** **Task 177:** UI-Builder Bugfixes & Layout-Verbesserungen
     - [X] **BUG:** Drag & Drop für Sektionen ist fehlerhaft.
     - [X] **BUG:** Drag & Drop für Widgets innerhalb von Spalten ist instabil, führt zu Abstürzen und verhindert das Stapeln von >2 Elementen.
     - [X] **BUG:** Vertikales Scrollen im UI-Editor Canvas ist nicht möglich.
+    - [ ] **BUG:** Das Löschen von Widgets (über Inspector 'X' und Rechtsklick-Menü) funktioniert nicht.
+    - [ ] **BUG:** Das Hinzufügen einer neuen Sektion ist nur am Anfang des Layouts möglich, nicht mehr zwischen oder nach bestehenden Sektionen.
+    - [ ] **BUG:** Im `LibraryPanel` erscheint ein doppelter Scrollbalken, wenn Kategorien aufgeklappt werden.
+    - [ ] **BUG:** Verschachtelte Sektionen haben einen unerwünschten vertikalen Abstand, obwohl alle Margin/Padding-Werte auf 0 gesetzt sind.
     - [X] **FEATURE:** Abstand zwischen Spalten in einer Sektion ist nicht einstellbar.
     - [X] **FEATURE:** es soll sich soverhalten wie ein Websiten Designer kein Abstand zum rand usw. es gibt ohne ihn eingesstellt zu haben der Rahmen z.B. eines Section soll sehr schmall sien um 0 PX zum randhaben
-    - [ ] **FEATURE:** Die Modies für Table / Mobile / Desktop sollen je weil als eigenes design gespeichert werden können der Switch sollen oben link als overlay im Bearbeitungscanvas sei, die gänigen Optionen wie Backgound-Color oder Image sowie generelle H1 und classen eingenschaften usw. soll beim auswählen im INspektor eingestellt werden können
+    - [x] **FEATURE:** Die Modies für Table / Mobile / Desktop sollen je weil als eigenes design gespeichert werden können der Switch sollen oben link als overlay im Bearbeitungscanvas sei
+    - [x] **[FEATURE]** Neue Speicher-Buttons (Disketten-Icons) und "Save As..."-Funktionalität implementieren.
+    - [x] **[FEATURE]** Upload/Laden von Projekt-Designs ermöglichen.
+    - [ ] **[FEATURE]** Verschachtelte Sektionen (Sektion in Sektion) ermöglichen.
+    - [x] **[DOC]** Projekt-Datei-Format im Handbuch dokumentieren.
+    - [ ] **[FEATURE]** Das Handbuch soll über einen Button in einem Fenster innerhalb der Applikation geladen werden können.
+    - [ ] **FEATURE:** die gänigen Optionen wie Backgound-Color oder Image sowie generelle H1 und classen eingenschaften usw. soll beim auswählen im INspektor eingestellt werden können
+    - [ ] **FEATURE:** Spaltenbreiten innerhalb einer Sektion sollen per Drag & Drop anpassbar sein.
     - [X] **FEATURE:** Spacer-Verhalten ist unklar (erstellt eine komplette Sektion).
-- [ ] **[SYSTEM]** **Task 178:** Implementierung von Inspector-Hilfe-Tooltips für alle Komponenten
+    - [X] **FEATURE:** "Add Widget"-Button in Spalten zum schnellen Hinzufügen von Widgets implementiert.
+- [ ] **[SYSTEM]** **Task 178:** Implementierung des Fenster- und Popup-Systems (Siehe `Tasks/178-feature-window-system.md`)
+- [ ] **[SYSTEM]** **Task 179:** Implementierung von Inspector-Hilfe-Tooltips für alle Komponenten
 - [x] **[SYSTEM]** **Task 171:** Implementierung eines Systems zum Rendern von UI-Assets im Editor
 - [x] **[ASSET]** **Task 172:** Refactoring des Aufgaben-Moduls in atomare Widgets
 - [x] **[SYSTEM]** **Task 173:** Implementierung des UI-Builders (Phase 1: Layout-System)

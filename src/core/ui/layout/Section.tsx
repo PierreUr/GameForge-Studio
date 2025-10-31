@@ -10,31 +10,41 @@ interface SectionProps {
     onSectionDrop: (draggedId: string, targetId: string, position: 'before' | 'after') => void;
     onWidgetMove: (source: any, target: any) => void;
     isSectionSelected: boolean;
-    onSectionSelect: (sectionId: string) => void;
+    onSectionSelect: (sectionId: string | null) => void;
     selectedColumnId: string | null;
-    onColumnSelect: (columnId: string) => void;
+    onColumnSelect: (columnId: string | null) => void;
     onContextMenuRequest: (e: React.MouseEvent, sectionId: string) => void;
     onColumnCountChange: (sectionId: string, count: number) => void;
     onAddWidgetClick: (sectionId: string, columnIndex: number, insertIndex: number, anchorEl: HTMLElement) => void;
+    onWidgetContextMenuRequest: (e: React.MouseEvent, widgetId: string) => void; // Added for context menu
+    // For recursion
+    selectedSectionId?: string | null;
+    isNested?: boolean;
+    onCustomDragStart?: (e: React.DragEvent) => void;
 }
 
 const SECTION_DRAG_TYPE = 'application/gameforge-section-id';
 
-const Section: React.FC<SectionProps> = ({ 
-    sectionData, 
-    onWidgetDrop, 
-    selectedWidgetId, 
-    onWidgetSelect, 
-    onSectionDrop, 
-    onWidgetMove, 
-    isSectionSelected, 
-    onSectionSelect,
-    selectedColumnId,
-    onColumnSelect,
-    onContextMenuRequest,
-    onColumnCountChange,
-    onAddWidgetClick
-}) => {
+const Section: React.FC<SectionProps> = (props) => {
+    const { 
+        sectionData, 
+        onWidgetDrop, 
+        selectedWidgetId, 
+        onWidgetSelect, 
+        onSectionDrop, 
+        onWidgetMove, 
+        isSectionSelected, 
+        onSectionSelect,
+        selectedColumnId,
+        onColumnSelect,
+        onContextMenuRequest,
+        onColumnCountChange,
+        onAddWidgetClick,
+        selectedSectionId,
+        isNested = false,
+        onCustomDragStart,
+        onWidgetContextMenuRequest,
+    } = props;
     const { id, columns, columnLayout, isSpacer, padding, columnGap, margin, backgroundColor, height, minHeight, alignItems } = sectionData;
     const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
     const [isHovered, setIsHovered] = useState(false);
@@ -81,8 +91,11 @@ const Section: React.FC<SectionProps> = ({
     };
 
     const handleSectionClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onSectionSelect(id);
+        // Only select the section if the click is on the section itself, not on a child element.
+        if (e.target === e.currentTarget) {
+            e.stopPropagation();
+            onSectionSelect(id);
+        }
     };
 
     const handleContextMenu = (e: React.MouseEvent) => {
@@ -94,7 +107,7 @@ const Section: React.FC<SectionProps> = ({
     // Minimalist view for spacer sections
     if (isSpacer) {
         const spacerWidget = sectionData.columns[0]?.widgets[0];
-        if (!spacerWidget) return null;
+        if (!spacerWidget || !('componentType' in spacerWidget)) return null;
 
         const spacerStyle = isSectionSelected ? {...styles.spacerWrapper, ...styles.selectedSpacer} : styles.spacerWrapper;
 
@@ -112,9 +125,15 @@ const Section: React.FC<SectionProps> = ({
                 {dropPosition === 'before' && <div style={{...styles.dropIndicator, top: -2}} />}
                 <div style={spacerStyle}>
                     {(isHovered || isSectionSelected) && (
-                         <div style={styles.dragHandle} draggable onDragStart={handleDragStart} onClick={(e) => { e.stopPropagation(); onSectionSelect(id); }}>⠿</div>
+                         <div 
+                            style={isNested ? styles.nestedDragHandle : styles.dragHandle}
+                            draggable 
+                            onDragStart={isNested ? onCustomDragStart : handleDragStart} 
+                            onClick={(e) => { e.stopPropagation(); onSectionSelect(id); }}
+                            title={isNested ? "Drag nested spacer" : "Drag spacer"}
+                        >⠿</div>
                     )}
-                    <div style={{height: `${spacerWidget.props.height || 20}px`, backgroundColor: '#444', width: '100%', borderRadius: '2px'}} onClick={(e) => { e.stopPropagation(); onWidgetSelect(spacerWidget)}}></div>
+                    <div style={{height: `${spacerWidget.props.height || 20}px`, backgroundColor: '#444', width: '100%', borderRadius: '2px'}} onClick={(e) => { e.stopPropagation(); onWidgetSelect(spacerWidget as WidgetData)}}></div>
                 </div>
                 {dropPosition === 'after' && <div style={{...styles.dropIndicator, bottom: -2}} />}
             </div>
@@ -152,11 +171,11 @@ const Section: React.FC<SectionProps> = ({
             {dropPosition === 'before' && <div style={{...styles.dropIndicator, top: -4}} />}
             {(isHovered || isSectionSelected) && (
                  <div 
-                    style={styles.dragHandle} 
+                    style={isNested ? styles.nestedDragHandle : styles.dragHandle} 
                     draggable 
-                    onDragStart={handleDragStart} 
+                    onDragStart={isNested ? onCustomDragStart : handleDragStart} 
                     onClick={(e) => { e.stopPropagation(); onSectionSelect(id); }}
-                    title="Drag to reorder section. Click to select."
+                    title={isNested ? "Drag nested section" : "Drag to reorder section"}
                 >
                     ⠿
                 </div>
@@ -174,7 +193,17 @@ const Section: React.FC<SectionProps> = ({
                         onWidgetMove={onWidgetMove}
                         isSelected={col.id === selectedColumnId}
                         onSelect={onColumnSelect}
-                        onAddWidgetClick={(insertIndex, anchorEl) => onAddWidgetClick(id, index, insertIndex, anchorEl)}
+                        onAddWidgetClick={onAddWidgetClick}
+                        // Pass down props for recursion
+                        onWidgetDrop={onWidgetDrop}
+                        onSectionDrop={onSectionDrop}
+                        onSectionSelect={onSectionSelect}
+                        selectedSectionId={selectedSectionId}
+                        onColumnSelect={onColumnSelect}
+                        selectedColumnId={selectedColumnId}
+                        onContextMenuRequest={onContextMenuRequest}
+                        onColumnCountChange={onColumnCountChange}
+                        onWidgetContextMenuRequest={onWidgetContextMenuRequest}
                     />
                 ))}
             </div>
@@ -221,8 +250,28 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         justifyContent: 'center',
     },
+    nestedDragHandle: {
+        position: 'absolute',
+        top: '4px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        cursor: 'grab',
+        color: 'white',
+        backgroundColor: '#3498db',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        fontSize: '14px',
+        lineHeight: 1,
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+    },
     columnsContainer: {
         display: 'grid',
+        zIndex: 1, // Ensure columns are below the handle
+        position: 'relative', // Create a stacking context
     },
     dropIndicator: {
         position: 'absolute',

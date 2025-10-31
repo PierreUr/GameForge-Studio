@@ -240,6 +240,8 @@
         "173-implement-ui-builder-phase-1-layout-system",
         "174-implement-ui-builder-phase-2-widget-library-and-inspector",
         "175-ui-builder-verbesserungen-phase-1-input-fix-layout-und-bibliotheks-organisation",
-        "176-ui-builder-reordering-von-layout-sektionen-per-drag-and-drop"
+        "176-ui-builder-reordering-von-layout-sektionen-per-drag-and-drop",
+        "177-ui-builder-bugfixes-drag-and-drop",
+        "179-ui-builder-responsive-layout-switching"
     ]
 }

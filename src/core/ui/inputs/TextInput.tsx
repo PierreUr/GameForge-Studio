@@ -44,11 +44,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     label: {
         color: '#ccc',
-        fontSize: '0.85rem',
+        fontSize: '0.95rem',
         textTransform: 'capitalize',
     },
     input: {
-        width: '120px',
+        width: '168px',
         backgroundColor: '#2a2a2a',
         color: '#eee',
         border: '1px solid #555',

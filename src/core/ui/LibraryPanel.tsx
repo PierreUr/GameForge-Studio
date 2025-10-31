@@ -158,7 +158,8 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
                         </h5>
                         {isExpanded && (
                             <div style={styles.grid}>
-                                {items.map(item => (
+                                {/* FIX: Cast `items` to ManifestItem[] to resolve type inference issue where it was being treated as `unknown`. */}
+                                {(items as ManifestItem[]).map(item => (
                                     <ComponentCard 
                                         key={item.id}
                                         templateId={item.id}

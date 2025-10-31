@@ -11,7 +11,7 @@ import { FrameConfig } from '../rendering/Renderer';
 import BooleanCheckbox from './inputs/BooleanCheckbox';
 import NumberInput from './inputs/NumberInput';
 import WidgetInspector from './WidgetInspector';
-import { SectionData, ColumnData } from './UIEditorPanel';
+import { SectionData, ColumnData, WidgetData } from './UIEditorPanel';
 import SectionInspector from './SectionInspector';
 import ColumnInspector from './ColumnInspector';
 
@@ -177,28 +177,68 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
 
     let inspectorContent;
 
-    const findWidgetData = (layout: SectionData[], widgetId: string | null) => {
+    const findWidgetData = (layout: SectionData[], widgetId: string | null): { widget: WidgetData, columnId: string } | null => {
         if (!widgetId) return null;
         for (const section of layout) {
             for (const column of section.columns) {
-                const widget = column.widgets.find(w => w.id === widgetId);
-                if (widget) return { widget, columnId: column.id };
+                for (const item of column.widgets) {
+                    if ('componentType' in item) { // It's a WidgetData
+                        if (item.id === widgetId) {
+                            return { widget: item, columnId: column.id };
+                        }
+                    } else { // It's a SectionData, recurse
+                        const found = findWidgetData([item], widgetId);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
             }
         }
         return null;
     };
+
+    const findSectionData = (layout: SectionData[], sectionId: string | null): SectionData | null => {
+        if (!sectionId) return null;
+        for (const section of layout) {
+            if (section.id === sectionId) return section;
+            // Recurse into columns to find nested sections
+            for (const column of section.columns) {
+                for (const item of column.widgets) {
+                    if (!('componentType' in item)) { // This is a SectionData
+                        const found = findSectionData([item], sectionId);
+                        if (found) return found;
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
 
     const findColumnData = (layout: SectionData[], columnId: string | null): ColumnData | null => {
         if (!columnId) return null;
         for (const section of layout) {
             const column = section.columns.find(c => c.id === columnId);
             if (column) return column;
+    
+            // Search in nested sections
+            for (const col of section.columns) {
+                for (const item of col.widgets) {
+                    if (!('componentType' in item)) { // It's a SectionData
+                        const found = findColumnData([item], columnId);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+            }
         }
         return null;
     };
 
     const widgetInfo = findWidgetData(uiLayout, selectedWidgetId);
-    const currentSectionData = uiLayout.find(s => s.id === selectedSectionId);
+    const currentSectionData = findSectionData(uiLayout, selectedSectionId);
     const currentColumnData = findColumnData(uiLayout, selectedColumnId);
 
     const handleSelectParentColumn = (columnId: string | null) => {

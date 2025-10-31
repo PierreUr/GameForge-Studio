@@ -18,7 +18,7 @@ export interface WidgetData {
 }
 export interface ColumnData {
     id: string;
-    widgets: WidgetData[];
+    widgets: (WidgetData | SectionData)[];
     styles?: {
         backgroundColor?: string;
         padding?: string;
@@ -76,8 +76,10 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const [widgetManifest, setWidgetManifest] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; sectionId: string } | null>(null);
+    const [sectionContextMenu, setSectionContextMenu] = useState<{ x: number; y: number; sectionId: string } | null>(null);
+    const [widgetContextMenu, setWidgetContextMenu] = useState<{ x: number; y: number; widgetId: string } | null>(null);
     const [pickerState, setPickerState] = useState<{ anchorEl: HTMLElement, onSelect: (widgetType: string) => void } | null>(null);
+    const [showTopDropIndicator, setShowTopDropIndicator] = useState(false);
 
     useEffect(() => {
         const fetchManifest = async () => {
@@ -97,89 +99,120 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         fetchManifest();
     }, []);
 
-    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-    }, []);
-
     const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.stopPropagation(); // Stop propagation to prevent section drop handlers from firing
+        e.stopPropagation();
         const droppedType = e.dataTransfer.getData('text/plain');
+
+        const newSection: SectionData = {
+            id: crypto.randomUUID(),
+            columnLayout: 1,
+            columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } }],
+            padding: '16px',
+            margin: '0',
+            height: 'auto',
+            minHeight: '100px',
+            alignItems: 'flex-start',
+        };
+
+        if (showTopDropIndicator && droppedType === 'layout-section') {
+            onLayoutChange([newSection, ...layout]);
+        } else if (layout.length === 0 && droppedType === 'layout-section') {
+             onLayoutChange([newSection]);
+        }
         
+        setShowTopDropIndicator(false);
+    }, [layout, onLayoutChange, showTopDropIndicator]);
+    
+    const handleCanvasDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isSectionDrag = e.dataTransfer.types.includes('text/plain') && e.dataTransfer.getData('text/plain') === 'layout-section';
+    
+        if (isSectionDrag && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const topDropZoneHeight = 40;
+            if (e.clientY < rect.top + topDropZoneHeight) {
+                setShowTopDropIndicator(true);
+            } else {
+                setShowTopDropIndicator(false);
+            }
+        }
+    }, []);
+    
+    const handleCanvasDragLeave = useCallback(() => {
+        setShowTopDropIndicator(false);
+    }, []);
+
+    const handleWidgetDrop = useCallback((sectionId: string, columnIndex: number, droppedType: string, dropIndex: number) => {
+        if (!widgetManifest) return;
+    
+        let newItem: WidgetData | SectionData;
+    
         if (droppedType === 'layout-section') {
-            const newSection: SectionData = {
+            newItem = {
                 id: crypto.randomUUID(),
                 columnLayout: 1,
                 columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } }],
                 padding: '16px',
                 margin: '0',
+                backgroundColor: 'rgba(0,0,0,0.1)',
                 height: 'auto',
                 minHeight: '100px',
                 alignItems: 'flex-start',
             };
-            onLayoutChange([...layout, newSection]);
-        } else if (droppedType === 'spacer') {
-            const spacerWidgetDef = widgetManifest.widgets.find((w: any) => w.id === 'spacer');
-            const newSpacerWidget: WidgetData = {
-                id: crypto.randomUUID(),
-                componentType: 'spacer',
-                props: { height: spacerWidgetDef?.properties?.[0]?.defaultValue || 20 },
-                styles: {}
-            };
-             const newSection: SectionData = {
-                id: crypto.randomUUID(),
-                columnLayout: 1,
-                columns: [{ id: crypto.randomUUID(), widgets: [newSpacerWidget] }],
-                isSpacer: true,
-            };
-            onLayoutChange([...layout, newSection]);
-        }
-
-    }, [layout, onLayoutChange, widgetManifest]);
-
-    const handleWidgetDrop = useCallback((sectionId: string, columnIndex: number, widgetType: string, dropIndex: number) => {
-        if (!widgetManifest || widgetType === 'layout-section' || !componentRegistry[widgetType]) return;
-
-        const widgetDef = widgetManifest.widgets.find((w: any) => w.id === widgetType);
-        const defaultProps = widgetDef?.properties.reduce((acc: any, prop: any) => {
-            acc[prop.name] = prop.defaultValue;
-            return acc;
-        }, {} as Record<string, any>) || {};
-
-        // Initialize styles from manifest
-        const defaultStyles: Record<string, any> = {};
-        if (widgetDef?.styles) {
-            Object.entries(widgetDef.styles).forEach(([groupName, props]: [string, any]) => {
-                defaultStyles[groupName] = props.reduce((acc: any, prop: any) => {
-                    acc[prop.name] = prop.defaultValue;
-                    return acc;
-                }, {});
-            });
-        }
-
-        const newWidget: WidgetData = {
-            id: crypto.randomUUID(),
-            componentType: widgetType,
-            props: defaultProps,
-            styles: defaultStyles
-        };
-
-        const newLayout = layout.map(section => {
-            if (section.id === sectionId) {
-                const newColumns = section.columns.map((col, index) => {
-                    if (index === columnIndex) {
-                        const newWidgets = [...col.widgets];
-                        newWidgets.splice(dropIndex, 0, newWidget); // Use splice to insert at drop index
-                        return { ...col, widgets: newWidgets };
-                    }
-                    return col;
+        } else if (componentRegistry[droppedType]) {
+            const widgetDef = widgetManifest.widgets.find((w: any) => w.id === droppedType);
+            const defaultProps = widgetDef?.properties.reduce((acc: any, prop: any) => {
+                acc[prop.name] = prop.defaultValue;
+                return acc;
+            }, {} as Record<string, any>) || {};
+    
+            const defaultStyles: Record<string, any> = {};
+            if (widgetDef?.styles) {
+                Object.entries(widgetDef.styles).forEach(([groupName, props]: [string, any]) => {
+                    defaultStyles[groupName] = props.reduce((acc: any, prop: any) => {
+                        acc[prop.name] = prop.defaultValue;
+                        return acc;
+                    }, {});
                 });
-                return { ...section, columns: newColumns };
             }
-            return section;
-        });
+    
+            newItem = {
+                id: crypto.randomUUID(),
+                componentType: droppedType,
+                props: defaultProps,
+                styles: defaultStyles
+            };
+        } else {
+            return; // Dropped type is not a valid widget or section
+        }
+    
+        const newLayout = JSON.parse(JSON.stringify(layout)); // Deep copy for safe mutation
+    
+        function findAndInsert(sections: SectionData[]): boolean {
+            for (const section of sections) {
+                if (section.id === sectionId) {
+                    const column = section.columns[columnIndex];
+                    if (column) {
+                        column.widgets.splice(dropIndex, 0, newItem);
+                        return true;
+                    }
+                }
+                // Recurse
+                for (const col of section.columns) {
+                    if (findAndInsert(col.widgets.filter(w => !('componentType' in w)) as SectionData[])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    
+        findAndInsert(newLayout);
         onLayoutChange(newLayout);
+    
     }, [widgetManifest, layout, onLayoutChange]);
 
     const handleSectionReorder = useCallback((draggedId: string, targetId: string, position: 'before' | 'after') => {
@@ -215,14 +248,22 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         EventBus.getInstance().publish('ui-widget:selected', { widgetId: widgetData.id, widgetDefinition });
     };
 
-    const handleContextMenuRequest = (e: React.MouseEvent, sectionId: string) => {
+    const handleSectionContextMenuRequest = (e: React.MouseEvent, sectionId: string) => {
         e.preventDefault();
         e.stopPropagation();
-        setContextMenu({ x: e.clientX, y: e.clientY, sectionId });
+        setSectionContextMenu({ x: e.clientX, y: e.clientY, sectionId });
     };
 
+    const handleWidgetContextMenuRequest = useCallback((e: React.MouseEvent, widgetId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setWidgetContextMenu({ x: e.clientX, y: e.clientY, widgetId });
+    }, []);
+
+
     const handleCloseContextMenu = () => {
-        setContextMenu(null);
+        setSectionContextMenu(null);
+        setWidgetContextMenu(null);
     };
 
     const handleDeleteSection = (sectionId: string) => {
@@ -238,9 +279,17 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         setPickerState({ anchorEl, onSelect });
     };
 
-    const contextMenuItems = contextMenu ? [
-        { label: 'Duplicate Section', onClick: () => onDuplicateSection(contextMenu.sectionId) },
-        { label: 'Delete Section', onClick: () => handleDeleteSection(contextMenu.sectionId) },
+    const sectionContextMenuItems = sectionContextMenu ? [
+        { label: 'Duplicate Section', onClick: () => onDuplicateSection(sectionContextMenu.sectionId) },
+        { label: 'Delete Section', onClick: () => handleDeleteSection(sectionContextMenu.sectionId) },
+    ] : [];
+
+    const widgetContextMenuItems = widgetContextMenu ? [
+        { label: 'Delete Widget', onClick: () => {
+            if (window.confirm('Are you sure you want to delete this widget?')) {
+                EventBus.getInstance().publish('ui-widget:delete', { widgetId: widgetContextMenu.widgetId });
+            }
+        }},
     ] : [];
 
     if (isLoading) {
@@ -251,20 +300,24 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         <div 
             ref={containerRef}
             style={styles.container}
-            onDragOver={handleDragOver}
+            onDragOver={handleCanvasDragOver}
             onDrop={handleDrop}
+            onDragLeave={handleCanvasDragLeave}
             onContextMenu={(e) => e.preventDefault()}
             onClick={() => {
                 handleCloseContextMenu();
                 setPickerState(null);
             }}
         >
+            {showTopDropIndicator && <div style={styles.topDropIndicator}>Add Section Here</div>}
             {layout.length === 0 ? (
                 <div style={styles.placeholder}>
                     <p>Drag a "Section" from the Library panel to get started.</p>
                 </div>
             ) : (
-                <div style={styles.canvas}>
+                <div 
+                    style={styles.canvas}
+                >
                     {layout.map(sectionData => (
                         <Section
                             key={sectionData.id}
@@ -278,18 +331,28 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
                             onSectionSelect={onSectionSelect}
                             selectedColumnId={selectedColumnId}
                             onColumnSelect={onColumnSelect}
-                            onContextMenuRequest={handleContextMenuRequest}
+                            onContextMenuRequest={handleSectionContextMenuRequest}
                             onColumnCountChange={onSectionColumnCountChange}
                             onAddWidgetClick={handleOpenPicker}
+                            isNested={false}
+                            onWidgetContextMenuRequest={handleWidgetContextMenuRequest}
                         />
                     ))}
                 </div>
             )}
-            {contextMenu && (
+            {sectionContextMenu && (
                 <ContextMenu
-                    x={contextMenu.x}
-                    y={contextMenu.y}
-                    items={contextMenuItems}
+                    x={sectionContextMenu.x}
+                    y={sectionContextMenu.y}
+                    items={sectionContextMenuItems}
+                    onClose={handleCloseContextMenu}
+                />
+            )}
+            {widgetContextMenu && (
+                <ContextMenu
+                    x={widgetContextMenu.x}
+                    y={widgetContextMenu.y}
+                    items={widgetContextMenuItems}
                     onClose={handleCloseContextMenu}
                 />
             )}
@@ -327,6 +390,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         backgroundColor: '#2d2d2d',
         boxSizing: 'border-box',
         boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+        paddingTop: '20px', // Space for top drop zone
+        position: 'relative',
     },
     placeholder: {
         display: 'flex',
@@ -338,6 +403,22 @@ const styles: { [key: string]: React.CSSProperties } = {
         textAlign: 'center',
         backgroundColor: '#2d2d2d',
         borderRadius: '8px',
+    },
+    topDropIndicator: {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        right: '0',
+        height: '40px',
+        backgroundColor: 'rgba(0, 170, 255, 0.2)',
+        border: '2px dashed #00aaff',
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#00aaff',
+        fontWeight: 'bold',
+        fontSize: '0.9rem',
     },
 };
 

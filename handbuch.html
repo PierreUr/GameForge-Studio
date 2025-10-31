@@ -153,6 +153,87 @@
                 <!-- Neue Einträge werden hier hinzugefügt -->
 
             </section>
+
+            <hr class="my-8 border-gray-700">
+
+            <section id="project-structure">
+                <h2 class="text-2xl font-semibold text-white mb-4">Project File Structure (.json)</h2>
+                <p class="mb-4">Gespeicherte GameForge Studio-Projekte sind JSON-Dateien, die den gesamten Zustand der Anwendung enthalten. Das Verständnis dieser Struktur ist für die manuelle Bearbeitung, Versionierung oder Fehlerbehebung unerlässlich.</p>
+                
+                <h4 class="font-semibold text-gray-200 mt-4 mb-2">Top-Level-Struktur</h4>
+                <p class="mb-4">Die JSON-Datei hat drei Hauptschlüssel:</p>
+                <ul class="list-disc ml-6 text-gray-400 mb-4">
+                    <li><code>metadata</code>: Enthält allgemeine Informationen wie den Projektnamen und die Version.</li>
+                    <li><code>layouts</code>: Ein Objekt, das den Zustand für jede responsive Ansicht (default, desktop, etc.) speichert.</li>
+                    <li><code>logicGraphState</code>: Enthält die serialisierte Struktur des Logik-Graphen.</li>
+                </ul>
+    
+                <h4 class="font-semibold text-gray-200 mt-4 mb-2">Layout-Struktur</h4>
+                <p class="mb-4">Jeder Eintrag unter <code>layouts</code> (z.B. <code>layouts.default</code>) ist weiter unterteilt:</p>
+                <ul class="list-disc ml-6 text-gray-400 mb-4">
+                    <li><code>ecsState</code>: Serialisierter Zustand der Entity-Component-System-Welt (Entitäten und ihre Komponenten).</li>
+                    <li><code>uiState</code>: Eine hierarchische Anordnung aller UI-Elemente, die im UI-Builder erstellt wurden. Dies ist ein Array von <strong>Sections</strong>.</li>
+                </ul>
+    
+                <h4 class="font-semibold text-gray-200 mt-4 mb-2">UI-Hierarchie</h4>
+                <p class="mb-4">Die <code>uiState</code>-Struktur folgt einer klaren Hierarchie:</p>
+                <pre class="bg-gray-800 p-4 rounded-md text-sm text-gray-300">Section[] -> Column[] -> Widget[]</pre>
+                <ul class="list-disc ml-6 text-gray-400 mt-4">
+                    <li>Eine <strong>Section</strong> ist der Hauptcontainer und definiert das Spaltenlayout.</li>
+                    <li>Jede Section enthält eine oder mehrere <strong>Columns</strong>.</li>
+                    <li>Jede Column enthält ein Array von <strong>Widgets</strong> (Überschriften, Bilder etc.).</li>
+                </ul>
+    
+                <h4 class="font-semibold text-gray-200 mt-4 mb-2">Beispiel-JSON</h4>
+                <p class="mb-4">Ein stark vereinfachtes Beispiel, das die Struktur zeigt:</p>
+                <pre class="bg-gray-800 p-4 rounded-md text-sm text-gray-300 overflow-x-auto"><code>{
+      "metadata": {
+        "projectName": "my-game-project",
+        "version": "1.2.0",
+        "activeLayoutKey": "default"
+      },
+      "layouts": {
+        "default": {
+          "ecsState": {
+            "entities": [0],
+            "components": {
+              "PositionComponent": [{"entity": 0, "data": {"x": 100, "y": 50}}]
+            }
+          },
+          "uiState": [
+            {
+              "id": "section-uuid-1",
+              "columnLayout": 1,
+              "columns": [
+                {
+                  "id": "column-uuid-1",
+                  "widgets": [
+                    {
+                      "id": "widget-uuid-1",
+                      "componentType": "heading",
+                      "props": {
+                        "text": "Welcome!",
+                        "level": 1
+                      },
+                      "styles": {
+                        "typography": {
+                          "color": "#ffffff"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "logicGraphState": {
+        "nodes": [],
+        "connections": []
+      }
+    }</code></pre>
+            </section>
         </main>
     </div>
 </body>

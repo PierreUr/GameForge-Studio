@@ -19,7 +19,7 @@ const InspectorGroup: React.FC<{ title: string, children: React.ReactNode }> = (
     const [isOpen, setIsOpen] = useState(true);
     return (
         <div style={styles.groupContainer}>
-            <button style={styles.groupHeader} onClick={() => setIsOpen(!isOpen)}>
+            <button style={styles.groupHeaderButton} onClick={() => setIsOpen(!isOpen)}>
                 <span style={{...styles.arrow, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}}>►</span>
                 {title}
             </button>
@@ -107,7 +107,12 @@ const WidgetInspector: React.FC<WidgetInspectorProps> = ({ widgetData, widgetDef
 
     return (
         <div>
-            <h5 style={styles.header}>Widget: {widgetDefinition.name}</h5>
+            <div style={styles.header}>
+                <span>Widget: {widgetDefinition.name}</span>
+                <button onClick={handleDeleteWidget} style={styles.deleteIcon} title="Delete Widget">
+                    &times;
+                </button>
+            </div>
             
             <div style={styles.columnEditContainer}>
                 <button onClick={onSelectParentColumn} style={styles.columnEditButton}>
@@ -134,12 +139,6 @@ const WidgetInspector: React.FC<WidgetInspectorProps> = ({ widgetData, widgetDef
                     ))}
                 </InspectorGroup>
             ))}
-
-             <div style={styles.deleteContainer}>
-                <button onClick={handleDeleteWidget} style={styles.deleteButton}>
-                    Delete Widget
-                </button>
-            </div>
         </div>
     );
 };
@@ -150,7 +149,25 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#eee',
         borderBottom: '1px solid #444',
         paddingBottom: '0.5rem',
-        fontSize: '1rem'
+        fontSize: '1rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    deleteIcon: {
+        background: '#7a2d2d',
+        border: '1px solid #9e2b25',
+        color: 'white',
+        cursor: 'pointer',
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '20px',
+        lineHeight: '20px',
+        padding: 0,
     },
     columnEditContainer: {
         marginBottom: '1rem',
@@ -172,7 +189,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         marginBottom: '1rem',
         border: '1px solid #4a4a4a',
     },
-    groupHeader: {
+    groupHeaderButton: {
         backgroundColor: '#4a4a4a',
         padding: '0.5rem 0.75rem',
         margin: 0,
@@ -203,22 +220,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         color: '#999',
     },
-    deleteContainer: {
-        marginTop: '1.5rem',
-        paddingTop: '1rem',
-        borderTop: '1px solid #444',
-    },
-    deleteButton: {
-        width: '100%',
-        backgroundColor: '#9e2b25',
-        color: 'white',
-        border: '1px solid #bf3f39',
-        padding: '0.75rem 1rem',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-        textAlign: 'center',
-    }
 };
 
 export default WidgetInspector;

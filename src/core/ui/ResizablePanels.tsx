@@ -95,7 +95,7 @@ const ResizablePanels: React.FC<ResizablePanelsProps> = ({ children }) => {
 
     return (
         <div ref={containerRef} style={styles.resizableContainer}>
-            <div style={{ width: `${leftPanelWidth}%`, ...styles.panel, overflow: 'auto' }}>
+            <div style={{ width: `${leftPanelWidth}%`, ...styles.panel }}>
                 {left}
             </div>
             <div

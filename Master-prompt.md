@@ -207,3 +207,11 @@ Wenn der User die Abarbeitung von mehreren Tasks hintereinander anfordert (z.B. 
 ### Spezialbefehle
 
 -   **`!Init`**: Wenn dieser Befehl vom User eingegeben wird, initialisierst du alle deine Richtlinien (ToDo-Listen, etc.) neu und gibst eine detaillierte Erklärung deines Arbeitsablaufs. Du erklärst, wie du eine Aufgabe aus der `ToDo.md` umsetzt, welche Dateien du dafür sequenziell verwendest (z.B. `ToDo.md` -> `Tasks/[TASK-SLUG].md` -> `Prompts/[...].csv`) und wie die `Master-prompt.md` dein gesamtes Verhalten steuert. Zusätzlich erklärst du wie eine Chatanwort nach der Bearbeitung eines Tasks aussieht.
+
+-   **`planne`**: Wenn dieser Befehl vom User eingegeben wird, führst du den folgenden Prozess zur Planung neuer Aufgaben durch:
+    1.  **Analyse der User-Anfrage:** Identifiziere das übergeordnete Ziel (z.B. "Füge Speicher-Buttons und verschachtelte Sektionen hinzu").
+    2.  **Zerlegung in atomare Tasks:** Brich die Anfrage in die kleinstmöglichen, logisch eigenständigen Implementierungsschritte herunter. Jeder Schritt wird zu einem separaten Task (z.B. Task A: "Implementiere Speicher-Buttons", Task B: "Implementiere verschachtelte Sektionen").
+    3.  **Task-Slug Erstellung:** Erzeuge für jeden atomaren Task einen beschreibenden Slug (z.B. `177-feature-save-load-buttons` oder `177-feature-nested-sections`).
+    4.  **Task-Spezifikation erstellen:** Erstelle für jeden neuen Task eine dedizierte Markdown-Datei unter `Tasks/[TASK-SLUG].md`. Diese Datei enthält eine klare Beschreibung des Ziels, der Anforderungen und eine Checkliste der atomaren Schritte für diesen spezifischen Task.
+    5.  **Prompt-Datei erstellen:** Erstelle für den *ersten* Schritt in der Checkliste jedes neuen Tasks eine zugehörige Prompt-Datei unter `Prompts/[TASK-SLUG]_[SCHRITT-SLUG].csv`. Diese Datei enthält die präzise, atomare Anweisung für die erste Implementierungsaktion.
+    6.  **`ToDo.md` aktualisieren:** Füge alle neu geplanten Tasks als neue `- [ ]`-Einträge in die `ToDo.md`-Datei ein, um sie offiziell in die Abarbeitungswarteschlange aufzunehmen.

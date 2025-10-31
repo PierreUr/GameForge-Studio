@@ -1,3 +1,5 @@
+import { SectionData } from "../ui/UIEditorPanel";
+
 /**
  * @interface IProjectMetadata
  * @description Defines the structure for project-level metadata, such as its name and version.
@@ -6,6 +8,13 @@ export interface IProjectMetadata {
     projectName: string;
     version: string;
     activeLayoutKey: string;
+    // FIX: Add property to store the project's live status. Made optional for backward compatibility.
+    isLive?: boolean;
+}
+
+export interface LayoutState {
+    ecsState: any;
+    uiState: SectionData[];
 }
 
 /**
@@ -26,10 +35,10 @@ export interface IProject {
      * @type {{ default: any; desktop?: any; tablet?: any; mobile?: any; }}
      */
     layouts: {
-        default: any;
-        desktop?: any;
-        tablet?: any;
-        mobile?: any;
+        default: LayoutState;
+        desktop?: LayoutState;
+        tablet?: LayoutState;
+        mobile?: LayoutState;
     };
 
     /**

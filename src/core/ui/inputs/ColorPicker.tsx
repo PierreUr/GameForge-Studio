@@ -145,7 +145,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     label: {
         color: '#ccc',
-        fontSize: '0.85rem',
+        fontSize: '0.95rem',
         textTransform: 'capitalize',
     },
     inputWrapper: {

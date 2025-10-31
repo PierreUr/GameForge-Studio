@@ -1,27 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FrameConfig } from '../rendering/Renderer';
 import { devicePresets } from './SettingsPanel';
 
 interface ViewportControlsProps {
     frameConfig: FrameConfig;
     onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
+    activeLayoutKey: string;
+    onLayoutSwitch: (layoutKey: string) => void;
+    onSave: () => void;
 }
 
-const ViewportControls: React.FC<ViewportControlsProps> = ({ frameConfig, onFrameConfigChange }) => {
+const presetToLayoutKey: Record<string, string> = {
+    'Desktop': 'desktop',
+    'Tablet': 'tablet',
+    'Mobile': 'mobile',
+};
+
+const layoutKeyToPresetName: Record<string, string> = {
+    'desktop': 'Desktop',
+    'tablet': 'Tablet',
+    'mobile': 'Mobile',
+    'default': 'Desktop',
+};
+
+
+const ViewportControls: React.FC<ViewportControlsProps> = ({ frameConfig, onFrameConfigChange, activeLayoutKey, onLayoutSwitch, onSave }) => {
+    const [favoriteLayout, setFavoriteLayout] = useState(() => localStorage.getItem('gameforge-favorite-layout'));
     
+    const handleSetFavorite = () => {
+        localStorage.setItem('gameforge-favorite-layout', activeLayoutKey);
+        setFavoriteLayout(activeLayoutKey);
+    };
+    
+    const isFavorite = activeLayoutKey === favoriteLayout;
+
     const handleFrameValueChange = (key: keyof FrameConfig, value: any) => {
         onFrameConfigChange({ [key]: value });
     };
 
     const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const presetName = e.target.value;
-        const selectedPreset = devicePresets.find(p => p.name === presetName);
+        const layoutKey = presetToLayoutKey[presetName] || 'desktop';
+        onLayoutSwitch(layoutKey);
 
+        const selectedPreset = devicePresets.find(p => p.name === presetName);
         if (selectedPreset) {
             onFrameConfigChange({
                 isVisible: true,
                 width: selectedPreset.width,
                 height: selectedPreset.height,
+                orientation: selectedPreset.width > selectedPreset.height ? 'landscape' : 'portrait'
             });
         } else {
              onFrameConfigChange({ isVisible: false });
@@ -33,24 +61,22 @@ const ViewportControls: React.FC<ViewportControlsProps> = ({ frameConfig, onFram
         handleFrameValueChange('orientation', newOrientation);
     };
 
-    const currentPreset = devicePresets.find(p => 
-        (p.width === frameConfig.width && p.height === frameConfig.height) ||
-        (p.height === frameConfig.width && p.width === frameConfig.height)
-    );
-    const selectedValue = frameConfig.isVisible && currentPreset ? currentPreset.name : "";
+    const selectedValue = layoutKeyToPresetName[activeLayoutKey] || 'Desktop';
 
     return (
         <div style={styles.container}>
             <div style={styles.controlGroup}>
                 <label htmlFor="preset-select" style={styles.label}>Device:</label>
                 <select id="preset-select" onChange={handlePresetChange} value={selectedValue} style={styles.select}>
-                    <option value="">None</option>
                     {devicePresets.map((preset) => (
                         <option key={preset.name} value={preset.name}>
                             {preset.name}
                         </option>
                     ))}
                 </select>
+                <button onClick={handleSetFavorite} style={isFavorite ? {...styles.favButton, ...styles.favButtonActive} : styles.favButton} aria-label="Set as favorite device">
+                    {isFavorite ? '★' : '☆'}
+                </button>
             </div>
             {frameConfig.isVisible && (
                  <div style={styles.controlGroup}>
@@ -60,6 +86,10 @@ const ViewportControls: React.FC<ViewportControlsProps> = ({ frameConfig, onFram
                     </button>
                 </div>
             )}
+            <div style={styles.divider}></div>
+            <button onClick={onSave} style={styles.iconButton} aria-label="Save Project As...">
+                💾
+            </button>
         </div>
     );
 };
@@ -68,9 +98,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     container: {
         display: 'flex',
         alignItems: 'center',
-        padding: '0.5rem 1rem',
-        backgroundColor: '#333',
-        borderBottom: '1px solid #444',
         gap: '1.5rem',
         flexShrink: 0,
     },
@@ -91,6 +118,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '0.2rem 0.4rem',
         fontSize: '0.8rem',
     },
+    favButton: {
+        background: 'none',
+        border: 'none',
+        color: '#999',
+        fontSize: '1.5rem',
+        cursor: 'pointer',
+        padding: '0 8px',
+        lineHeight: 1,
+    },
+    favButtonActive: {
+        color: '#ffc107',
+    },
     toggleButton: {
         backgroundColor: '#4a4a4a',
         color: '#eee',
@@ -99,6 +138,27 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '3px',
         cursor: 'pointer',
         textTransform: 'capitalize',
+    },
+    divider: {
+        width: '1px',
+        height: '24px',
+        backgroundColor: '#444',
+        marginLeft: '0.5rem',
+        marginRight: '0.5rem',
+    },
+    iconButton: {
+        backgroundColor: 'rgba(45, 45, 45, 0.75)',
+        border: 'none',
+        color: '#eee',
+        cursor: 'pointer',
+        borderRadius: '4px',
+        fontSize: '1.2rem',
+        width: '36px',
+        height: '36px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        transition: 'background-color 0.2s'
     }
 };
 

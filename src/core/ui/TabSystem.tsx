@@ -7,6 +7,7 @@ export interface Tab {
     label: ReactNode;
     content: ReactNode;
     id?: string;
+    onClose?: () => void;
 }
 
 interface TabSystemProps {
@@ -39,10 +40,13 @@ const TabSystem: React.FC<TabSystemProps> = ({ tabs, onTabChange }) => {
                         const tabIdentifier = tab.id || (typeof tab.label === 'string' ? tab.label : index.toString());
                         const tabId = `tab-${tabIdentifier.toLowerCase().replace(/\s+/g, '-')}`;
                         const isActive = index === activeTab;
+                        
                         const buttonStyle = {
                             ...styles.tabButton,
                             ...(isActive ? styles.activeTabButton : {}),
+                            ...(tab.onClose ? { paddingRight: '2rem' } : {})
                         };
+
                         return (
                             <DebugIdTooltip key={tabIdentifier} debugId={tabId}>
                                 <button
@@ -52,13 +56,25 @@ const TabSystem: React.FC<TabSystemProps> = ({ tabs, onTabChange }) => {
                                     aria-selected={isActive}
                                 >
                                     {tab.label}
+                                    {tab.onClose && (
+                                        <span
+                                            style={styles.closeButton}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                tab.onClose?.();
+                                            }}
+                                            title="Close tab"
+                                        >
+                                            &times;
+                                        </span>
+                                    )}
                                 </button>
                             </DebugIdTooltip>
                         );
                     })}
                 </div>
                 <div style={styles.tabContent} role="tabpanel">
-                    {tabs[activeTab].content}
+                    {tabs[activeTab]?.content}
                 </div>
             </div>
         </DebugIdTooltip>
@@ -70,7 +86,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        width: '100%',
+        flex: 1, // Allow it to grow in a flex container
+        minWidth: 0, // Allow it to shrink
     },
     tabHeader: {
         display: 'flex',
@@ -90,6 +107,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: '0.9rem',
         borderTopLeftRadius: '4px',
         borderTopRightRadius: '4px',
+        position: 'relative',
     },
     activeTabButton: {
         backgroundColor: '#252526',
@@ -107,6 +125,20 @@ const styles: { [key: string]: React.CSSProperties } = {
         backgroundColor: '#252526', // Ensure content background matches active tab
         minHeight: 0,
     },
+    closeButton: {
+        position: 'absolute',
+        top: '50%',
+        right: '8px',
+        transform: 'translateY(-50%)',
+        background: 'none',
+        border: 'none',
+        color: '#aaa',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        lineHeight: 1,
+        padding: '2px 4px',
+        borderRadius: '50%',
+    }
 };
 
 export default TabSystem;

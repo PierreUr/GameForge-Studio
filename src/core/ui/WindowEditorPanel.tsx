@@ -3,17 +3,15 @@ import TabSystem, { Tab } from './TabSystem';
 import { EventBus } from '../ecs/EventBus';
 import UIEditorPanel, { SectionData, WidgetData, ColumnData } from './UIEditorPanel';
 import { FrameConfig } from '../rendering/Renderer';
-import ViewportControls from './ViewportControls';
-
-interface WindowDesign {
-    id: string;
-    name: string;
-    layout: SectionData[];
-    frameConfig: FrameConfig;
-}
+import WidgetPicker from './WidgetPicker';
+import { WindowDesign } from '../project/IProject';
 
 interface WindowEditorPanelProps {
     activeMainView: 'scene' | 'ui-editor' | 'logic-graph' | 'layers' | 'windows';
+    windowDesigns: Record<string, WindowDesign>;
+    activeDesignId: string | null;
+    onDesignsChange: React.Dispatch<React.SetStateAction<Record<string, WindowDesign>>>;
+    onActiveDesignIdChange: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const defaultFrameConfig: FrameConfig = {
@@ -41,11 +39,16 @@ const removeWidgetRecursively = (items: (WidgetData | SectionData)[], widgetId: 
 };
 
 
-const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView }) => {
-    const [windowDesigns, setWindowDesigns] = useState<Record<string, WindowDesign>>({});
-    const [activeTabId, setActiveTabId] = useState<string | null>(null);
+const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ 
+    activeMainView,
+    windowDesigns,
+    activeDesignId,
+    onDesignsChange,
+    onActiveDesignIdChange,
+}) => {
     const [widgetManifest, setWidgetManifest] = useState<any>(null);
-    const windowCounterRef = useRef(1);
+    const windowCounterRef = useRef(Object.keys(windowDesigns).length + 1);
+    const [pickerState, setPickerState] = useState<{ anchorEl: HTMLElement } | null>(null);
 
     useEffect(() => {
         const fetchManifest = async () => {
@@ -78,10 +81,10 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
             frameConfig: { ...defaultFrameConfig },
         };
         
-        setWindowDesigns(prev => ({ ...prev, [newTabId]: newDesign }));
-        setActiveTabId(newTabId);
+        onDesignsChange(prev => ({ ...prev, [newTabId]: newDesign }));
+        onActiveDesignIdChange(newTabId);
 
-    }, [widgetManifest]);
+    }, [widgetManifest, onDesignsChange, onActiveDesignIdChange]);
 
     // --- Event Bus Subscription ---
     useEffect(() => {
@@ -89,7 +92,7 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
         eventBus.subscribe('window:create-design', handleCreateWindow);
         
         const handleRequestSelection = (payload: { type: 'column', id: string }) => {
-            if (activeMainView !== 'windows' || !activeTabId || !windowDesigns[activeTabId]) return;
+            if (activeMainView !== 'windows' || !activeDesignId || !windowDesigns[activeDesignId]) return;
             
             const findColumnDataInLayout = (layout: SectionData[], columnId: string | null): ColumnData | null => {
                 if (!columnId) return null;
@@ -108,7 +111,7 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
                 return null;
             };
 
-            const colData = findColumnDataInLayout(windowDesigns[activeTabId].layout, payload.id);
+            const colData = findColumnDataInLayout(windowDesigns[activeDesignId].layout, payload.id);
             if (colData) {
                 EventBus.getInstance().publish('ui-element:selected', { type: 'column', data: colData });
             }
@@ -119,13 +122,13 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
             eventBus.unsubscribe('window:create-design', handleCreateWindow);
             eventBus.unsubscribe('ui-element:request-selection', handleRequestSelection);
         };
-    }, [handleCreateWindow, activeTabId, windowDesigns, activeMainView]);
+    }, [handleCreateWindow, activeDesignId, windowDesigns, activeMainView]);
     
     const updateActiveDesign = (updater: (design: WindowDesign) => WindowDesign) => {
-        if (activeTabId) {
-            setWindowDesigns(prev => ({
+        if (activeDesignId) {
+            onDesignsChange(prev => ({
                 ...prev,
-                [activeTabId]: updater(prev[activeTabId]),
+                [activeDesignId]: updater(prev[activeDesignId]),
             }));
         }
     };
@@ -133,7 +136,7 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
     // --- Inspector Event Handlers for the Active Tab ---
     useEffect(() => {
         const eventBus = EventBus.getInstance();
-        if (!activeTabId || activeMainView !== 'windows') return;
+        if (!activeDesignId || activeMainView !== 'windows') return;
 
         const handleSectionPropertyChange = (payload: { sectionId: string, propName: string, value: any }) => {
             updateActiveDesign(d => {
@@ -202,48 +205,55 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
             eventBus.unsubscribe('ui-column:update-prop', handleColumnPropertyChange);
             eventBus.unsubscribe('ui-widget:delete', handleDeleteWidget);
         };
-    }, [activeTabId, activeMainView]);
+    }, [activeDesignId, activeMainView, onDesignsChange]);
 
-
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
+    const handleOpenPicker = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
-        const droppedType = e.dataTransfer.getData('text/plain');
-        handleCreateWindow(droppedType);
+        setPickerState({ anchorEl: e.currentTarget });
     };
 
-    const activeDesign = activeTabId ? windowDesigns[activeTabId] : null;
+    const handlePickerSelect = (widgetType: string) => {
+        handleCreateWindow(widgetType);
+        setPickerState(null);
+    };
+
+    const handleCloseTab = (tabIdToClose: string) => {
+        onDesignsChange(prev => {
+            const newDesigns = { ...prev };
+            delete newDesigns[tabIdToClose];
+            return newDesigns;
+        });
+
+        if (activeDesignId === tabIdToClose) {
+            const remainingIds = Object.keys(windowDesigns).filter(id => id !== tabIdToClose);
+            onActiveDesignIdChange(remainingIds[0] || null);
+        }
+    };
+
+    const activeDesign = activeDesignId ? windowDesigns[activeDesignId] : null;
 
     const tabs: Tab[] = Object.values(windowDesigns).map(design => ({
         id: design.id,
         label: design.name,
-        content: <></> // Content is rendered outside TabSystem
+        content: <></>,
+        onClose: () => handleCloseTab(design.id),
     }));
-
-    const finalTabs = tabs.length > 0 ? tabs : [
-        { id: 'placeholder', label: 'No Windows Open', content: <></> }
-    ];
 
     return (
         <div style={styles.container}>
-            <TabSystem tabs={finalTabs} onTabChange={(tab) => setActiveTabId(tab.id === 'placeholder' ? null : tab.id)} />
-
-            {activeDesign && (
-                 <div style={styles.viewportToolbar}>
-                    <ViewportControls 
-                        frameConfig={activeDesign.frameConfig}
-                        onFrameConfigChange={(newConfig) => updateActiveDesign(d => ({...d, frameConfig: {...d.frameConfig, ...newConfig}}))}
-                        activeLayoutKey={'default'} // Placeholder
-                        onLayoutSwitch={() => {}} // Placeholder
-                        onSave={() => {}} // Placeholder
-                    />
-                </div>
-            )}
+            <div style={styles.tabBarContainer}>
+                <TabSystem 
+                    tabs={tabs} 
+                    onTabChange={(tab) => onActiveDesignIdChange(tab.id)}
+                />
+                <button 
+                    onClick={handleOpenPicker}
+                    style={styles.newTabButton}
+                    title="Create a new window design"
+                >
+                    +
+                </button>
+            </div>
             
             <div style={styles.contentArea}>
                 {activeDesign ? (
@@ -255,15 +265,22 @@ const WindowEditorPanel: React.FC<WindowEditorPanelProps> = ({ activeMainView })
                         onDuplicateSection={() => {}}
                     />
                 ) : (
-                    <div 
-                        style={styles.placeholderContainer}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                    >
-                        <p style={styles.placeholderText}>Drag a window type (e.g., Modal Window) from the Library<br/>onto this panel to create a new window design.</p>
+                    <div style={styles.placeholderContainer}>
+                        <p style={styles.placeholderText}>Click the '+' to create a new window design.</p>
                     </div>
                 )}
             </div>
+            {pickerState && widgetManifest && (
+                <WidgetPicker
+                    widgetManifest={{
+                        ...widgetManifest,
+                        widgets: widgetManifest.widgets.filter((w: any) => w.category === 'Windows')
+                    }}
+                    anchorEl={pickerState.anchorEl}
+                    onSelect={handlePickerSelect}
+                    onClose={() => setPickerState(null)}
+                />
+            )}
         </div>
     );
 };
@@ -275,6 +292,29 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#1e1e1e',
+    },
+    tabBarContainer: {
+        display: 'flex',
+        alignItems: 'flex-end',
+        backgroundColor: '#252526',
+        borderBottom: '1px solid #444',
+        paddingLeft: '0.5rem',
+        gap: '4px',
+        flexShrink: 0,
+    },
+    newTabButton: {
+        padding: '0.6rem 1rem',
+        cursor: 'pointer',
+        backgroundColor: '#3e3e42',
+        border: '1px solid #555',
+        borderBottom: 'none',
+        color: '#ccc',
+        fontSize: '0.9rem',
+        borderTopLeftRadius: '4px',
+        borderTopRightRadius: '4px',
+        marginLeft: '4px',
+        alignSelf: 'flex-start',
+        marginTop: '5px',
     },
     contentArea: {
         flex: 1,
@@ -294,14 +334,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#999',
         textAlign: 'center',
     },
-     viewportToolbar: {
-        backgroundColor: '#252526',
-        padding: '0.5rem 1rem',
-        borderBottom: '1px solid #444',
-        display: 'flex',
-        alignItems: 'center',
-        flexShrink: 0,
-    }
 };
 
 export default WindowEditorPanel;

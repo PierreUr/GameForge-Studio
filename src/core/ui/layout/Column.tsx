@@ -43,6 +43,28 @@ const Column: React.FC<ColumnProps> = (props) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isSelected, setIsSelected] = useState(false);
     const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+    const columnRef = useRef<HTMLDivElement>(null);
+    const [isSmall, setIsSmall] = useState(false);
+
+    useEffect(() => {
+        const observer = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                const threshold = 140; // Width in pixels to switch to icon
+                setIsSmall(entry.contentRect.width < threshold);
+            }
+        });
+
+        const currentColumn = columnRef.current;
+        if (currentColumn) {
+            observer.observe(currentColumn);
+        }
+
+        return () => {
+            if (currentColumn) {
+                observer.unobserve(currentColumn);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const handleSelection = (payload: {type: string, data: any}) => {
@@ -174,7 +196,7 @@ const Column: React.FC<ColumnProps> = (props) => {
         padding: columnData.styles?.padding || '0px',
         gap: `${columnData.styles?.rowGap || 0}px`,
         height: columnData.styles?.height || 'auto',
-        minHeight: columnData.styles?.minHeight || '60px',
+        minHeight: columnData.styles?.minHeight, // Let it stretch by default
         alignItems: columnData.styles?.alignItems,
         zIndex: 2,
     };
@@ -185,6 +207,7 @@ const Column: React.FC<ColumnProps> = (props) => {
 
     return (
         <div 
+            ref={columnRef}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onDragLeave={handleDragLeave}
@@ -194,15 +217,24 @@ const Column: React.FC<ColumnProps> = (props) => {
             onMouseLeave={() => setIsHovered(false)}
         >
             {widgets.length === 0 && dropIndex === null && (
-                <div style={styles.emptyColumnPlaceholder}>
-                    <span>Drop Widget Here or </span>
-                    <button 
-                        onClick={(e) => handleAddClick(e, 0)} 
-                        style={styles.placeholderAddButton}
+                isSmall ? (
+                    <button
+                        onClick={(e) => handleAddClick(e, 0)}
+                        style={styles.placeholderAddButtonIcon}
                     >
-                        Add Widget
+                        +
                     </button>
-                </div>
+                ) : (
+                    <div style={styles.emptyColumnPlaceholder}>
+                        <span>Drop Widget Here or </span>
+                        <button 
+                            onClick={(e) => handleAddClick(e, 0)} 
+                            style={styles.placeholderAddButton}
+                        >
+                            Add Widget
+                        </button>
+                    </div>
+                )
             )}
             {widgets.map((item, index) => {
                 const isWidget = 'componentType' in item;
@@ -228,7 +260,7 @@ const Column: React.FC<ColumnProps> = (props) => {
                                 {React.createElement(componentRegistry[item.componentType], { ...item.props, styles: item.styles })}
                              </div>
                         ) : (
-                            <div data-widget-index={index}>
+                            <div data-widget-index={index} style={{ margin: 0, padding: 0, width: '100%' }}>
                                  <Section 
                                     {...props}
                                     sectionData={item as SectionData} 
@@ -261,6 +293,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         transition: 'border-color 0.2s, background-color 0.2s',
         position: 'relative',
         width: '100%',
+        boxSizing: 'border-box',
+        minHeight: 0, // CRITICAL FIX: Allows column to shrink and respect parent's height/maxHeight constraints.
     },
     emptyColumnPlaceholder: {
         display: 'flex',
@@ -285,11 +319,31 @@ const styles: { [key: string]: React.CSSProperties } = {
         cursor: 'pointer',
         fontSize: '0.8rem',
     },
+    placeholderAddButtonIcon: {
+        width: '100%',
+        height: '100%',
+        minHeight: '60px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'none',
+        border: 'none',
+        color: '#777',
+        fontSize: '2.5rem',
+        cursor: 'pointer',
+        padding: 0,
+        borderRadius: '4px',
+        transition: 'color 0.2s',
+    },
     widgetWrapper: {
         position: 'relative',
         cursor: 'pointer',
         borderRadius: '4px',
         overflow: 'hidden',
+        margin: 0,
+        padding: 0,
+        width: '100%',
+        minHeight: 0, // Fix for flexbox shrinking issues with content like images
     },
     dropIndicator: {
         height: '4px',

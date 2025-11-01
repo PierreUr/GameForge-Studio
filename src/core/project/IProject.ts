@@ -1,4 +1,6 @@
 import { SectionData } from "../ui/UIEditorPanel";
+import { FrameConfig } from "../rendering/Renderer";
+
 
 /**
  * @interface IProjectMetadata
@@ -16,6 +18,14 @@ export interface LayoutState {
     ecsState: any;
     uiState: SectionData[];
 }
+
+export interface WindowDesign {
+    id: string;
+    name: string;
+    layout: SectionData[];
+    frameConfig: FrameConfig;
+}
+
 
 /**
  * @interface IProject
@@ -47,4 +57,10 @@ export interface IProject {
      * @type {any}
      */
     logicGraphState: any;
+
+    /**
+     * The serialized state of all designed windows and popups.
+     * @type {Record<string, WindowDesign>}
+     */
+    windowDesigns?: Record<string, WindowDesign>;
 }

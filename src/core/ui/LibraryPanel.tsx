@@ -109,11 +109,9 @@ const LibraryPanel: React.FC<LibraryPanelProps> = ({ activeMainView }) => {
     };
 
     const visibleItems = useMemo(() => {
-        if (activeMainView === 'ui-editor') {
-            return libraryItems.filter(item => item.category !== 'Windows');
-        }
-        return libraryItems;
-    }, [libraryItems, activeMainView]);
+        // Permanently filter out the 'Windows' category as requested.
+        return libraryItems.filter(item => item.category.toLowerCase() !== 'windows');
+    }, [libraryItems]);
 
     const filteredItems = useMemo(() => {
         if (!searchTerm) return visibleItems;
@@ -152,7 +150,7 @@ const LibraryPanel: React.FC<LibraryPanelProps> = ({ activeMainView }) => {
             {error && <p style={styles.errorText}>Error: {error}</p>}
             
             {!isLoading && !error && Object.entries(groupedItems).sort(([a], [b]) => {
-                const order = ['Layout', 'Entity Templates', 'Content', 'Forms', 'Windows'];
+                const order = ['Layout', 'Entity Templates', 'Content', 'Forms'];
                 const aIndex = order.indexOf(a);
                 const bIndex = order.indexOf(b);
                 if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;

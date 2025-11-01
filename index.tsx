@@ -48,6 +48,7 @@ import UIEditorPanel, { SectionData, WidgetData, ColumnData } from './src/core/u
 import ViewportControls from './src/core/ui/ViewportControls';
 import Modal from './src/core/ui/Modal';
 import WindowEditorPanel from './src/core/ui/WindowEditorPanel';
+import { WindowDesign } from './src/core/project/IProject';
 
 type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers' | 'windows';
 
@@ -194,6 +195,11 @@ const App = () => {
     const [isManualLoading, setIsManualLoading] = useState(false);
     const [widgetManifest, setWidgetManifest] = useState<any>(null);
 
+    // Window Editor State
+    const [windowDesigns, setWindowDesigns] = useState<Record<string, WindowDesign>>({});
+    const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+
+
     useEffect(() => {
         fetch('./src/core/assets/ui-widget-manifest.json')
             .then(res => res.json())
@@ -207,6 +213,19 @@ const App = () => {
     const handleFrameConfigChange = useCallback((newConfig: Partial<FrameConfig>) => {
         setFrameConfig(prev => ({ ...prev, ...newConfig }));
     }, []);
+
+    const handleWindowFrameConfigChange = useCallback((newConfig: Partial<FrameConfig>) => {
+        if (activeWindowId && windowDesigns[activeWindowId]) {
+            setWindowDesigns(prev => ({
+                ...prev,
+                [activeWindowId]: {
+                    ...prev[activeWindowId],
+                    frameConfig: { ...prev[activeWindowId].frameConfig, ...newConfig }
+                }
+            }));
+        }
+    }, [activeWindowId, windowDesigns]);
+
 
     const handleGridConfigChange = useCallback((newConfig: Partial<GridConfig>) => {
         setGridConfig(prev => ({ ...prev, ...newConfig }));
@@ -277,20 +296,20 @@ const App = () => {
     const projectManager = ProjectManager.getInstance();
 
     const handleSaveProject = useCallback(() => {
-        projectManager.saveProject(uiLayout, projectName, isProjectLive);
-    }, [projectManager, uiLayout, projectName, isProjectLive]);
+        projectManager.saveProject(uiLayout, projectName, isProjectLive, windowDesigns);
+    }, [projectManager, uiLayout, projectName, isProjectLive, windowDesigns]);
 
     const handleLoadProject = useCallback(() => {
         projectManager.loadProject();
     }, [projectManager]);
     
     const handlePreviewProject = useCallback(() => {
-        projectManager.previewProject(uiLayout);
-    }, [projectManager, uiLayout]);
+        projectManager.previewProject(uiLayout, windowDesigns);
+    }, [projectManager, uiLayout, windowDesigns]);
 
     const handleExportHTML = useCallback(() => {
-        projectManager.exportToStandaloneHTML(uiLayout);
-    }, [projectManager, uiLayout]);
+        projectManager.exportToStandaloneHTML(uiLayout, windowDesigns);
+    }, [projectManager, uiLayout, windowDesigns]);
     
     const handleLayoutSwitch = useCallback((newLayoutKey: string) => {
         if (!ecsWorld) return;
@@ -303,10 +322,15 @@ const App = () => {
 
 
     useEffect(() => {
-        const handleProjectLoaded = (payload: { activeLayoutKey: string, uiState: SectionData[], isLive: boolean }) => {
+        const handleProjectLoaded = (payload: { activeLayoutKey: string, uiState: SectionData[], isLive: boolean, windowDesigns: Record<string, WindowDesign> }) => {
             setActiveLayoutKey(payload.activeLayoutKey);
             setUiLayout(payload.uiState);
             setIsProjectLive(payload.isLive);
+            setWindowDesigns(payload.windowDesigns || {});
+            
+            // Set active window to the first one if it exists
+            const firstWindowId = Object.keys(payload.windowDesigns || {})[0];
+            setActiveWindowId(firstWindowId || null);
             
             const preset = devicePresets.find(p => p.name.toLowerCase() === payload.activeLayoutKey) || devicePresets[0];
             setFrameConfig(prev => ({
@@ -360,6 +384,12 @@ const App = () => {
     // --- Inspector Event Handlers ---
     useEffect(() => {
         const eventBus = EventBus.getInstance();
+        
+        // This effect should ONLY handle events for the main UI Editor.
+        // The WindowEditorPanel has its own internal handlers for these events.
+        if (activeMainView !== 'ui-editor') {
+            return;
+        }
 
         const handleSectionPropertyChange = (payload: { sectionId: string, propName: string, value: any }) => {
             setUiLayout(prevLayout => {
@@ -430,12 +460,10 @@ const App = () => {
         };
 
         const handleRequestSelection = (payload: { type: 'column', id: string }) => {
-            if (activeMainView === 'ui-editor') {
-                 const colData = findColumnData(uiLayout, payload.id);
-                 if (colData) {
-                     EventBus.getInstance().publish('ui-element:selected', { type: 'column', data: colData });
-                 }
-            }
+             const colData = findColumnData(uiLayout, payload.id);
+             if (colData) {
+                 EventBus.getInstance().publish('ui-element:selected', { type: 'column', data: colData });
+             }
         };
 
         eventBus.subscribe('ui-section:update-prop', handleSectionPropertyChange);
@@ -577,6 +605,14 @@ const App = () => {
         return <AdminDashboard onRunTests={handleRunTests} onToggleColliders={handleToggleColliders} onClose={() => setIsAdminView(false)} />;
     }
 
+    const activeFrameConfig = activeMainView === 'ui-editor' 
+        ? frameConfig 
+        : (activeWindowId && windowDesigns[activeWindowId] ? windowDesigns[activeWindowId].frameConfig : undefined);
+
+    const activeFrameConfigHandler = activeMainView === 'ui-editor' 
+        ? handleFrameConfigChange 
+        : handleWindowFrameConfigChange;
+
     return (
         <div style={styles.appContainer}>
             <ProgressBarHeader />
@@ -599,18 +635,18 @@ const App = () => {
                 <ResizablePanels>
                     <LeftSidebar activeMainView={activeMainView} />
                     <div style={styles.centerPanel}>
-                        <MainViewTabs activeTab={activeMainView} onTabChange={setActiveMainView} />
-                         {activeMainView === 'ui-editor' && (
+                        {(activeMainView === 'ui-editor' || (activeMainView === 'windows' && activeWindowId)) && activeFrameConfig && (
                             <div style={styles.globalViewportToolbar}>
                                 <ViewportControls 
-                                    frameConfig={frameConfig}
-                                    onFrameConfigChange={handleFrameConfigChange}
-                                    activeLayoutKey={activeLayoutKey}
-                                    onLayoutSwitch={handleLayoutSwitch}
+                                    frameConfig={activeFrameConfig}
+                                    onFrameConfigChange={activeFrameConfigHandler}
+                                    activeLayoutKey={activeMainView === 'ui-editor' ? activeLayoutKey : 'default'}
+                                    onLayoutSwitch={activeMainView === 'ui-editor' ? handleLayoutSwitch : () => {}}
                                     onSave={handleSaveProject}
                                 />
                             </div>
                         )}
+                        <MainViewTabs activeTab={activeMainView} onTabChange={setActiveMainView} />
                          <div style={styles.viewportContainer}>
                              {activeMainView === 'scene' && (
                                 <CanvasContainer world={ecsWorld} renderingSystem={renderingSystemRef.current} />
@@ -624,7 +660,15 @@ const App = () => {
                                 />
                             )}
                              {activeMainView === 'logic-graph' && <LogicGraphPanel />}
-                             {activeMainView === 'windows' && <WindowEditorPanel activeMainView={activeMainView} />}
+                             {activeMainView === 'windows' && (
+                                <WindowEditorPanel 
+                                    activeMainView={activeMainView}
+                                    windowDesigns={windowDesigns}
+                                    activeDesignId={activeWindowId}
+                                    onDesignsChange={setWindowDesigns}
+                                    onActiveDesignIdChange={setActiveWindowId}
+                                />
+                             )}
                         </div>
                     </div>
                     <RightSidebar 

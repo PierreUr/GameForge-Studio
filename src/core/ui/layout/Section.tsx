@@ -267,14 +267,18 @@ const Section: React.FC<SectionProps> = (props) => {
         margin: margin ?? '0',
         border: isSectionSelected ? '2px solid #007acc' : '1px solid #4a4a4a',
         backgroundColor: backgroundColor || 'transparent',
+        height: height,
+        minHeight: minHeight,
+        maxHeight: maxHeight,
+        display: 'flex',
+        flexDirection: 'column',
     };
 
     const columnsContainerStyle: React.CSSProperties = {
         ...styles.columnsContainer,
-        height: height,
-        minHeight: minHeight,
-        maxHeight: maxHeight,
         alignItems: alignItems,
+        flex: 1,
+        minHeight: 0, // Allow shrinking
     };
 
     const gapValue = columnGap ?? 0;
@@ -321,7 +325,7 @@ const Section: React.FC<SectionProps> = (props) => {
                                 onMouseDown={(e) => handleMouseDown(e, index - 1)}
                             />
                         )}
-                        <div style={{ flexGrow: currentWidths[index], flexBasis: 0, minWidth: '50px', display: 'flex' }}>
+                        <div style={{ flexGrow: currentWidths[index], flexBasis: 0, minWidth: 0, display: 'flex' }}>
                             <Column
                                 {...props}
                                 key={col.id}
@@ -346,6 +350,9 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '4px',
         position: 'relative',
         transition: 'border-color 0.2s, background-color 0.2s',
+        width: '100%',
+        boxSizing: 'border-box',
+        minWidth: 0, // FIX: Allows section to shrink properly inside a flex container
     },
     spacerSection: {
         position: 'relative',

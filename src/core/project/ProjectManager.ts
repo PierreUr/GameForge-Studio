@@ -1,6 +1,6 @@
 import { World } from '../ecs/World';
 import { Graph } from '../graph/Graph';
-import { IProject, LayoutState } from './IProject';
+import { IProject, LayoutState, WindowDesign } from './IProject';
 import { EventBus } from '../ecs/EventBus';
 import { SectionData } from '../ui/UIEditorPanel';
 
@@ -41,6 +41,7 @@ export class ProjectManager {
                 default: { ...emptyLayout }
             },
             logicGraphState: { nodes: [], connections: [] },
+            windowDesigns: {},
         };
     }
 
@@ -114,8 +115,7 @@ export class ProjectManager {
      * @param projectName The name for the project and file.
      * @param isLive The live status of the project.
      */
-    // FIX: Added the `isLive` parameter to match the function call in index.tsx, resolving the argument count error.
-    public saveProject(uiLayout: SectionData[], projectName?: string, isLive?: boolean): void {
+    public saveProject(uiLayout: SectionData[], projectName?: string, isLive?: boolean, windowDesigns?: Record<string, WindowDesign>): void {
         if (!this.world || !this.graph) {
             alert('Cannot save: ProjectManager not fully initialized.');
             return;
@@ -135,9 +135,12 @@ export class ProjectManager {
                 this.currentProject.metadata.projectName = projectName;
             }
 
-            // FIX: Save the project's live status to the project metadata.
             if (isLive !== undefined) {
                 this.currentProject.metadata.isLive = isLive;
+            }
+
+            if (windowDesigns) {
+                this.currentProject.windowDesigns = windowDesigns;
             }
 
             const jsonString = JSON.stringify(this.currentProject, null, 2);
@@ -215,11 +218,11 @@ export class ProjectManager {
                     this.world!.loadProjectState(stateToLoad.ecsState);
                     this.graph!.deserialize(this.currentProject.logicGraphState);
                     
-                    // FIX: Pass the loaded project's `isLive` status in the event payload.
                     EventBus.getInstance().publish('project:loaded', { 
                         activeLayoutKey: this.activeLayoutKey,
                         uiState: stateToLoad.uiState || [],
-                        isLive: this.currentProject.metadata.isLive
+                        isLive: this.currentProject.metadata.isLive,
+                        windowDesigns: this.currentProject.windowDesigns || {},
                     });
 
                 } catch (error) {
@@ -249,7 +252,7 @@ export class ProjectManager {
      * Saves the current project state to the browser's localStorage.
      * @private
      */
-    private autoSaveToLocalStorage(uiLayout: SectionData[]): void {
+    private autoSaveToLocalStorage(uiLayout: SectionData[], windowDesigns: Record<string, WindowDesign>): void {
         if (!this.world || !this.graph) {
             return; 
         }
@@ -261,6 +264,7 @@ export class ProjectManager {
             };
             this.currentProject.logicGraphState = this.graph.serialize();
             this.currentProject.metadata.activeLayoutKey = this.activeLayoutKey;
+            this.currentProject.windowDesigns = windowDesigns;
 
             const jsonString = JSON.stringify(this.currentProject);
             localStorage.setItem(AUTO_SAVE_KEY, jsonString);
@@ -269,7 +273,7 @@ export class ProjectManager {
         }
     }
 
-    private _generateStandaloneHTML(isPreview: boolean, uiLayout: SectionData[]): string | null {
+    private _generateStandaloneHTML(isPreview: boolean, uiLayout: SectionData[], windowDesigns: Record<string, WindowDesign>): string | null {
         if (!this.world || !this.graph) {
             alert('Cannot generate HTML: ProjectManager not fully initialized.');
             return null;
@@ -282,6 +286,7 @@ export class ProjectManager {
                 uiState: uiLayout
             };
             this.currentProject.logicGraphState = this.graph.serialize();
+            this.currentProject.windowDesigns = windowDesigns;
             
             const projectStateString = JSON.stringify(this.currentProject);
             
@@ -316,8 +321,8 @@ export class ProjectManager {
         }
     }
     
-    public previewProject(uiLayout: SectionData[]): void {
-        const htmlContent = this._generateStandaloneHTML(true, uiLayout);
+    public previewProject(uiLayout: SectionData[], windowDesigns: Record<string, WindowDesign>): void {
+        const htmlContent = this._generateStandaloneHTML(true, uiLayout, windowDesigns);
         if (htmlContent) {
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -325,8 +330,8 @@ export class ProjectManager {
         }
     }
 
-    public exportToStandaloneHTML(uiLayout: SectionData[]): void {
-        const htmlContent = this._generateStandaloneHTML(false, uiLayout);
+    public exportToStandaloneHTML(uiLayout: SectionData[], windowDesigns: Record<string, WindowDesign>): void {
+        const htmlContent = this._generateStandaloneHTML(false, uiLayout, windowDesigns);
         if (htmlContent) {
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);

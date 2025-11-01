@@ -26,6 +26,12 @@
     - [x] **[FEATURE]** Verschachtelte Sektionen (Sektion in Sektion) ermöglichen.
     - [x] **[DOC]** Projekt-Datei-Format im Handbuch dokumentieren.
 - [ ] **[SYSTEM]** **Task 178:** Implementierung des Fenster- und Popup-Systems
+    - [ ] **BUG:** Sektionen ignorieren `height`-Einstellungen, wenn sie bild-basierte Widgets enthalten.
+        -   *Prompt-Referenz: Korrigiere das CSS-Flexbox-Verhalten in `Section.tsx` und `Column.tsx`, um sicherzustellen, dass Höhenbeschränkungen (insb. `maxHeight`) korrekt auf die Kind-Elemente vererbt und von diesen respektiert werden, auch wenn deren Inhalt (z.B. Bilder) überdimensioniert ist.*
+    - [ ] **BUG:** Das Löschen von Widgets funktioniert nicht zuverlässig.
+        -   *Prompt-Referenz: Analysiere und bereinige die Event-Handler für `ui-widget:delete` in `index.tsx` und `WindowEditorPanel.tsx`. Stelle sicher, dass es keine Konflikte gibt und das Event im korrekten Kontext (UI Editor vs. Window Editor) verarbeitet wird.*
+    - [ ] **BUG:** Die `object-fit`-Eigenschaft für Image-Widgets hat keine Funktion.
+        -   *Prompt-Referenz: Passe das Styling in `ImageWidget.tsx` und dem umschließenden Wrapper in `Column.tsx` an. Der Bild-Container muss eine explizite Höhe haben (z.B. durch `height: 100%`), damit `object-fit` wirksam werden kann. Stelle sicher, dass die übergeordnete Sektion die Höhe korrekt vorgibt.*
 - [ ] **[ASSET]** **Task 019:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Frontend UI: Aufgabenverwaltung (Erweitert)
 - [ ] **[ASSET]** **Task 020:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Produktivitätsmethoden (Backend)
 - [ ] **[ASSET]** **Task 021:** File Location `/Taks` for details, Execute Order in `/Prompts` in as CSV files with Name   Frontend UI: Methoden & Tools

@@ -30,7 +30,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ widgetManifest, anchorEl, o
     }, [onClose]);
 
     const filteredWidgets = widgetManifest.widgets.filter((widget: any) =>
-        widget.name.toLowerCase().includes(searchTerm.toLowerCase()) && widget.id !== 'layout-section'
+        widget.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
     const rect = anchorEl.getBoundingClientRect();

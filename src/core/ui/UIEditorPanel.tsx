@@ -118,11 +118,6 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         e.stopPropagation();
         const droppedType = e.dataTransfer.getData('text/plain');
 
-        if (widgetManifest && widgetManifest.widgets.some((w: any) => w.id === droppedType && w.category === 'Windows')) {
-            EventBus.getInstance().publish('window:create-design', droppedType);
-            return;
-        }
-
         if (droppedType !== 'layout-section') return;
 
         const newSection: SectionData = {
@@ -170,7 +165,7 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         if (!widgetManifest) return;
 
         if (widgetManifest.widgets.some((w: any) => w.id === droppedType && w.category === 'Windows')) {
-            EventBus.getInstance().publish('window:create-design', droppedType);
+            EventBus.getInstance().publish('window:create-design', { id: droppedType });
             return;
         }
     
@@ -360,6 +355,12 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
             }
         }},
     ] : [];
+    
+    const uiWidgets = widgetManifest ? {
+        ...widgetManifest,
+        widgets: widgetManifest.widgets.filter((w: any) => w.category !== 'Windows')
+    } : null;
+
 
     if (!widgetManifest) {
         return <div style={styles.container}><p style={styles.loadingText}>Loading UI Editor...</p></div>;
@@ -437,9 +438,9 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
                     onClose={handleCloseContextMenu}
                 />
             )}
-            {pickerState && widgetManifest && (
+            {pickerState && uiWidgets && (
                 <WidgetPicker
-                    widgetManifest={widgetManifest}
+                    widgetManifest={uiWidgets}
                     anchorEl={pickerState.anchorEl}
                     onSelect={pickerState.onSelect}
                     onClose={() => setPickerState(null)}

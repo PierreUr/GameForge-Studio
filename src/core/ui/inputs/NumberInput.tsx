@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import InspectorHelpTooltip from '../InspectorHelpTooltip';
 
 interface NumberInputProps {
@@ -11,8 +11,39 @@ interface NumberInputProps {
 }
 
 const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange, disabled = false, isHelpVisible, helpText }) => {
+    const [internalValue, setInternalValue] = useState<string>(String(value));
+
+    useEffect(() => {
+        // This effect should only run when the component receives a new 'value' prop from its parent
+        // that is different from its internal state. This happens when selecting a new element.
+        // It avoids resetting the input while typing.
+        if (parseFloat(internalValue) !== value) {
+            setInternalValue(String(value));
+        }
+    }, [value]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(parseFloat(e.target.value));
+        setInternalValue(e.target.value);
+    };
+
+    const handleBlur = () => {
+        const parsedValue = parseFloat(internalValue);
+        if (!isNaN(parsedValue) && parsedValue !== value) {
+            onChange(parsedValue);
+        } else {
+            // If input is invalid or unchanged, revert to the original value from props
+            setInternalValue(String(value));
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleBlur();
+            (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'Escape') {
+            setInternalValue(String(value));
+            (e.target as HTMLInputElement).blur();
+        }
     };
 
     return (
@@ -23,8 +54,10 @@ const NumberInput: React.FC<NumberInputProps> = ({ label, value, onChange, disab
             </div>
             <input
                 type="number"
-                value={value}
+                value={internalValue}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
                 style={disabled ? { ...styles.input, ...styles.disabledInput } : styles.input}
                 disabled={disabled}
             />

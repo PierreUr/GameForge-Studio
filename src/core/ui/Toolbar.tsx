@@ -15,6 +15,7 @@ interface ToolbarProps {
     onProjectNameChange: (name: string) => void;
     isProjectLive: boolean;
     onIsProjectLiveChange: (isLive: boolean) => void;
+    onHelpClick: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ 
@@ -29,7 +30,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
     projectName,
     onProjectNameChange,
     isProjectLive,
-    onIsProjectLiveChange
+    onIsProjectLiveChange,
+    onHelpClick,
 }) => {
     const { user } = useAuth();
     const isAdmin = user?.roles.includes('ADMIN');
@@ -148,6 +150,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <DebugIdTooltip debugId="toolbar-logout">
                 <button style={styles.button} onClick={onLogout}>Logout</button>
             </DebugIdTooltip>
+
+            <DebugIdTooltip debugId="toolbar-help">
+                <button style={{...styles.button, ...styles.helpButton}} onClick={onHelpClick} aria-label="Open Help Manual">?</button>
+            </DebugIdTooltip>
         </div>
     );
 };
@@ -176,6 +182,21 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '0.5rem',
         width: '40px',
         fontSize: '1.2rem',
+        lineHeight: 1,
+    },
+    helpButton: {
+        backgroundColor: '#007acc',
+        color: 'white',
+        border: '1px solid #005a99',
+        borderRadius: '50%',
+        width: '26px',
+        height: '26px',
+        padding: 0,
+        fontSize: '1rem',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         lineHeight: 1,
     },
     divider: {

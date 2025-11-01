@@ -4,23 +4,22 @@ import NumberInput from './inputs/NumberInput';
 import TextInput from './inputs/TextInput';
 import ColorPicker from './inputs/ColorPicker';
 import SelectInput from './inputs/SelectInput';
+import { EventBus } from '../ecs/EventBus';
 
 interface SectionInspectorProps {
     sectionData: SectionData;
-    onPropertyChange: (sectionId: string, propName: string, value: any) => void;
-    onColumnCountChange: (sectionId: string, count: number) => void;
     isHelpVisible: boolean;
 }
 
-const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onPropertyChange, onColumnCountChange, isHelpVisible }) => {
+const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, isHelpVisible }) => {
 
     const handlePropChange = (propName: string, value: any) => {
-        onPropertyChange(sectionData.id, propName, value);
+        EventBus.getInstance().publish('ui-section:update-prop', { sectionId: sectionData.id, propName, value });
     };
 
     const handleColumnChange = (value: number) => {
         const count = Math.max(1, Math.min(12, value)); // Clamp between 1 and 12
-        onColumnCountChange(sectionData.id, count);
+        EventBus.getInstance().publish('ui-section:column-count-change', { sectionId: sectionData.id, count });
     };
 
     return (
@@ -48,7 +47,7 @@ const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onProp
                 <div style={styles.propertyItem}>
                     <NumberInput
                         label="Column Gap (px)"
-                        value={sectionData.columnGap ?? 16}
+                        value={sectionData.columnGap ?? 0}
                         onChange={(value) => handlePropChange('columnGap', value)}
                         isHelpVisible={isHelpVisible}
                         helpText="The horizontal space between columns inside this section."
@@ -90,14 +89,23 @@ const SectionInspector: React.FC<SectionInspectorProps> = ({ sectionData, onProp
                         helpText="The minimum height of the section. Use CSS units (e.g., '100px')."
                     />
                 </div>
+                 <div style={styles.propertyItem}>
+                    <TextInput
+                        label="Max Height"
+                        value={sectionData.maxHeight ?? ''}
+                        onChange={(value) => handlePropChange('maxHeight', value)}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The maximum height of the section. Use CSS units (e.g., '300px'). Leave empty for no limit."
+                    />
+                </div>
                 <div style={styles.propertyItem}>
                     <SelectInput
                         label="Vertical Align"
-                        value={sectionData.alignItems ?? 'flex-start'}
+                        value={sectionData.alignItems ?? 'stretch'}
                         onChange={(value) => handlePropChange('alignItems', value)}
-                        options={['flex-start', 'center', 'flex-end']}
+                        options={['stretch', 'flex-start', 'center', 'flex-end']}
                         isHelpVisible={isHelpVisible}
-                        helpText="Vertically align the content within the columns (Top, Center, Bottom)."
+                        helpText="Vertically align the columns. 'Stretch' makes them equal height."
                     />
                 </div>
             </div>

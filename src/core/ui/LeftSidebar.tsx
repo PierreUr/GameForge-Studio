@@ -4,12 +4,18 @@ import LibraryPanel from './LibraryPanel';
 import AssetPanel from './AssetPanel';
 import NodeLibraryPanel from './graph/NodeLibraryPanel';
 
-const LeftSidebar: React.FC = () => {
+type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers' | 'windows';
+
+interface LeftSidebarProps {
+    activeMainView: MainView;
+}
+
+const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeMainView }) => {
     
     const tabs: Tab[] = [
         {
             label: 'Library',
-            content: <LibraryPanel />
+            content: <LibraryPanel activeMainView={activeMainView} />
         },
         {
             label: 'Nodes',

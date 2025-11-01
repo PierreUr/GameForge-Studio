@@ -16,6 +16,24 @@
             ]
         },
         {
+            "id": "info-popup",
+            "name": "Info Popup",
+            "description": "A non-interactive tooltip that appears on hover.",
+            "category": "Windows"
+        },
+        {
+            "id": "modal-window",
+            "name": "Modal Window",
+            "description": "A draggable dialog window with a title and content area.",
+            "category": "Windows"
+        },
+        {
+            "id": "context-popup",
+            "name": "Context Popup",
+            "description": "An interactive popover that appears at the click position.",
+            "category": "Windows"
+        },
+        {
             "id": "heading",
             "name": "Heading",
             "description": "A text heading (h1, h2, etc.).",
@@ -57,6 +75,10 @@
                 { "name": "objectFit", "type": "select", "label": "Fit", "defaultValue": "cover", "options": ["fill", "contain", "cover", "none", "scale-down"], "description": "How the image should be resized to fit its container." }
             ],
              "styles": {
+                "dimensions": [
+                    { "name": "width", "type": "string", "label": "Width", "defaultValue": "100%", "description": "The width of the image. Use CSS units (e.g., '100%', '150px', 'auto')." },
+                    { "name": "height", "type": "string", "label": "Height", "defaultValue": "auto", "description": "The height of the image. Use CSS units (e.g., 'auto', '300px')." }
+                ],
                 "spacing": [
                     { "name": "padding", "type": "string", "label": "Padding", "defaultValue": "0px", "description": "Space inside the element's border. Units are required (e.g., '10px' or '10px 20px')." },
                     { "name": "margin", "type": "string", "label": "Margin", "defaultValue": "0px", "description": "Space outside the element's border. Units are required (e.g., '10px' or '0 auto')." }

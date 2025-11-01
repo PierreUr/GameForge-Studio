@@ -19,44 +19,25 @@ interface RightSidebarProps {
     world: World | null;
     frameConfig: FrameConfig;
     onFrameConfigChange: (newConfig: Partial<FrameConfig>) => void;
-    uiLayout: SectionData[];
-    selectedWidgetId: string | null;
-    selectedSectionId: string | null;
-    onSectionPropertyChange: (sectionId: string, propName: string, value: any) => void;
-    onSectionColumnCountChange: (sectionId: string, count: number) => void;
-    selectedColumnId: string | null;
-    onColumnPropertyChange: (columnId: string, propName: string, value: any) => void;
-    onColumnSelect: (columnId: string | null) => void;
     isInspectorHelpVisible: boolean;
     onToggleInspectorHelp: () => void;
 }
 
-interface SelectedWidgetInfo {
-    widgetId: string;
-    widgetDefinition: any;
+interface SelectedElement {
+    type: 'entity' | 'template' | 'node' | 'widget' | 'section' | 'column';
+    data: any;
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({ 
     world, 
     frameConfig, 
     onFrameConfigChange, 
-    uiLayout, 
-    selectedWidgetId, 
-    selectedSectionId, 
-    onSectionPropertyChange,
-    onSectionColumnCountChange,
-    selectedColumnId,
-    onColumnPropertyChange,
-    onColumnSelect,
     isInspectorHelpVisible,
-    onToggleInspectorHelp
+    onToggleInspectorHelp,
 }) => {
-    const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
-    const [entityComponents, setEntityComponents] = useState<[string, IComponent][]>([]);
-    const [previewData, setPreviewData] = useState<{ type: 'template' | 'node', data: any } | null>(null);
+    const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
     const [templates, setTemplates] = useState<any[]>([]);
     const [nodes, setNodes] = useState<any[]>([]);
-    const [selectedWidgetInfo, setSelectedWidgetInfo] = useState<SelectedWidgetInfo | null>(null);
 
     useEffect(() => {
         const fetchManifests = async () => {
@@ -75,11 +56,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         };
         fetchManifests();
     }, []);
-
+    
     const updateComponents = useCallback((entityId: number) => {
         if (world) {
             const components = world.getComponentsForEntity(entityId);
-            setEntityComponents(components);
+            setSelectedElement({ type: 'entity', data: { id: entityId, components }});
         }
     }, [world]);
 
@@ -87,77 +68,104 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         const eventBus = EventBus.getInstance();
 
         const handleEntitySelection = (payload: { entityId: number }) => {
-            setSelectedWidgetInfo(null);
-            setPreviewData(null);
             if (payload && typeof payload.entityId === 'number') {
-                setSelectedEntityId(payload.entityId);
                 updateComponents(payload.entityId);
             }
         };
         
-        const handleEntityDeselection = () => {
-            setSelectedEntityId(null);
-            setEntityComponents([]);
-        };
-
         const handleCommandExecuted = () => {
-            if (selectedEntityId !== null) {
-                updateComponents(selectedEntityId);
+            if (selectedElement?.type === 'entity') {
+                updateComponents(selectedElement.data.id);
             }
         };
 
         const handlePreviewTemplate = (payload: { templateId: string }) => {
             const item = templates.find(t => t.id === payload.templateId);
-            if (item) {
-                setPreviewData({ type: 'template', data: item });
-                setSelectedEntityId(null);
-                setSelectedWidgetInfo(null);
-            }
+            if (item) setSelectedElement({ type: 'template', data: item });
         };
 
         const handlePreviewNode = (payload: { nodeType: string }) => {
             const item = nodes.find(n => n.type === payload.nodeType);
-            if (item) {
-                setPreviewData({ type: 'node', data: item });
-                setSelectedEntityId(null);
-                setSelectedWidgetInfo(null);
-            }
+            if (item) setSelectedElement({ type: 'node', data: item });
         };
         
-        const handlePreviewClear = () => setPreviewData(null);
+        const handleUiElementSelected = (payload: { type: 'widget' | 'section' | 'column', data: any }) => {
+            setSelectedElement({ type: payload.type, data: payload.data });
+        };
+        
+        const handleDeselection = () => {
+            setSelectedElement(null);
+        };
+        
+        // This handles updates from property changes
+        const handleUiPropUpdate = (payload: { widgetId?: string, sectionId?: string, columnId?: string, propName: string, value: any }) => {
+            setSelectedElement(prev => {
+                if (!prev) return null;
 
-        const handleWidgetSelection = (payload: SelectedWidgetInfo) => {
-            setSelectedEntityId(null);
-            setPreviewData(null);
-            setSelectedWidgetInfo(payload);
+                let idMatch = false;
+                switch (prev.type) {
+                    case 'widget': idMatch = prev.data.widgetData.id === payload.widgetId; break;
+                    case 'section': idMatch = prev.data.id === payload.sectionId; break;
+                    case 'column': idMatch = prev.data.id === payload.columnId; break;
+                }
+                
+                if (idMatch) {
+                    let newData = { ...prev.data };
+                    // Special handling for nested data like styles or props
+                    if (payload.propName === 'styles') {
+                        newData.styles = payload.value;
+                    } else if (prev.type === 'widget') {
+                         newData.widgetData = { ...newData.widgetData, [payload.propName]: payload.value };
+                    } else {
+                        newData = { ...newData, [payload.propName]: payload.value };
+                    }
+                    return { ...prev, data: newData };
+                }
+                return prev;
+            });
         };
 
         eventBus.subscribe('entity:selected', handleEntitySelection);
-        eventBus.subscribe('entity:deselected', handleEntityDeselection);
         eventBus.subscribe('command:executed', handleCommandExecuted);
         eventBus.subscribe('preview:template', handlePreviewTemplate);
         eventBus.subscribe('preview:node', handlePreviewNode);
-        eventBus.subscribe('preview:clear', handlePreviewClear);
-        eventBus.subscribe('ui-widget:selected', handleWidgetSelection);
+        eventBus.subscribe('ui-element:selected', handleUiElementSelected);
+        
+        // Listen to multiple deselect events
+        eventBus.subscribe('entity:deselected', handleDeselection);
+        eventBus.subscribe('preview:clear', handleDeselection);
+        eventBus.subscribe('ui-element:deselected', handleDeselection);
+        
+        // Listen to property updates to keep inspector in sync without full re-renders
+        eventBus.subscribe('ui-widget:update-prop', handleUiPropUpdate);
+        eventBus.subscribe('ui-section:update-prop', handleUiPropUpdate);
+        eventBus.subscribe('ui-column:update-prop', handleUiPropUpdate);
 
         return () => {
             eventBus.unsubscribe('entity:selected', handleEntitySelection);
-            eventBus.unsubscribe('entity:deselected', handleEntityDeselection);
             eventBus.unsubscribe('command:executed', handleCommandExecuted);
             eventBus.unsubscribe('preview:template', handlePreviewTemplate);
             eventBus.unsubscribe('preview:node', handlePreviewNode);
-            eventBus.unsubscribe('preview:clear', handlePreviewClear);
-            eventBus.unsubscribe('ui-widget:selected', handleWidgetSelection);
+            eventBus.unsubscribe('ui-element:selected', handleUiElementSelected);
+            
+            eventBus.unsubscribe('entity:deselected', handleDeselection);
+            eventBus.unsubscribe('preview:clear', handleDeselection);
+            eventBus.unsubscribe('ui-element:deselected', handleDeselection);
+            
+            eventBus.unsubscribe('ui-widget:update-prop', handleUiPropUpdate);
+            eventBus.unsubscribe('ui-section:update-prop', handleUiPropUpdate);
+            eventBus.unsubscribe('ui-column:update-prop', handleUiPropUpdate);
         };
-    }, [world, updateComponents, selectedEntityId, templates, nodes]);
+    }, [world, updateComponents, templates, nodes]);
 
     const handleComponentUpdate = (componentName: string, propertyKey: string, value: any) => {
-        if (world && selectedEntityId !== null) {
-            const componentTuple = entityComponents.find(([name]) => name === componentName);
+        if (world && selectedElement?.type === 'entity') {
+            const entityId = selectedElement.data.id;
+            const componentTuple = selectedElement.data.components.find(([name]: [string]) => name === componentName);
             if (componentTuple) {
                 const oldValue = (componentTuple[1] as any)[propertyKey];
                 if (oldValue === value) return;
-                const command = new UpdateComponentCommand(world, selectedEntityId, componentName, propertyKey, oldValue, value);
+                const command = new UpdateComponentCommand(world, entityId, componentName, propertyKey, oldValue, value);
                 CommandManager.getInstance().executeCommand(command);
             }
         }
@@ -177,105 +185,43 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
 
     let inspectorContent;
 
-    const findWidgetData = (layout: SectionData[], widgetId: string | null): { widget: WidgetData, columnId: string } | null => {
-        if (!widgetId) return null;
-        for (const section of layout) {
-            for (const column of section.columns) {
-                for (const item of column.widgets) {
-                    if ('componentType' in item) { // It's a WidgetData
-                        if (item.id === widgetId) {
-                            return { widget: item, columnId: column.id };
-                        }
-                    } else { // It's a SectionData, recurse
-                        const found = findWidgetData([item], widgetId);
-                        if (found) {
-                            return found;
-                        }
-                    }
-                }
-            }
+    if (selectedElement) {
+        switch(selectedElement.type) {
+            case 'section':
+                inspectorContent = <SectionInspector sectionData={selectedElement.data} isHelpVisible={isInspectorHelpVisible} />;
+                break;
+            case 'column':
+                inspectorContent = <ColumnInspector columnData={selectedElement.data} isHelpVisible={isInspectorHelpVisible} />;
+                break;
+            case 'widget':
+                 inspectorContent = (
+                    <WidgetInspector 
+                        widgetData={selectedElement.data.widgetData} 
+                        widgetDefinition={selectedElement.data.widgetDefinition} 
+                        isHelpVisible={isInspectorHelpVisible}
+                        onSelectParentColumn={() => {
+                            EventBus.getInstance().publish('ui-element:request-selection', { type: 'column', id: selectedElement.data.columnId });
+                        }}
+                    />
+                );
+                break;
+            case 'entity':
+                 inspectorContent = (
+                    <div>
+                        <h5 style={styles.entityHeader}>Entity: {selectedElement.data.id}</h5>
+                        {selectedElement.data.components.map(([name, data]: [string, IComponent]) => (
+                            <ComponentInspector key={name} componentName={name} componentData={data} onDataChange={handleComponentUpdate} />
+                        ))}
+                    </div>
+                );
+                break;
+            case 'template':
+            case 'node':
+                inspectorContent = <PreviewInspector item={selectedElement.data} type={selectedElement.type} />;
+                break;
+            default:
+                inspectorContent = <p>Select an item on the canvas or in a library to inspect its properties.</p>;
         }
-        return null;
-    };
-
-    const findSectionData = (layout: SectionData[], sectionId: string | null): SectionData | null => {
-        if (!sectionId) return null;
-        for (const section of layout) {
-            if (section.id === sectionId) return section;
-            // Recurse into columns to find nested sections
-            for (const column of section.columns) {
-                for (const item of column.widgets) {
-                    if (!('componentType' in item)) { // This is a SectionData
-                        const found = findSectionData([item], sectionId);
-                        if (found) return found;
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-
-    const findColumnData = (layout: SectionData[], columnId: string | null): ColumnData | null => {
-        if (!columnId) return null;
-        for (const section of layout) {
-            const column = section.columns.find(c => c.id === columnId);
-            if (column) return column;
-    
-            // Search in nested sections
-            for (const col of section.columns) {
-                for (const item of col.widgets) {
-                    if (!('componentType' in item)) { // It's a SectionData
-                        const found = findColumnData([item], columnId);
-                        if (found) {
-                            return found;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-    const widgetInfo = findWidgetData(uiLayout, selectedWidgetId);
-    const currentSectionData = findSectionData(uiLayout, selectedSectionId);
-    const currentColumnData = findColumnData(uiLayout, selectedColumnId);
-
-    const handleSelectParentColumn = (columnId: string | null) => {
-        onColumnSelect(columnId);
-    };
-
-    if (widgetInfo && selectedWidgetInfo) {
-        inspectorContent = (
-            <WidgetInspector 
-                widgetData={widgetInfo.widget} 
-                widgetDefinition={selectedWidgetInfo.widgetDefinition} 
-                isHelpVisible={isInspectorHelpVisible}
-                onSelectParentColumn={() => handleSelectParentColumn(widgetInfo.columnId)}
-            />
-        );
-    } else if (currentSectionData) {
-        inspectorContent = (
-            <SectionInspector 
-                sectionData={currentSectionData} 
-                onPropertyChange={onSectionPropertyChange} 
-                onColumnCountChange={onSectionColumnCountChange}
-                isHelpVisible={isInspectorHelpVisible} 
-            />
-        );
-    } else if (currentColumnData) {
-        inspectorContent = <ColumnInspector columnData={currentColumnData} onPropertyChange={onColumnPropertyChange} isHelpVisible={isInspectorHelpVisible} />;
-    } else if (selectedEntityId !== null) {
-        inspectorContent = (
-            <div>
-                <h5 style={styles.entityHeader}>Entity: {selectedEntityId}</h5>
-                 {entityComponents.map(([name, data]) => (
-                    <ComponentInspector key={name} componentName={name} componentData={data} onDataChange={handleComponentUpdate} />
-                 ))}
-            </div>
-        );
-    } else if (previewData) {
-        inspectorContent = <PreviewInspector item={previewData.data} type={previewData.type} />;
     } else {
         inspectorContent = <p>Select an item on the canvas or in a library to inspect its properties.</p>;
     }
@@ -316,6 +262,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '1rem',
         fontSize: '0.9rem',
         color: '#ccc',
+        overflowY: 'auto',
+        height: '100%'
     },
     inspectorTabHeader: {
         display: 'flex',

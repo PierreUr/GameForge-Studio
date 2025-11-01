@@ -1,16 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { WidgetData, componentRegistry, ColumnData, SectionData } from '../UIEditorPanel';
 import Section from './Section';
+import { EventBus } from '../../ecs/EventBus';
 
 interface ColumnProps {
     columnData: ColumnData;
     sectionId: string;
     columnIndex: number;
     onDrop: (widgetType: string, dropIndex: number) => void;
-    selectedWidgetId: string | null;
-    onWidgetSelect: (widgetData: WidgetData) => void;
+    onWidgetSelect: (widgetData: WidgetData, columnId: string, sectionId: string) => void;
     onWidgetMove: (source: any, target: any) => void;
-    isSelected: boolean;
     onSelect: (columnId: string | null) => void;
     onAddWidgetClick: (sectionId: string, columnIndex: number, insertIndex: number, anchorEl: HTMLElement) => void;
     onWidgetContextMenuRequest: (e: React.MouseEvent, widgetId: string) => void;
@@ -18,11 +17,9 @@ interface ColumnProps {
     onWidgetDrop: (sectionId: string, columnIndex: number, widgetType: string, dropIndex: number) => void;
     onSectionDrop: (draggedId: string, targetId: string, position: 'before' | 'after') => void;
     onSectionSelect: (sectionId: string | null) => void;
-    selectedSectionId: string | null;
     onColumnSelect: (columnId: string | null) => void;
-    selectedColumnId: string | null;
     onContextMenuRequest: (e: React.MouseEvent, sectionId: string) => void;
-    onColumnCountChange: (sectionId: string, count: number) => void;
+    onSectionAdd: (targetId: string, position: 'before' | 'after') => void;
     isNested?: boolean;
 }
 
@@ -35,18 +32,43 @@ const Column: React.FC<ColumnProps> = (props) => {
         sectionId, 
         columnIndex, 
         onDrop, 
-        selectedWidgetId, 
         onWidgetSelect, 
         onWidgetMove,
-        isSelected,
         onSelect,
         onAddWidgetClick,
         onWidgetContextMenuRequest,
     } = props;
     const { id: columnId, widgets } = columnData;
     const [dropIndex, setDropIndex] = useState<number | null>(null);
-    const addButtonRef = useRef<HTMLButtonElement>(null);
     const [isHovered, setIsHovered] = useState(false);
+    const [isSelected, setIsSelected] = useState(false);
+    const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleSelection = (payload: {type: string, data: any}) => {
+             if (payload.type === 'column' && payload.data.id === columnId) {
+                setIsSelected(true);
+                setSelectedWidgetId(null);
+            } else if (payload.type === 'widget' && payload.data.columnId === columnId) {
+                setSelectedWidgetId(payload.data.widgetData.id);
+                setIsSelected(false);
+            } else {
+                setIsSelected(false);
+                setSelectedWidgetId(null);
+            }
+        };
+        const handleDeselection = () => {
+            setIsSelected(false);
+            setSelectedWidgetId(null);
+        };
+
+        EventBus.getInstance().subscribe('ui-element:selected', handleSelection);
+        EventBus.getInstance().subscribe('ui-element:deselected', handleDeselection);
+        return () => {
+            EventBus.getInstance().unsubscribe('ui-element:selected', handleSelection);
+            EventBus.getInstance().unsubscribe('ui-element:deselected', handleDeselection);
+        }
+    }, [columnId]);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         const isSectionDrag = e.dataTransfer.types.includes(SECTION_DRAG_TYPE);
@@ -129,6 +151,7 @@ const Column: React.FC<ColumnProps> = (props) => {
 
     const getCombinedStyles = (widget: WidgetData): React.CSSProperties => {
         if (!widget.styles) return {};
+        // Flattens all style groups (typography, spacing, etc.) into a single style object.
         return Object.values(widget.styles).reduce((acc, group) => ({ ...acc, ...group }), {});
     };
 
@@ -139,19 +162,20 @@ const Column: React.FC<ColumnProps> = (props) => {
         }
     };
 
-    const handleAddClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleAddClick = (e: React.MouseEvent<HTMLButtonElement>, insertIndex: number) => {
         e.stopPropagation();
-        if (addButtonRef.current) {
-            onAddWidgetClick(sectionId, columnIndex, widgets.length, addButtonRef.current);
-        }
+        onAddWidgetClick(sectionId, columnIndex, insertIndex, e.currentTarget);
     };
 
     const columnStyle: React.CSSProperties = {
         ...styles.column,
         border: isSelected ? '2px solid #28a745' : '1px dashed #555',
         backgroundColor: columnData.styles?.backgroundColor || 'transparent',
-        padding: columnData.styles?.padding || '0.5rem',
-        gap: `${columnData.styles?.rowGap || 8}px`,
+        padding: columnData.styles?.padding || '0px',
+        gap: `${columnData.styles?.rowGap || 0}px`,
+        height: columnData.styles?.height || 'auto',
+        minHeight: columnData.styles?.minHeight || '60px',
+        alignItems: columnData.styles?.alignItems,
         zIndex: 2,
     };
     
@@ -169,8 +193,16 @@ const Column: React.FC<ColumnProps> = (props) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {widgets.length === 0 && dropIndex === null && !isHovered && (
-                <div style={styles.placeholder}>Drop Widget Here</div>
+            {widgets.length === 0 && dropIndex === null && (
+                <div style={styles.emptyColumnPlaceholder}>
+                    <span>Drop Widget Here or </span>
+                    <button 
+                        onClick={(e) => handleAddClick(e, 0)} 
+                        style={styles.placeholderAddButton}
+                    >
+                        Add Widget
+                    </button>
+                </div>
             )}
             {widgets.map((item, index) => {
                 const isWidget = 'componentType' in item;
@@ -180,150 +212,125 @@ const Column: React.FC<ColumnProps> = (props) => {
                         {dropIndex === index && <div style={styles.dropIndicator} />}
                         
                         {isWidget ? (
-                             <div 
+                             <div
                                 data-widget-index={index}
                                 draggable
                                 onDragStart={(e) => handleWidgetDragStart(e, item)}
+                                onClick={(e) => { e.stopPropagation(); onWidgetSelect(item, columnId, sectionId); }}
+                                onContextMenu={(e) => onWidgetContextMenuRequest(e, item.id)}
+                                style={{
+                                    ...styles.widgetWrapper,
+                                    outline: selectedWidgetId === item.id ? '2px solid #007acc' : '1px solid transparent',
+                                    outlineOffset: '2px',
+                                    ...getCombinedStyles(item)
+                                }}
                             >
-                            {(() => {
-                                const widget = item as WidgetData;
-                                const Component = componentRegistry[widget.componentType];
-                                const isWidgetSelected = widget.id === selectedWidgetId;
-                                const combinedStyles = getCombinedStyles(widget);
-    
-                                const wrapperStyle = isWidgetSelected 
-                                    ? { ...styles.widgetWrapper, ...combinedStyles, ...styles.selectedWidgetWrapper } 
-                                    : { ...styles.widgetWrapper, ...combinedStyles };
-    
-                                return (
-                                    <div 
-                                        style={wrapperStyle}
-                                        onClick={(e) => { e.stopPropagation(); onWidgetSelect(widget); }}
-                                        onContextMenu={(e) => onWidgetContextMenuRequest(e, widget.id)}
-                                    >
-                                        {Component ? (
-                                            <Component {...widget.props} styles={widget.styles} />
-                                        ) : (
-                                            <div style={styles.errorWrapper}>
-                                                Unknown Widget: {widget.componentType}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
-                            </div>
+                                {React.createElement(componentRegistry[item.componentType], { ...item.props, styles: item.styles })}
+                             </div>
                         ) : (
-                             <div data-widget-index={index}>
-                                {(() => {
-                                    const section = item as SectionData;
-                                    const handleNestedDragStart = (e: React.DragEvent) => {
-                                        e.stopPropagation();
-                                        const payload = JSON.stringify({
-                                            widgetId: section.id,
-                                            sourceSectionId: sectionId,
-                                            sourceColumnIndex: columnIndex,
-                                        });
-                                        e.dataTransfer.setData(WIDGET_DRAG_TYPE, payload);
-                                        e.dataTransfer.effectAllowed = 'move';
-                                    };
-                                    return (
-                                        <Section
-                                            {...props}
-                                            sectionData={section}
-                                            isSectionSelected={section.id === props.selectedSectionId}
-                                            isNested={true}
-                                            onCustomDragStart={handleNestedDragStart}
-                                        />
-                                    );
-                                })()}
+                            <div data-widget-index={index}>
+                                 <Section 
+                                    {...props}
+                                    sectionData={item as SectionData} 
+                                    isNested={true}
+                                    onCustomDragStart={(e) => handleWidgetDragStart(e, item)}
+                                />
                             </div>
                         )}
                     </React.Fragment>
                 );
             })}
-             {dropIndex === widgets.length && <div style={styles.dropIndicator} />}
-            <div style={addButtonContainerStyle}>
-                <button ref={addButtonRef} onClick={handleAddClick} style={styles.addButton} title="Add Widget">
-                    +
-                </button>
-            </div>
+            {dropIndex === widgets.length && <div style={styles.dropIndicator} />}
+
+             {widgets.length > 0 && (
+                 <div style={addButtonContainerStyle}>
+                     <button onClick={(e) => handleAddClick(e, widgets.length)} style={styles.addButton} title="Add Widget">
+                         +
+                     </button>
+                 </div>
+            )}
         </div>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
     column: {
-        borderRadius: '4px',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
+        borderRadius: '4px',
         transition: 'border-color 0.2s, background-color 0.2s',
-        minHeight: '60px',
+        position: 'relative',
+        width: '100%',
     },
-    placeholder: {
-        flex: 1,
+    emptyColumnPlaceholder: {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        color: '#666',
+        color: '#777',
+        fontSize: '0.9rem',
+        minHeight: '60px',
+        pointerEvents: 'none',
+        flex: 1,
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        padding: '1rem',
+    },
+    placeholderAddButton: {
+        pointerEvents: 'all',
+        background: 'none',
+        border: '1px solid #666',
+        color: '#aaa',
+        padding: '0.25rem 0.75rem',
+        borderRadius: '12px',
+        cursor: 'pointer',
         fontSize: '0.8rem',
-        textAlign: 'center',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        minHeight: '40px',
     },
     widgetWrapper: {
-        border: '2px solid transparent',
-        borderRadius: '3px',
+        position: 'relative',
         cursor: 'pointer',
+        borderRadius: '4px',
         overflow: 'hidden',
-    },
-    selectedWidgetWrapper: {
-        borderColor: '#007acc',
-    },
-    errorWrapper: {
-        backgroundColor: '#5c2323',
-        color: '#ffc1c1',
-        padding: '1rem',
-        borderColor: '#ff8080',
     },
     dropIndicator: {
         height: '4px',
         backgroundColor: '#00aaff',
         borderRadius: '2px',
-        margin: '-2px 0',
+        margin: '2px 0',
     },
     addButtonContainer: {
         position: 'absolute',
-        bottom: '8px',
+        bottom: '-12px',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 10,
-        opacity: 0,
-        transition: 'opacity 0.2s ease-in-out',
-        pointerEvents: 'none', // Initially not interactive
-    },
-    addButtonContainerHover: {
-        opacity: 1,
-        pointerEvents: 'auto', // Make interactive on hover
-    },
-    addButton: {
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        border: '1px solid rgba(0, 122, 204, 0.5)',
-        color: '#00aaff',
-        cursor: 'pointer',
-        borderRadius: '50%',
-        width: '32px',
-        height: '32px',
+        height: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '24px',
-        lineHeight: '32px',
+        transition: 'opacity 0.2s ease-in-out',
+        opacity: 0,
+        pointerEvents: 'none',
+    },
+    addButtonContainerHover: {
+        opacity: 1,
+        pointerEvents: 'all',
+    },
+    addButton: {
+        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+        border: '1px solid #28a745',
+        color: 'white',
+        cursor: 'pointer',
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        lineHeight: '24px',
         fontWeight: 'bold',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
-    }
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+    },
 };
 
 export default Column;

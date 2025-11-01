@@ -8,8 +8,15 @@ interface ImageWidgetProps {
         spacing?: {
             padding?: string;
             margin?: string;
-        }
-    }
+        };
+        border?: {
+            borderRadius?: number;
+        };
+        dimensions?: {
+            width?: string;
+            height?: string;
+        };
+    };
 }
 
 const ImageWidget: React.FC<ImageWidgetProps> = ({ 
@@ -19,17 +26,19 @@ const ImageWidget: React.FC<ImageWidgetProps> = ({
     styles
 }) => {
     
+    // The wrapper div in Column.tsx handles the sizing via the 'dimensions' style group.
+    // This widget's internal container should fill that wrapper.
     const containerStyle: React.CSSProperties = {
         width: '100%',
-        aspectRatio: '16 / 9', // Default aspect ratio
-        overflow: 'hidden',
-        ...styles?.spacing,
+        height: '100%',
+        display: 'flex',
     };
     
     const imageStyle: React.CSSProperties = {
         width: '100%',
         height: '100%',
         objectFit: objectFit,
+        borderRadius: styles?.border?.borderRadius ? `${styles.border.borderRadius}px` : undefined,
     };
 
     return (

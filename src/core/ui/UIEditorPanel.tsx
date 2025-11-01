@@ -23,6 +23,9 @@ export interface ColumnData {
         backgroundColor?: string;
         padding?: string;
         rowGap?: number;
+        height?: string;
+        minHeight?: string;
+        alignItems?: string;
     };
 }
 export interface SectionData {
@@ -36,20 +39,16 @@ export interface SectionData {
     backgroundColor?: string;
     height?: string;
     minHeight?: string;
+    maxHeight?: string;
     alignItems?: string;
+    columnWidths?: number[];
 }
 
 interface UIEditorPanelProps {
     layout: SectionData[];
     onLayoutChange: (newLayout: SectionData[]) => void;
-    selectedWidgetId: string | null;
-    onWidgetSelect: (widgetId: string | null) => void;
-    selectedSectionId: string | null;
-    onSectionSelect: (sectionId: string | null) => void;
-    selectedColumnId: string | null;
-    onColumnSelect: (columnId: string | null) => void;
+    widgetManifest: any;
     onDuplicateSection: (sectionId: string) => void;
-    onSectionColumnCountChange: (sectionId: string, count: number) => void;
 }
 
 // A map to resolve component names from the manifest to actual React components
@@ -64,65 +63,87 @@ export const componentRegistry: Record<string, React.ComponentType<any>> = {
 const UIEditorPanel: React.FC<UIEditorPanelProps> = ({ 
     layout, 
     onLayoutChange, 
-    selectedWidgetId, 
-    onWidgetSelect, 
-    selectedSectionId, 
-    onSectionSelect, 
-    selectedColumnId, 
-    onColumnSelect,
+    widgetManifest,
     onDuplicateSection,
-    onSectionColumnCountChange
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [widgetManifest, setWidgetManifest] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [sectionContextMenu, setSectionContextMenu] = useState<{ x: number; y: number; sectionId: string } | null>(null);
     const [widgetContextMenu, setWidgetContextMenu] = useState<{ x: number; y: number; widgetId: string } | null>(null);
     const [pickerState, setPickerState] = useState<{ anchorEl: HTMLElement, onSelect: (widgetType: string) => void } | null>(null);
     const [showTopDropIndicator, setShowTopDropIndicator] = useState(false);
+    const [isCanvasHovered, setIsCanvasHovered] = useState(false);
 
-    useEffect(() => {
-        const fetchManifest = async () => {
-            try {
-                const response = await fetch('./src/core/assets/ui-widget-manifest.json');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch widget manifest');
-                }
-                const data = await response.json();
-                setWidgetManifest(data);
-            } catch (error) {
-                console.error("Error loading widget manifest:", error);
-            } finally {
-                setIsLoading(false);
-            }
+    const handleAddSection = useCallback((position: 'start' | 'end') => {
+        const newSection: SectionData = {
+            id: crypto.randomUUID(),
+            columnLayout: 1,
+            columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 0 } }],
+            padding: '0px',
+            margin: '0',
+            height: 'auto',
+            minHeight: '100px',
+            alignItems: 'flex-start',
         };
-        fetchManifest();
-    }, []);
+    
+        if (position === 'start') {
+            onLayoutChange([newSection, ...layout]);
+        } else {
+            onLayoutChange([...layout, newSection]);
+        }
+    }, [layout, onLayoutChange]);
+
+    const handleSectionAdd = useCallback((targetId: string, position: 'before' | 'after') => {
+        const newSection: SectionData = {
+            id: crypto.randomUUID(),
+            columnLayout: 1,
+            columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 0 } }],
+            padding: '0px',
+            margin: '0',
+            height: 'auto',
+            minHeight: '100px',
+            alignItems: 'flex-start',
+        };
+    
+        const newLayout = [...layout];
+        const targetIndex = newLayout.findIndex(s => s.id === targetId);
+        if (targetIndex !== -1) {
+            const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+            newLayout.splice(insertIndex, 0, newSection);
+            onLayoutChange(newLayout);
+        }
+    }, [layout, onLayoutChange]);
 
     const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         const droppedType = e.dataTransfer.getData('text/plain');
 
+        if (widgetManifest && widgetManifest.widgets.some((w: any) => w.id === droppedType && w.category === 'Windows')) {
+            EventBus.getInstance().publish('window:create-design', droppedType);
+            return;
+        }
+
+        if (droppedType !== 'layout-section') return;
+
         const newSection: SectionData = {
             id: crypto.randomUUID(),
             columnLayout: 1,
-            columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } }],
-            padding: '16px',
+            columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 0 } }],
+            padding: '0px',
             margin: '0',
             height: 'auto',
             minHeight: '100px',
             alignItems: 'flex-start',
         };
 
-        if (showTopDropIndicator && droppedType === 'layout-section') {
+        if (showTopDropIndicator) {
             onLayoutChange([newSection, ...layout]);
-        } else if (layout.length === 0 && droppedType === 'layout-section') {
-             onLayoutChange([newSection]);
+        } else {
+            onLayoutChange([...layout, newSection]);
         }
         
         setShowTopDropIndicator(false);
-    }, [layout, onLayoutChange, showTopDropIndicator]);
+    }, [layout, onLayoutChange, showTopDropIndicator, widgetManifest]);
     
     const handleCanvasDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -133,13 +154,13 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         if (isSectionDrag && containerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
             const topDropZoneHeight = 40;
-            if (e.clientY < rect.top + topDropZoneHeight) {
+            if (e.clientY < rect.top + topDropZoneHeight && layout.length > 0) {
                 setShowTopDropIndicator(true);
             } else {
                 setShowTopDropIndicator(false);
             }
         }
-    }, []);
+    }, [layout.length]);
     
     const handleCanvasDragLeave = useCallback(() => {
         setShowTopDropIndicator(false);
@@ -147,6 +168,11 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
 
     const handleWidgetDrop = useCallback((sectionId: string, columnIndex: number, droppedType: string, dropIndex: number) => {
         if (!widgetManifest) return;
+
+        if (widgetManifest.widgets.some((w: any) => w.id === droppedType && w.category === 'Windows')) {
+            EventBus.getInstance().publish('window:create-design', droppedType);
+            return;
+        }
     
         let newItem: WidgetData | SectionData;
     
@@ -154,8 +180,8 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
             newItem = {
                 id: crypto.randomUUID(),
                 columnLayout: 1,
-                columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } }],
-                padding: '16px',
+                columns: [{ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 0 } }],
+                padding: '0px',
                 margin: '0',
                 backgroundColor: 'rgba(0,0,0,0.1)',
                 height: 'auto',
@@ -241,12 +267,55 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         });
     }, []);
 
-    const handleWidgetSelect = (widgetData: WidgetData) => {
+    const handleWidgetSelect = (widgetData: WidgetData, columnId: string, sectionId: string) => {
         if (!widgetManifest) return;
-        onWidgetSelect(widgetData.id);
         const widgetDefinition = widgetManifest.widgets.find((w: any) => w.id === widgetData.componentType);
-        EventBus.getInstance().publish('ui-widget:selected', { widgetId: widgetData.id, widgetDefinition });
+        EventBus.getInstance().publish('ui-element:selected', { type: 'widget', data: { widgetData, widgetDefinition, columnId, sectionId } });
     };
+
+    const handleSectionSelect = (sectionId: string | null) => {
+         if (sectionId) {
+            const findRecursively = (items: (SectionData | WidgetData)[]): SectionData | null => {
+                for (const item of items) {
+                    if (!('componentType' in item)) { // It's a SectionData
+                        if (item.id === sectionId) return item;
+                        for (const col of item.columns) {
+                            const found = findRecursively(col.widgets);
+                            if (found) return found;
+                        }
+                    }
+                }
+                return null;
+            }
+            const sectionData = findRecursively(layout);
+            if (sectionData) EventBus.getInstance().publish('ui-element:selected', { type: 'section', data: sectionData });
+
+        } else {
+            EventBus.getInstance().publish('ui-element:deselected');
+        }
+    };
+    
+    const handleColumnSelect = (columnId: string | null) => {
+        if (columnId) {
+             const findRecursively = (items: (SectionData | WidgetData)[]): ColumnData | null => {
+                for (const item of items) {
+                    if (!('componentType' in item)) {
+                        for (const col of item.columns) {
+                            if (col.id === columnId) return col;
+                            const found = findRecursively(col.widgets);
+                            if (found) return found;
+                        }
+                    }
+                }
+                return null;
+            }
+            const columnData = findRecursively(layout);
+            if(columnData) EventBus.getInstance().publish('ui-element:selected', { type: 'column', data: columnData });
+        } else {
+             EventBus.getInstance().publish('ui-element:deselected');
+        }
+    };
+
 
     const handleSectionContextMenuRequest = (e: React.MouseEvent, sectionId: string) => {
         e.preventDefault();
@@ -268,7 +337,7 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
 
     const handleDeleteSection = (sectionId: string) => {
         onLayoutChange(layout.filter(s => s.id !== sectionId));
-        onSectionSelect(null); // Deselect if it was selected
+        handleSectionSelect(null);
     };
     
     const handleOpenPicker = (sectionId: string, columnIndex: number, insertIndex: number, anchorEl: HTMLElement) => {
@@ -292,7 +361,7 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
         }},
     ] : [];
 
-    if (isLoading) {
+    if (!widgetManifest) {
         return <div style={styles.container}><p style={styles.loadingText}>Loading UI Editor...</p></div>;
     }
 
@@ -307,37 +376,49 @@ const UIEditorPanel: React.FC<UIEditorPanelProps> = ({
             onClick={() => {
                 handleCloseContextMenu();
                 setPickerState(null);
+                EventBus.getInstance().publish('ui-element:deselected');
             }}
         >
             {showTopDropIndicator && <div style={styles.topDropIndicator}>Add Section Here</div>}
             {layout.length === 0 ? (
-                <div style={styles.placeholder}>
-                    <p>Drag a "Section" from the Library panel to get started.</p>
+                <div style={styles.placeholder} onClick={(e) => { e.stopPropagation(); handleAddSection('start'); }}>
+                    <div style={styles.addFirstSectionButton}>
+                        <span style={styles.addIcon}>+</span> Add Section
+                    </div>
                 </div>
             ) : (
                 <div 
                     style={styles.canvas}
+                    onMouseEnter={() => setIsCanvasHovered(true)}
+                    onMouseLeave={() => setIsCanvasHovered(false)}
                 >
+                    <div style={{...styles.sectionInserter, opacity: isCanvasHovered ? 1 : 0}}>
+                        <button style={styles.inserterButton} onClick={(e) => { e.stopPropagation(); handleAddSection('start'); }} title="Add section at the top">
+                            +
+                        </button>
+                    </div>
                     {layout.map(sectionData => (
                         <Section
                             key={sectionData.id}
                             sectionData={sectionData}
                             onWidgetDrop={handleWidgetDrop}
-                            selectedWidgetId={selectedWidgetId}
                             onWidgetSelect={handleWidgetSelect}
                             onSectionDrop={handleSectionReorder}
                             onWidgetMove={handleWidgetMove}
-                            isSectionSelected={sectionData.id === selectedSectionId}
-                            onSectionSelect={onSectionSelect}
-                            selectedColumnId={selectedColumnId}
-                            onColumnSelect={onColumnSelect}
+                            onSectionSelect={handleSectionSelect}
+                            onColumnSelect={handleColumnSelect}
                             onContextMenuRequest={handleSectionContextMenuRequest}
-                            onColumnCountChange={onSectionColumnCountChange}
                             onAddWidgetClick={handleOpenPicker}
                             isNested={false}
                             onWidgetContextMenuRequest={handleWidgetContextMenuRequest}
+                            onSectionAdd={handleSectionAdd}
                         />
                     ))}
+                    <div style={{...styles.sectionInserter, opacity: isCanvasHovered ? 1 : 0}}>
+                         <button style={styles.inserterButton} onClick={(e) => { e.stopPropagation(); handleAddSection('end'); }} title="Add section at the bottom">
+                            +
+                        </button>
+                    </div>
                 </div>
             )}
             {sectionContextMenu && (
@@ -390,7 +471,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         backgroundColor: '#2d2d2d',
         boxSizing: 'border-box',
         boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-        paddingTop: '20px', // Space for top drop zone
         position: 'relative',
     },
     placeholder: {
@@ -398,11 +478,50 @@ const styles: { [key: string]: React.CSSProperties } = {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100%',
-        color: '#666',
-        border: '2px dashed #444',
-        textAlign: 'center',
         backgroundColor: '#2d2d2d',
+        cursor: 'pointer',
+    },
+    addFirstSectionButton: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        fontSize: '1.2rem',
+        color: '#ccc',
+        padding: '1rem 2rem',
+        border: '2px dashed #555',
         borderRadius: '8px',
+        transition: 'background-color 0.2s, border-color 0.2s',
+    },
+    addIcon: {
+        fontSize: '2rem',
+        lineHeight: 1,
+    },
+    sectionInserter: {
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'opacity 0.2s ease-in-out',
+        pointerEvents: 'none',
+        position: 'relative',
+        margin: '4px 0',
+    },
+    inserterButton: {
+        backgroundColor: 'rgba(0, 122, 204, 0.7)',
+        border: '1px solid #00aaff',
+        color: 'white',
+        cursor: 'pointer',
+        borderRadius: '50%',
+        width: '32px',
+        height: '32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        lineHeight: '32px',
+        fontWeight: 'bold',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
+        pointerEvents: 'all',
     },
     topDropIndicator: {
         position: 'absolute',

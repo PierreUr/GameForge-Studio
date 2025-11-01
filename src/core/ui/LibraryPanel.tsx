@@ -2,7 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ComponentCard from './ComponentCard';
 import { EventBus } from '../ecs/EventBus';
 
-interface LibraryPanelProps {}
+type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers' | 'windows';
+
+interface LibraryPanelProps {
+    activeMainView: MainView;
+}
 
 interface ManifestItem {
     id: string;
@@ -12,7 +16,7 @@ interface ManifestItem {
     type: 'widget' | 'template';
 }
 
-const LibraryPanel: React.FC<LibraryPanelProps> = () => {
+const LibraryPanel: React.FC<LibraryPanelProps> = ({ activeMainView }) => {
     const [libraryItems, setLibraryItems] = useState<ManifestItem[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -104,13 +108,20 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
         }));
     };
 
+    const visibleItems = useMemo(() => {
+        if (activeMainView === 'ui-editor') {
+            return libraryItems.filter(item => item.category !== 'Windows');
+        }
+        return libraryItems;
+    }, [libraryItems, activeMainView]);
+
     const filteredItems = useMemo(() => {
-        if (!searchTerm) return libraryItems;
-        return libraryItems.filter(item => 
+        if (!searchTerm) return visibleItems;
+        return visibleItems.filter(item => 
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
             item.category.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [libraryItems, searchTerm]);
+    }, [visibleItems, searchTerm]);
 
     const groupedItems = useMemo(() => {
         return filteredItems.reduce((acc, item) => {
@@ -141,7 +152,7 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
             {error && <p style={styles.errorText}>Error: {error}</p>}
             
             {!isLoading && !error && Object.entries(groupedItems).sort(([a], [b]) => {
-                const order = ['Layout', 'Entity Templates'];
+                const order = ['Layout', 'Entity Templates', 'Content', 'Forms', 'Windows'];
                 const aIndex = order.indexOf(a);
                 const bIndex = order.indexOf(b);
                 if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
@@ -158,20 +169,22 @@ const LibraryPanel: React.FC<LibraryPanelProps> = () => {
                         </h5>
                         {isExpanded && (
                             <div style={styles.grid}>
-                                {/* FIX: Cast `items` to ManifestItem[] to resolve type inference issue where it was being treated as `unknown`. */}
-                                {(items as ManifestItem[]).map(item => (
-                                    <ComponentCard 
-                                        key={item.id}
-                                        templateId={item.id}
-                                        name={item.name} 
-                                        description={item.description}
-                                        isSelected={selectedItemId === item.id}
-                                        onClick={() => handleSelectItem(item)}
-                                        categories={item.type === 'widget' ? allCategories : undefined}
-                                        currentCategory={item.type === 'widget' ? item.category : undefined}
-                                        onCategoryChange={item.type === 'widget' ? (newCat) => handleCategoryChange(item.id, newCat) : undefined}
-                                    />
-                                ))}
+                                {(items as ManifestItem[]).map(item => {
+                                    const showCategoryMenu = item.type === 'widget' && !['Layout', 'Windows'].includes(item.category);
+                                    return (
+                                        <ComponentCard 
+                                            key={item.id}
+                                            templateId={item.id}
+                                            name={item.name} 
+                                            description={item.description}
+                                            isSelected={selectedItemId === item.id}
+                                            onClick={() => handleSelectItem(item)}
+                                            categories={showCategoryMenu ? allCategories : undefined}
+                                            currentCategory={showCategoryMenu ? item.category : undefined}
+                                            onCategoryChange={showCategoryMenu ? (newCat) => handleCategoryChange(item.id, newCat) : undefined}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -185,7 +198,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     panelContainer: {
         padding: '1rem',
         height: '100%',
-        overflowY: 'auto',
     },
     searchContainer: {
         marginBottom: '1rem',

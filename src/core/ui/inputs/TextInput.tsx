@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import InspectorHelpTooltip from '../InspectorHelpTooltip';
 
 interface TextInputProps {
@@ -10,8 +10,35 @@ interface TextInputProps {
 }
 
 const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, isHelpVisible, helpText }) => {
+    const [internalValue, setInternalValue] = useState(value);
+
+    useEffect(() => {
+        // This effect should only run when the component receives a new 'value' prop from its parent
+        // that is different from its internal state. This happens when selecting a new element.
+        // It avoids resetting the input while typing.
+        if (internalValue !== value) {
+            setInternalValue(value);
+        }
+    }, [value]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(e.target.value);
+        setInternalValue(e.target.value);
+    };
+
+    const handleBlur = () => {
+        if (internalValue !== value) {
+            onChange(internalValue);
+        }
+    };
+    
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleBlur();
+            (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'Escape') {
+            setInternalValue(value);
+             (e.target as HTMLInputElement).blur();
+        }
     };
 
     return (
@@ -22,8 +49,10 @@ const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, isHelpVis
             </div>
             <input
                 type="text"
-                value={value}
+                value={internalValue}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
                 style={styles.input}
             />
         </div>

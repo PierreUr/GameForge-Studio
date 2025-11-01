@@ -17,6 +17,13 @@ import { PhysicsBodyComponent } from './src/core/library/PhysicsBodyComponent';
 import { ColliderComponent } from './src/core/library/ColliderComponent';
 import { ScoreComponent } from './src/core/library/ScoreComponent';
 import { AIPatrolComponent } from './src/core/library/AIPatrolComponent';
+// FIX: Import missing system classes to resolve 'Cannot find name' errors.
+import { PlayerInputSystem } from './src/core/library/PlayerInputSystem';
+import { MovementSystem } from './src/core/library/MovementSystem';
+import { AIPatrolSystem } from './src/core/library/AIPatrolSystem';
+import { PhysicsSystem } from './src/core/library/PhysicsSystem';
+import { HealthSystem } from './src/core/library/HealthSystem';
+import { ScoringSystem } from './src/core/library/ScoringSystem';
 import LeftSidebar from './src/core/ui/LeftSidebar';
 import RightSidebar from './src/core/ui/RightSidebar';
 import CanvasContainer from './src/core/ui/CanvasContainer';
@@ -39,8 +46,10 @@ import LoginPage from './src/core/ui/LoginPage';
 import AdminDashboard from './src/core/ui/admin/AdminDashboard';
 import UIEditorPanel, { SectionData, WidgetData, ColumnData } from './src/core/ui/UIEditorPanel';
 import ViewportControls from './src/core/ui/ViewportControls';
+import Modal from './src/core/ui/Modal';
+import WindowEditorPanel from './src/core/ui/WindowEditorPanel';
 
-type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers';
+type MainView = 'scene' | 'ui-editor' | 'logic-graph' | 'layers' | 'windows';
 
 const MainViewTabs: React.FC<{ activeTab: MainView, onTabChange: (tabId: MainView) => void }> = ({ activeTab, onTabChange }) => {
     const tabs: { id: MainView; label: string }[] = [
@@ -48,6 +57,7 @@ const MainViewTabs: React.FC<{ activeTab: MainView, onTabChange: (tabId: MainVie
         { id: 'ui-editor', label: 'UI Editor' },
         { id: 'logic-graph', label: 'Logic Graph' },
         { id: 'layers', label: 'Layers' },
+        { id: 'windows', label: 'Windows' },
     ];
     
     return (
@@ -110,6 +120,51 @@ const getInitialLayoutState = () => {
     };
 };
 
+const findColumnData = (layout: SectionData[], columnId: string | null): ColumnData | null => {
+    if (!columnId) return null;
+    for (const section of layout) {
+        const column = section.columns.find(c => c.id === columnId);
+        if (column) return column;
+
+        // Search in nested sections
+        for (const col of section.columns) {
+            for (const item of col.widgets) {
+                if (!('componentType' in item)) { // It's a SectionData
+                    const found = findColumnData([item], columnId);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        }
+    }
+    return null;
+};
+
+// Helper function to recursively remove a widget from the layout
+const removeWidgetRecursively = (items: (WidgetData | SectionData)[], widgetId: string): (WidgetData | SectionData)[] => {
+    const newItems = [];
+    for (const item of items) {
+        if (item.id === widgetId) {
+            continue; // Skip the item to delete it
+        }
+
+        if ('componentType' in item) {
+            newItems.push(item); // It's a widget we want to keep
+        } else {
+            // It's a section, recurse into its columns
+            const section = item as SectionData;
+            const updatedColumns = section.columns.map(col => ({
+                ...col,
+                widgets: removeWidgetRecursively(col.widgets, widgetId)
+            }));
+            newItems.push({ ...section, columns: updatedColumns });
+        }
+    }
+    return newItems;
+};
+
+
 const App = () => {
     const { user, token, logout } = useAuth();
     const [ecsWorld, setEcsWorld] = useState<World | null>(null);
@@ -133,10 +188,18 @@ const App = () => {
     
     // UI Builder State
     const [uiLayout, setUiLayout] = useState<SectionData[]>([]);
-    const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
-    const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-    const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
     const [isInspectorHelpVisible, setIsInspectorHelpVisible] = useState(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [manualContent, setManualContent] = useState<string | null>(null);
+    const [isManualLoading, setIsManualLoading] = useState(false);
+    const [widgetManifest, setWidgetManifest] = useState<any>(null);
+
+    useEffect(() => {
+        fetch('./src/core/assets/ui-widget-manifest.json')
+            .then(res => res.json())
+            .then(data => setWidgetManifest(data))
+            .catch(err => console.error("Failed to load widget manifest:", err));
+    }, []);
 
     // FIX: Created wrapper functions to handle partial state updates for frame and grid configs.
     // This resolves the TypeScript error where a `Dispatch<SetStateAction>` was passed to a prop
@@ -153,524 +216,392 @@ const App = () => {
         setIsInspectorHelpVisible(prev => !prev);
     }, []);
 
-    const handleWidgetSelect = useCallback((widgetId: string | null) => {
-        setSelectedWidgetId(widgetId);
-        if (widgetId !== null) {
-            setSelectedSectionId(null);
-            setSelectedColumnId(null);
-        }
-    }, []);
+    const handleToggleHelpModal = useCallback(() => setIsHelpModalOpen(prev => !prev), []);
 
-    const handleSectionSelect = useCallback((sectionId: string | null) => {
-        setSelectedSectionId(sectionId);
-        if (sectionId !== null) {
-            setSelectedWidgetId(null);
-            setSelectedColumnId(null);
-        }
-    }, []);
-
-    const handleColumnSelect = useCallback((columnId: string | null) => {
-        setSelectedColumnId(columnId);
-        if (columnId !== null) {
-            setSelectedWidgetId(null);
-            setSelectedSectionId(null);
-        }
-    }, []);
-
-    const handleSectionPropertyChange = useCallback((sectionId: string, propName: string, propValue: any) => {
-        setUiLayout(prevLayout => {
-            const updateRecursively = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
-                return items.map(item => {
-                    if ('componentType' in item) {
-                        return item; // It's a widget, skip
+    useEffect(() => {
+        if (isHelpModalOpen && !manualContent) {
+            setIsManualLoading(true);
+            fetch('./handbuch.html')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
                     }
-                    const section = item as SectionData;
-                    if (section.id === sectionId) {
-                        // Found it, apply update
-                        return { ...section, [propName]: propValue };
-                    }
-                    // Not it, recurse into its columns
-                    const updatedColumns = section.columns.map(col => ({
-                        ...col,
-                        widgets: updateRecursively(col.widgets)
-                    }));
-                    return { ...section, columns: updatedColumns };
+                    return response.text();
+                })
+                .then(html => {
+                    setManualContent(html);
+                })
+                .catch(error => {
+                    console.error('Failed to fetch manual:', error);
+                    setManualContent('<p style="color: red;">Error: Could not load the help manual.</p>');
+                })
+                .finally(() => {
+                    setIsManualLoading(false);
                 });
+        }
+    }, [isHelpModalOpen, manualContent]);
+
+    const handleDuplicateSection = useCallback((sectionId: string) => {
+        const duplicateRecursively = (item: WidgetData | SectionData): WidgetData | SectionData => {
+            const newId = crypto.randomUUID();
+            if ('componentType' in item) { // It's a widget
+                return { ...item, id: newId };
+            }
+            // It's a section
+            const section = item as SectionData;
+            return {
+                ...section,
+                id: newId,
+                columns: section.columns.map(col => ({
+                    ...col,
+                    id: crypto.randomUUID(),
+                    widgets: col.widgets.map(duplicateRecursively)
+                }))
             };
-            return updateRecursively(prevLayout) as SectionData[];
+        };
+
+        setUiLayout(prevLayout => {
+            const newLayout = [...prevLayout];
+            const sectionIndex = newLayout.findIndex(s => s.id === sectionId);
+            if (sectionIndex !== -1) {
+                const originalSection = newLayout[sectionIndex];
+                const duplicatedSection = duplicateRecursively(originalSection) as SectionData;
+                newLayout.splice(sectionIndex + 1, 0, duplicatedSection);
+            }
+            return newLayout;
         });
     }, []);
 
-    const handleSectionColumnCountChange = useCallback((sectionId: string, newColumnCount: number) => {
-        const updateRecursively = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
-            return items.map(item => {
-                if ('componentType' in item) {
-                    return item; // It's a widget, return as is
-                }
-    
-                const section = item as SectionData;
-    
-                if (section.id === sectionId) {
-                    // This is the target section, perform the update
-                    let newColumns = [...section.columns];
-                    if (newColumnCount > newColumns.length) {
-                        for (let i = newColumns.length; i < newColumnCount; i++) {
-                            newColumns.push({ id: crypto.randomUUID(), widgets: [], styles: { backgroundColor: 'transparent', padding: '0px', rowGap: 8 } });
-                        }
-                    } else if (newColumnCount < newColumns.length) {
-                        const widgetsToMove = newColumns.slice(newColumnCount).flatMap(col => col.widgets);
-                        newColumns = newColumns.slice(0, newColumnCount);
-                        if (newColumns.length > 0) {
-                            newColumns[newColumns.length - 1].widgets.push(...widgetsToMove);
-                        }
-                    }
-                    return { ...section, columnLayout: newColumnCount, columns: newColumns };
-                } else {
-                    // Not the target section, recurse into its columns
-                    const updatedColumns = section.columns.map(col => ({
-                        ...col,
-                        widgets: updateRecursively(col.widgets)
-                    }));
-                    return { ...section, columns: updatedColumns };
-                }
-            });
-        };
-    
-        setUiLayout(prevLayout => updateRecursively(prevLayout) as SectionData[]);
-    }, []);
 
-    const handleColumnPropertyChange = useCallback((columnId: string, propName: string, propValue: any) => {
-        setUiLayout(prevLayout =>
-            prevLayout.map(section => ({
-                ...section,
-                columns: section.columns.map(column => {
-                    if (column.id === columnId) {
-                        return { 
-                            ...column, 
-                            styles: { ...column.styles, [propName]: propValue } 
-                        };
-                    }
-                    return column;
-                })
-            }))
-        );
-    }, []);
+    // --- Project Management ---
+    const projectManager = ProjectManager.getInstance();
 
     const handleSaveProject = useCallback(() => {
-        console.log(`[App] handleSaveProject triggered`);
-        if (projectName && projectName.trim() !== "") {
-            // FIX: Pass the project's live status to the save function.
-            ProjectManager.getInstance().saveProject(uiLayout, projectName.trim(), isProjectLive);
-        } else {
-             console.log('[App] Save cancelled or project name was empty.');
-        }
-    }, [uiLayout, projectName, isProjectLive]);
+        projectManager.saveProject(uiLayout, projectName, isProjectLive);
+    }, [projectManager, uiLayout, projectName, isProjectLive]);
 
-    // FIX: Implemented the missing `handleRunTests` function.
-    const handleRunTests = useCallback(async (slug?: string): Promise<string> => {
-        const logger = new TestLogger();
-        
-        if (!ecsWorld) {
-            const msg = "ECS World not initialized. Cannot run tests.";
-            logger.logCustom(msg, 'ERROR');
-            return logger.getLog();
-        }
-        
-        const deps = { world: ecsWorld };
-
-        const runTest = async (slugToRun: string, testFn: (logger: TestLogger, deps: { world: World }) => Promise<void> | void) => {
-             try {
-                await testFn(logger, deps);
-            } catch (e: any) {
-                logger.logCustom(`CRITICAL ERROR in test '${slugToRun}': ${e.message}`, "ERROR");
-            }
-        };
-
-        if (slug) {
-            const testFn = testRegistry[slug];
-            if (testFn) {
-                await runTest(slug, testFn);
-            } else {
-                logger.logCustom(`Test with slug "${slug}" not found.`, "WARN");
-            }
-        } else {
-            for (const [testSlug, testFn] of Object.entries(testRegistry)) {
-               await runTest(testSlug, testFn);
-            }
-        }
-        
-        const fullLog = logger.getLog();
-        
-        try {
-            localStorage.setItem('test-execution-log', fullLog);
-        } catch (e) {
-            console.error("Failed to save test execution log to localStorage:", e);
-        }
-
-        return fullLog;
-    }, [ecsWorld]);
+    const handleLoadProject = useCallback(() => {
+        projectManager.loadProject();
+    }, [projectManager]);
     
-    const handleDuplicateSection = useCallback((sectionId: string) => {
-        const sectionToDuplicate = uiLayout.find(s => s.id === sectionId);
-        if (!sectionToDuplicate) return;
+    const handlePreviewProject = useCallback(() => {
+        projectManager.previewProject(uiLayout);
+    }, [projectManager, uiLayout]);
 
-        // Deep copy to prevent reference issues
-        const duplicateSection = JSON.parse(JSON.stringify(sectionToDuplicate));
-
-        // Generate new IDs for all nested elements
-        duplicateSection.id = crypto.randomUUID();
-        duplicateSection.columns.forEach((col: ColumnData) => {
-            col.id = crypto.randomUUID();
-            col.widgets.forEach((w: WidgetData) => {
-                w.id = crypto.randomUUID();
-            });
-        });
-
-        const originalIndex = uiLayout.findIndex(s => s.id === sectionId);
-        const newLayout = [...uiLayout];
-        newLayout.splice(originalIndex + 1, 0, duplicateSection);
-        setUiLayout(newLayout);
-    }, [uiLayout]);
-
+    const handleExportHTML = useCallback(() => {
+        projectManager.exportToStandaloneHTML(uiLayout);
+    }, [projectManager, uiLayout]);
+    
     const handleLayoutSwitch = useCallback((newLayoutKey: string) => {
         if (!ecsWorld) return;
-        const pm = ProjectManager.getInstance();
-        const { ecsState, uiState } = pm.switchActiveLayout(newLayoutKey, uiLayout);
-    
-        if (ecsState) {
-            ecsWorld.loadProjectState(ecsState);
-        }
-        setUiLayout(uiState || []); // Ensure uiState is never null/undefined
+        
+        const { ecsState, uiState } = projectManager.switchActiveLayout(newLayoutKey, uiLayout);
+        ecsWorld.loadProjectState(ecsState);
+        setUiLayout(uiState);
         setActiveLayoutKey(newLayoutKey);
-    }, [ecsWorld, uiLayout]);
+    }, [projectManager, uiLayout, ecsWorld]);
 
-    // Restore Ctrl+D functionality for duplicating sections
+
+    useEffect(() => {
+        const handleProjectLoaded = (payload: { activeLayoutKey: string, uiState: SectionData[], isLive: boolean }) => {
+            setActiveLayoutKey(payload.activeLayoutKey);
+            setUiLayout(payload.uiState);
+            setIsProjectLive(payload.isLive);
+            
+            const preset = devicePresets.find(p => p.name.toLowerCase() === payload.activeLayoutKey) || devicePresets[0];
+            setFrameConfig(prev => ({
+                ...prev,
+                isVisible: true,
+                width: preset.width,
+                height: preset.height,
+                orientation: preset.width > preset.height ? 'landscape' : 'portrait'
+            }));
+            
+            // Deselect everything to prevent stale selections
+            EventBus.getInstance().publish('ui-element:deselected');
+        };
+
+        EventBus.getInstance().subscribe('project:loaded', handleProjectLoaded);
+        return () => EventBus.getInstance().unsubscribe('project:loaded', handleProjectLoaded);
+    }, []);
+
+
+    // --- Command Management ---
+    const commandManager = CommandManager.getInstance();
+    const handleUndo = () => commandManager.undo();
+    const handleRedo = () => commandManager.redo();
+    
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
-                const activeEl = document.activeElement;
-                const isInputFocused = activeEl && (
-                    activeEl.tagName === 'INPUT' || 
-                    activeEl.tagName === 'TEXTAREA' || 
-                    (activeEl as HTMLElement).isContentEditable
-                );
-
-                if (!isInputFocused && selectedSectionId) {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z') {
                     e.preventDefault();
-                    handleDuplicateSection(selectedSectionId);
+                    handleUndo();
+                } else if (e.key === 'y') {
+                    e.preventDefault();
+                    handleRedo();
+                } else if (e.key === 's') {
+                    e.preventDefault();
+                    handleSaveProject();
                 }
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                 if(ecsWorld && ecsWorld.selectedEntity !== null) {
+                    const command = new DestroyEntityCommand(ecsWorld, ecsWorld.selectedEntity);
+                    commandManager.executeCommand(command);
+                 }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [selectedSectionId, handleDuplicateSection]);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [ecsWorld, commandManager, handleSaveProject]);
 
 
+    // --- Inspector Event Handlers ---
     useEffect(() => {
-        // Do not run setup if not logged in
-        if (!token) return;
-
-        let gameLoop: GameLoop | null = null;
-        let autoSaveInterval: number | null = null;
-
-        const setupEcs = async () => {
-            try {
-                // --- ECS Core Initialization for the main app instance ---
-                const entityManager = new EntityManager();
-                const componentManager = new ComponentManager();
-                const systemManager = new SystemManager(entityManager, componentManager);
-                const world = new World(
-                    entityManager,
-                    componentManager,
-                    systemManager
-                );
-
-                world.registerComponent(PositionComponent);
-                world.registerComponent(VelocityComponent);
-                world.registerComponent(SpriteComponent);
-                world.registerComponent(HealthComponent);
-                world.registerComponent(PlayerInputComponent);
-                world.registerComponent(PhysicsBodyComponent);
-                world.registerComponent(ColliderComponent);
-                world.registerComponent(ScoreComponent);
-                world.registerComponent(AIPatrolComponent);
-                
-                const renderingSystem = new RenderingSystem();
-                world.systemManager.registerSystem(renderingSystem, -100); // Render last
-                renderingSystemRef.current = renderingSystem;
-
-                // Add Logic Graph System
-                const logicGraph = new Graph();
-                graphRef.current = logicGraph;
-                const graphInterpreter = new GraphInterpreter(logicGraph);
-                const logicSystem = new LogicSystem(logicGraph, graphInterpreter);
-                world.systemManager.registerSystem(logicSystem, 0);
-
-                // Initialize Project Manager
-                const projectManager = ProjectManager.getInstance();
-                projectManager.init(world, logicGraph);
-                // autoSaveInterval = projectManager.startAutoSave(30000); // Auto-save every 30 seconds
-
-                setEcsWorld(world);
-                gameLoop = new GameLoop(world.systemManager);
-                gameLoop.start();
-                
-                // Set initial grid config after renderer is initialized
-                const renderer = Renderer.getInstance();
-                if(renderer.isInitialized) {
-                    renderer.setGridConfig(gridConfig);
-                    renderer.setFrameConfig(frameConfig);
-                }
-                
-                // Run automatic self-test on load
-                if (!hasRunInitialTests.current) {
-                    hasRunInitialTests.current = true;
-                    // We don't need the return value here, just trigger the run and local storage save
-                    handleRunTests(); 
-                }
-
-            } catch (e: any) {
-                console.error('An unexpected error occurred during initial setup:', e);
-            }
-        };
-        
-        setupEcs();
-
-        // FIX: Update handler to receive and set the project's 'live' status.
-        const handleProjectLoaded = (payload: { activeLayoutKey: string, uiState: SectionData[], isLive?: boolean }) => {
-            const loadedKey = payload.activeLayoutKey;
-            setUiLayout(payload.uiState || []);
-            setActiveLayoutKey(loadedKey);
-            setIsProjectLive(payload.isLive ?? false); // Set live status
-            
-            if (loadedKey === 'default') {
-                setFrameConfig(prev => ({ ...prev, isVisible: false }));
-            } else {
-                const presetName = Object.keys(devicePresets).find(key => key.toLowerCase() === loadedKey);
-                const preset = presetName ? devicePresets.find(p => p.name === presetName) : undefined;
-                if (preset) {
-                    setFrameConfig(prev => ({
-                        ...prev,
-                        isVisible: true,
-                        width: preset.width,
-                        height: preset.height,
-                        orientation: preset.width > preset.height ? 'landscape' : 'portrait'
-                    }));
-                }
-            }
-        };
-        
-        // FIX: Replaced the non-recursive function with a recursive one to handle nested sections.
-        // This also adds a type guard to safely access the `props` property on widgets, resolving the TypeScript error.
-        const handleWidgetPropertyUpdate = (payload: { widgetId: string, propName: string, propValue: any }) => {
-            setUiLayout(prevLayout => {
-                function recursiveUpdate(items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] {
-                    return items.map(item => {
-                        if (item.id === payload.widgetId && 'componentType' in item) {
-                            // This is the widget we want to update
-                            if (payload.propName === 'styles') {
-                                return { ...item, styles: payload.propValue };
-                            }
-                            return {
-                                ...item,
-                                props: { ...item.props, [payload.propName]: payload.propValue }
-                            };
-                        } else if (!('componentType' in item)) { // This is a SectionData, recurse into its columns
-                            return {
-                                ...item,
-                                columns: item.columns.map(col => ({
-                                    ...col,
-                                    widgets: recursiveUpdate(col.widgets)
-                                }))
-                            };
-                        }
-                        // This is a different widget, return as is
-                        return item;
-                    });
-                }
-                return recursiveUpdate(prevLayout) as SectionData[];
-            });
-        };
-        
-        const handleWidgetDelete = (payload: { widgetId: string }) => {
-            setUiLayout(prevLayout => {
-                const recursiveFilter = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
-                    return items
-                        .filter(item => item.id !== payload.widgetId)
-                        .map(item => {
-                            if (!('componentType' in item)) { // is SectionData
-                                const section = item as SectionData;
-                                return {
-                                    ...section,
-                                    columns: section.columns.map(col => ({
-                                        ...col,
-                                        widgets: recursiveFilter(col.widgets)
-                                    }))
-                                };
-                            }
-                            return item;
-                        });
-                };
-                return recursiveFilter(prevLayout) as SectionData[];
-            });
-            handleWidgetSelect(null);
-        };
-        
-        // FIX: Corrected the `findAndInsertRecursive` function to properly traverse nested sections, enabling drag-and-drop into any level of the layout.
-        const handleWidgetMove = (payload: { source: any; target: any }) => {
-            setUiLayout(prevLayout => {
-                const newLayout = JSON.parse(JSON.stringify(prevLayout)); // Deep copy for safe mutation
-                let foundWidget: WidgetData | SectionData | null = null;
-        
-                function findAndRemoveRecursive(items: (WidgetData | SectionData)[]): boolean {
-                    for (let i = 0; i < items.length; i++) {
-                        const item = items[i];
-                        if (item.id === payload.source.widgetId) {
-                            [foundWidget] = items.splice(i, 1);
-                            return true;
-                        }
-                        if (!('componentType' in item)) { // is SectionData
-                            for (const column of (item as SectionData).columns) {
-                                if (findAndRemoveRecursive(column.widgets)) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                    return false;
-                }
-        
-                function findAndInsertRecursive(items: (WidgetData | SectionData)[]): boolean {
-                    for (const item of items) {
-                        if ('componentType' in item) {
-                            continue; // It's a widget, cannot insert here.
-                        }
-                        
-                        const section = item as SectionData;
-                        if (section.id === payload.target.targetSectionId) {
-                            const column = section.columns[payload.target.targetColumnIndex];
-                            if (column) {
-                                column.widgets.splice(payload.target.targetDropIndex, 0, foundWidget!);
-                                return true; // Insertion complete
-                            }
-                        } else {
-                            // Recurse into this section's columns
-                            for (const column of section.columns) {
-                                if (findAndInsertRecursive(column.widgets)) {
-                                    return true; // Insertion happened in a nested section
-                                }
-                            }
-                        }
-                    }
-                    return false; // Target not found at this level
-                }
-        
-                findAndRemoveRecursive(newLayout);
-        
-                if (foundWidget) {
-                    if (findAndInsertRecursive(newLayout)) {
-                        return newLayout;
-                    }
-                }
-        
-                return prevLayout; // No change if widget not found or insert failed
-            });
-        };
-        
         const eventBus = EventBus.getInstance();
-        eventBus.subscribe('project:loaded', handleProjectLoaded);
-        eventBus.subscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
-        eventBus.subscribe('ui-widget:delete', handleWidgetDelete);
-        eventBus.subscribe('ui-widget:move', handleWidgetMove);
+
+        const handleSectionPropertyChange = (payload: { sectionId: string, propName: string, value: any }) => {
+            setUiLayout(prevLayout => {
+                const updateRecursively = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
+                    return items.map(item => {
+                        if ('componentType' in item) return item;
+                        const section = item as SectionData;
+                        if (section.id === payload.sectionId) {
+                            return { ...section, [payload.propName]: payload.value };
+                        }
+                        const updatedColumns = section.columns.map(col => ({ ...col, widgets: updateRecursively(col.widgets) }));
+                        return { ...section, columns: updatedColumns };
+                    });
+                };
+                return updateRecursively(prevLayout) as SectionData[];
+            });
+        };
+
+        const handleSectionColumnCountChange = (payload: { sectionId: string, count: number }) => {
+            setUiLayout(prevLayout => {
+                const updateRecursively = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
+                    return items.map(item => {
+                        if ('componentType' in item) return item;
+                        const section = item as SectionData;
+                        if (section.id === payload.sectionId) {
+                            let newColumns = [...section.columns];
+                            if (payload.count > newColumns.length) {
+                                for (let i = newColumns.length; i < payload.count; i++) {
+                                    newColumns.push({ id: crypto.randomUUID(), widgets: [], styles: {} });
+                                }
+                            } else if (payload.count < newColumns.length) {
+                                const widgetsToMove = newColumns.slice(payload.count).flatMap(col => col.widgets);
+                                newColumns = newColumns.slice(0, payload.count);
+                                if (newColumns.length > 0) newColumns[newColumns.length - 1].widgets.push(...widgetsToMove);
+                            }
+                            return { ...section, columnLayout: payload.count, columns: newColumns };
+                        }
+                        const updatedColumns = section.columns.map(col => ({ ...col, widgets: updateRecursively(col.widgets) }));
+                        return { ...section, columns: updatedColumns };
+                    });
+                };
+                return updateRecursively(prevLayout) as SectionData[];
+            });
+        };
+
+        const handleColumnPropertyChange = (payload: { columnId: string, propName: string, value: any }) => {
+            setUiLayout(prevLayout => {
+                const updateRecursively = (items: (WidgetData | SectionData)[]): (WidgetData | SectionData)[] => {
+                    return items.map(item => {
+                        if ('componentType' in item) return item;
+                        const section = item as SectionData;
+                        const updatedColumns = section.columns.map(col => {
+                            if (col.id === payload.columnId) {
+                                return { ...col, styles: { ...col.styles, [payload.propName]: payload.value } };
+                            }
+                            return { ...col, widgets: updateRecursively(col.widgets) };
+                        });
+                        return { ...section, columns: updatedColumns };
+                    });
+                };
+                return updateRecursively(prevLayout) as SectionData[];
+            });
+        };
+        
+        const handleDeleteWidget = (payload: { widgetId: string }) => {
+            setUiLayout(prevLayout => removeWidgetRecursively(prevLayout, payload.widgetId) as SectionData[]);
+            EventBus.getInstance().publish('ui-element:deselected');
+        };
+
+        const handleRequestSelection = (payload: { type: 'column', id: string }) => {
+            if (activeMainView === 'ui-editor') {
+                 const colData = findColumnData(uiLayout, payload.id);
+                 if (colData) {
+                     EventBus.getInstance().publish('ui-element:selected', { type: 'column', data: colData });
+                 }
+            }
+        };
+
+        eventBus.subscribe('ui-section:update-prop', handleSectionPropertyChange);
+        eventBus.subscribe('ui-section:column-count-change', handleSectionColumnCountChange);
+        eventBus.subscribe('ui-column:update-prop', handleColumnPropertyChange);
+        eventBus.subscribe('ui-widget:delete', handleDeleteWidget);
+        eventBus.subscribe('ui-element:request-selection', handleRequestSelection);
 
         return () => {
-            eventBus.unsubscribe('project:loaded', handleProjectLoaded);
-            eventBus.unsubscribe('ui-widget:update-prop', handleWidgetPropertyUpdate);
-            eventBus.unsubscribe('ui-widget:delete', handleWidgetDelete);
-            eventBus.unsubscribe('ui-widget:move', handleWidgetMove);
-            if (gameLoop && gameLoop.isRunning) {
+             eventBus.unsubscribe('ui-section:update-prop', handleSectionPropertyChange);
+             eventBus.unsubscribe('ui-section:column-count-change', handleSectionColumnCountChange);
+             eventBus.unsubscribe('ui-column:update-prop', handleColumnPropertyChange);
+             eventBus.unsubscribe('ui-widget:delete', handleDeleteWidget);
+             eventBus.unsubscribe('ui-element:request-selection', handleRequestSelection);
+        }
+    }, [uiLayout, activeMainView]);
+
+    // --- ECS & Game Loop Initialization ---
+    useEffect(() => {
+        if (ecsWorld) return;
+
+        // Core ECS Managers
+        const entityManager = new EntityManager();
+        const componentManager = new ComponentManager();
+        const systemManager = new SystemManager(entityManager, componentManager);
+        
+        // Game Loop
+        const gameLoop = new GameLoop(systemManager);
+        
+        // World
+        const world = new World(entityManager, componentManager, systemManager);
+        
+        // Graph and Interpreter
+        const graph = new Graph();
+        graphRef.current = graph;
+        const graphInterpreter = new GraphInterpreter(graph);
+
+        // Register all library components
+        world.registerComponent(PositionComponent);
+        world.registerComponent(VelocityComponent);
+        world.registerComponent(SpriteComponent);
+        world.registerComponent(HealthComponent);
+        world.registerComponent(PlayerInputComponent);
+        world.registerComponent(PhysicsBodyComponent);
+        world.registerComponent(ColliderComponent);
+        world.registerComponent(ScoreComponent);
+        world.registerComponent(AIPatrolComponent);
+        
+        // Register core systems with priorities
+        const renderingSystem = new RenderingSystem();
+        renderingSystemRef.current = renderingSystem;
+        systemManager.registerSystem(new PlayerInputSystem(), 100);
+        systemManager.registerSystem(new MovementSystem(), 90);
+        systemManager.registerSystem(new AIPatrolSystem(), 80);
+        systemManager.registerSystem(new PhysicsSystem(), 70);
+        systemManager.registerSystem(new HealthSystem(), 60);
+        systemManager.registerSystem(new ScoringSystem(entityManager, componentManager), 50);
+        systemManager.registerSystem(new LogicSystem(graph, graphInterpreter), 40);
+        systemManager.registerSystem(renderingSystem, 10); // Render last
+
+        // Init Project Manager
+        ProjectManager.getInstance().init(world, graph);
+
+        setEcsWorld(world);
+        if (!gameLoop.isRunning) {
+            gameLoop.start();
+        }
+
+        return () => {
+            if (gameLoop.isRunning) {
                 gameLoop.stop();
             }
-            if (autoSaveInterval) {
-                clearInterval(autoSaveInterval);
-            }
         };
-    }, [token, gridConfig, frameConfig, handleRunTests, handleWidgetSelect, uiLayout, handleDuplicateSection, selectedSectionId]);
+    }, [ecsWorld]);
+    
+    const handleRunTests = async (slug?: string): Promise<string> => {
+        if (!ecsWorld) return "ECS World not initialized.";
 
-    if (!token) {
+        const logger = new TestLogger();
+        const testsToRun: [string, Function][] = slug
+            ? [[slug, testRegistry[slug]]]
+            : Object.entries(testRegistry);
+
+        for (const [testSlug, testFn] of testsToRun) {
+            if (testFn) {
+                try {
+                    await Promise.resolve(testFn(logger, { world: ecsWorld }));
+                } catch (e) {
+                    logger.logCustom(`CRITICAL ERROR in test '${testSlug}': ${(e as Error).message}`, "ERROR");
+                }
+            } else {
+                 logger.logCustom(`Test with slug '${testSlug}' not found.`, "WARN");
+            }
+        }
+        return logger.getLog();
+    };
+
+    const handleRunAllInitialTests = useCallback(async () => {
+        if (hasRunInitialTests.current) return;
+        hasRunInitialTests.current = true;
+        const results = await handleRunTests();
+        console.log("--- Initial System Self-Test Results ---");
+        console.log(results);
+        localStorage.setItem('test-execution-log', results);
+    }, [handleRunTests]);
+
+    useEffect(() => {
+        if (ecsWorld && !hasRunInitialTests.current) {
+            handleRunAllInitialTests();
+        }
+    }, [ecsWorld, handleRunAllInitialTests]);
+
+    const handleToggleColliders = () => {
+        if(renderingSystemRef.current) {
+            renderingSystemRef.current.toggleDebugRendering();
+        }
+    }
+    
+     useEffect(() => {
+        const renderer = Renderer.getInstance();
+        if(renderer.isInitialized) {
+            renderer.setGridConfig(gridConfig);
+        }
+    }, [gridConfig]);
+
+    useEffect(() => {
+        const renderer = Renderer.getInstance();
+        if(renderer.isInitialized) {
+            renderer.setFrameConfig(frameConfig);
+        }
+    }, [frameConfig]);
+
+
+    if (!user) {
         return <LoginPage />;
     }
-
+    
     if (isAdminView) {
-        return <AdminDashboard 
-            onRunTests={handleRunTests} 
-            onToggleColliders={() => {
-                renderingSystemRef.current?.toggleDebugRendering();
-            }} 
-            onClose={() => setIsAdminView(false)} 
-        />;
-    }
-
-    let mainContent;
-    switch (activeMainView) {
-        case 'scene':
-            mainContent = <CanvasContainer 
-                world={ecsWorld} 
-                renderingSystem={renderingSystemRef.current} 
-            />;
-            break;
-        case 'ui-editor':
-            mainContent = <UIEditorPanel 
-                layout={uiLayout} 
-                onLayoutChange={setUiLayout}
-                selectedWidgetId={selectedWidgetId}
-                onWidgetSelect={handleWidgetSelect}
-                selectedSectionId={selectedSectionId}
-                onSectionSelect={handleSectionSelect}
-                selectedColumnId={selectedColumnId}
-                onColumnSelect={handleColumnSelect}
-                onDuplicateSection={handleDuplicateSection}
-                onSectionColumnCountChange={handleSectionColumnCountChange}
-            />;
-            break;
-        case 'logic-graph':
-            mainContent = <LogicGraphPanel />;
-            break;
-        case 'layers':
-            mainContent = <div>Layers Panel Placeholder</div>;
-            break;
-        default:
-            mainContent = <div>Error: Unknown View</div>;
+        return <AdminDashboard onRunTests={handleRunTests} onToggleColliders={handleToggleColliders} onClose={() => setIsAdminView(false)} />;
     }
 
     return (
-        <DebugProvider>
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#1e1e1e', color: '#ccc' }}>
-                <ProgressBarHeader />
-                <Toolbar 
-                    onSave={handleSaveProject}
-                    onLoad={() => ProjectManager.getInstance().loadProject()}
-                    onPreview={() => ProjectManager.getInstance().previewProject(uiLayout)}
-                    onExportHTML={() => ProjectManager.getInstance().exportToStandaloneHTML(uiLayout)}
-                    onUndo={() => CommandManager.getInstance().undo()}
-                    onRedo={() => CommandManager.getInstance().redo()}
-                    onLogout={logout}
-                    onAdminClick={() => setIsAdminView(true)}
-                    projectName={projectName}
-                    onProjectNameChange={setProjectName}
-                    isProjectLive={isProjectLive}
-                    onIsProjectLiveChange={setIsProjectLive}
-                />
+        <div style={styles.appContainer}>
+            <ProgressBarHeader />
+            <Toolbar 
+                onSave={handleSaveProject} 
+                onLoad={handleLoadProject}
+                onPreview={handlePreviewProject}
+                onExportHTML={handleExportHTML}
+                onUndo={handleUndo} 
+                onRedo={handleRedo}
+                onLogout={logout}
+                onAdminClick={() => setIsAdminView(true)}
+                projectName={projectName}
+                onProjectNameChange={setProjectName}
+                isProjectLive={isProjectLive}
+                onIsProjectLiveChange={setIsProjectLive}
+                onHelpClick={handleToggleHelpModal}
+            />
+            <div style={styles.mainContent}>
                 <ResizablePanels>
-                    <LeftSidebar />
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e', minWidth: 0, flex: 1 }}>
+                    <LeftSidebar activeMainView={activeMainView} />
+                    <div style={styles.centerPanel}>
                         <MainViewTabs activeTab={activeMainView} onTabChange={setActiveMainView} />
-                        {(activeMainView === 'scene' || activeMainView === 'ui-editor') && (
-                            <div style={viewportToolbarStyles.container}>
+                         {activeMainView === 'ui-editor' && (
+                            <div style={styles.globalViewportToolbar}>
                                 <ViewportControls 
                                     frameConfig={frameConfig}
                                     onFrameConfigChange={handleFrameConfigChange}
@@ -678,101 +609,115 @@ const App = () => {
                                     onLayoutSwitch={handleLayoutSwitch}
                                     onSave={handleSaveProject}
                                 />
-                                <div style={{ flex: 1 }} /> {/* Spacer */}
-                                <button onClick={() => setIsSettingsPanelOpen(true)} style={viewportToolbarStyles.settingsButton} aria-label="Open Settings">
-                                    ⚙️
-                                </button>
                             </div>
                         )}
-                        <div style={{ flex: 1, display: 'flex', position: 'relative', minHeight: 0 }}>
-                            {mainContent}
+                         <div style={styles.viewportContainer}>
+                             {activeMainView === 'scene' && (
+                                <CanvasContainer world={ecsWorld} renderingSystem={renderingSystemRef.current} />
+                            )}
+                            {activeMainView === 'ui-editor' && (
+                                <UIEditorPanel
+                                    layout={uiLayout}
+                                    onLayoutChange={setUiLayout}
+                                    widgetManifest={widgetManifest}
+                                    onDuplicateSection={handleDuplicateSection}
+                                />
+                            )}
+                             {activeMainView === 'logic-graph' && <LogicGraphPanel />}
+                             {activeMainView === 'windows' && <WindowEditorPanel activeMainView={activeMainView} />}
                         </div>
                     </div>
                     <RightSidebar 
                         world={ecsWorld} 
-                        frameConfig={frameConfig} 
-                        // FIX: Pass the wrapper function instead of the raw setState function to match the expected prop type.
+                        frameConfig={frameConfig}
                         onFrameConfigChange={handleFrameConfigChange}
-                        uiLayout={uiLayout}
-                        selectedWidgetId={selectedWidgetId}
-                        selectedSectionId={selectedSectionId}
-                        onSectionPropertyChange={handleSectionPropertyChange}
-                        onSectionColumnCountChange={handleSectionColumnCountChange}
-                        selectedColumnId={selectedColumnId}
-                        onColumnPropertyChange={handleColumnPropertyChange}
-                        onColumnSelect={handleColumnSelect}
                         isInspectorHelpVisible={isInspectorHelpVisible}
                         onToggleInspectorHelp={toggleInspectorHelp}
                     />
                 </ResizablePanels>
-                {isSettingsPanelOpen && (
-                    <SettingsPanel 
-                        isOpen={isSettingsPanelOpen}
-                        onClose={() => setIsSettingsPanelOpen(false)}
-                        gridConfig={gridConfig}
-                        // FIX: Pass the wrapper function instead of the raw setState function to match the expected prop type.
-                        onGridConfigChange={handleGridConfigChange}
-                    />
-                )}
             </div>
-        </DebugProvider>
+            {isSettingsPanelOpen && (
+                <SettingsPanel 
+                    isOpen={isSettingsPanelOpen}
+                    onClose={() => setIsSettingsPanelOpen(false)}
+                    gridConfig={gridConfig}
+                    onGridConfigChange={handleGridConfigChange}
+                />
+            )}
+            {isHelpModalOpen && (
+                <Modal isOpen={isHelpModalOpen} onClose={handleToggleHelpModal} title="GameForge Studio - Handbuch">
+                    {isManualLoading ? <p>Loading manual...</p> : <div dangerouslySetInnerHTML={{ __html: manualContent || '' }} />}
+                </Modal>
+            )}
+        </div>
     );
 };
 
-const viewportToolbarStyles: { [key: string]: React.CSSProperties } = {
-    container: {
+const styles: { [key: string]: React.CSSProperties } = {
+    appContainer: {
         display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#252526',
-        borderBottom: '1px solid #000',
-        flexShrink: 0,
-        padding: '4px 10px',
+        flexDirection: 'column',
+        height: '100vh',
+        backgroundColor: '#1e1e1e',
+        color: '#d4d4d4',
     },
-    settingsButton: {
-        backgroundColor: 'rgba(45, 45, 45, 0.75)',
-        border: '1px solid #666',
-        color: '#eee',
-        cursor: 'pointer',
-        borderRadius: '4px',
-        fontSize: '1.2rem',
-        width: '36px',
-        height: '36px',
+    mainContent: {
+        flex: 1,
         display: 'flex',
-        justifyContent: 'center',
+        overflow: 'hidden', // Prevents main content from causing scrollbars
+    },
+    centerPanel: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        position: 'relative',
+    },
+    viewportContainer: {
+        flex: 1,
+        position: 'relative',
+        display: 'flex',
+        overflow: 'hidden',
+    },
+    globalViewportToolbar: {
+        backgroundColor: '#252526',
+        padding: '0.5rem 1rem',
+        borderBottom: '1px solid #444',
+        display: 'flex',
         alignItems: 'center',
-        transition: 'background-color 0.2s'
-    }
+        flexShrink: 0,
+    },
 };
 
-// FIX: Added the missing styles object for the MainViewTabs component.
 const mainViewTabsStyles: { [key: string]: React.CSSProperties } = {
     mainViewTabsContainer: {
         display: 'flex',
         backgroundColor: '#252526',
-        borderBottom: '1px solid #000',
+        borderBottom: '1px solid #444',
         flexShrink: 0,
     },
     mainViewTab: {
         padding: '0.75rem 1.5rem',
         cursor: 'pointer',
-        backgroundColor: '#2d2d2d',
+        backgroundColor: 'transparent',
         border: 'none',
-        color: '#aaa',
+        color: '#ccc',
         fontSize: '0.9rem',
-        borderRight: '1px solid #000',
-        outline: 'none',
     },
     activeMainViewTab: {
-        backgroundColor: '#3e3e42',
+        backgroundColor: '#333333',
         color: '#fff',
-    }
+        borderBottom: '2px solid #007acc',
+    },
 };
 
-const root = createRoot(document.getElementById('root')!);
+const container = document.getElementById('root');
+const root = createRoot(container!);
 root.render(
     <React.StrictMode>
-        <AuthProvider>
-            <App />
-        </AuthProvider>
+        <DebugProvider>
+            <AuthProvider>
+                <App />
+            </AuthProvider>
+        </DebugProvider>
     </React.StrictMode>
 );

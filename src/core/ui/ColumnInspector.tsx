@@ -3,17 +3,18 @@ import { ColumnData } from './UIEditorPanel';
 import ColorPicker from './inputs/ColorPicker';
 import TextInput from './inputs/TextInput';
 import NumberInput from './inputs/NumberInput';
+import SelectInput from './inputs/SelectInput';
+import { EventBus } from '../ecs/EventBus';
 
 interface ColumnInspectorProps {
     columnData: ColumnData;
-    onPropertyChange: (columnId: string, propName: string, value: any) => void;
     isHelpVisible: boolean;
 }
 
-const ColumnInspector: React.FC<ColumnInspectorProps> = ({ columnData, onPropertyChange, isHelpVisible }) => {
+const ColumnInspector: React.FC<ColumnInspectorProps> = ({ columnData, isHelpVisible }) => {
 
     const handleStyleChange = (propName: string, value: any) => {
-        onPropertyChange(columnData.id, propName, value);
+        EventBus.getInstance().publish('ui-column:update-prop', { columnId: columnData.id, propName, value });
     };
 
     return (
@@ -23,7 +24,7 @@ const ColumnInspector: React.FC<ColumnInspectorProps> = ({ columnData, onPropert
                 <div style={styles.propertyItem}>
                     <NumberInput
                         label="Row Gap (Px)"
-                        value={columnData.styles?.rowGap ?? 8}
+                        value={columnData.styles?.rowGap ?? 0}
                         onChange={(value) => handleStyleChange('rowGap', value)}
                         isHelpVisible={isHelpVisible}
                         helpText="The vertical space between widgets inside this column."
@@ -41,10 +42,38 @@ const ColumnInspector: React.FC<ColumnInspectorProps> = ({ columnData, onPropert
                 <div style={styles.propertyItem}>
                     <TextInput
                         label="Padding"
-                        value={columnData.styles?.padding ?? '0.5rem'}
+                        value={columnData.styles?.padding ?? '0px'}
                         onChange={(value) => handleStyleChange('padding', value)}
                         isHelpVisible={isHelpVisible}
                         helpText="The inner space of the column. Use CSS format (e.g., '10px')."
+                    />
+                </div>
+                 <div style={styles.propertyItem}>
+                    <TextInput
+                        label="Height"
+                        value={columnData.styles?.height ?? 'auto'}
+                        onChange={(value) => handleStyleChange('height', value)}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The fixed height of the column. Use CSS units (e.g., '300px' or '50vh'). 'auto' is default."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
+                    <TextInput
+                        label="Min Height"
+                        value={columnData.styles?.minHeight ?? ''}
+                        onChange={(value) => handleStyleChange('minHeight', value)}
+                        isHelpVisible={isHelpVisible}
+                        helpText="The minimum height of the column. Use CSS units (e.g., '100px')."
+                    />
+                </div>
+                <div style={styles.propertyItem}>
+                    <SelectInput
+                        label="Horizontal Align"
+                        value={columnData.styles?.alignItems ?? 'stretch'}
+                        onChange={(value) => handleStyleChange('alignItems', value)}
+                        options={['stretch', 'flex-start', 'center', 'flex-end']}
+                        isHelpVisible={isHelpVisible}
+                        helpText="Horizontally align widgets in this column. 'Stretch' makes them fill the width."
                     />
                 </div>
             </div>
